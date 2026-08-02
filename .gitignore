@@ -14,5 +14,16 @@
 *.test
 *.out
 
+# local-only spec (not for public repo)
+/docs/rebuild-spec.md
+
+# editor / tooling
+.claude/
+.idea/
+.vscode/
+
 # macOS
 .DS_Store
+
+# windows
+Thumbs.db

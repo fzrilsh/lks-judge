@@ -40,11 +40,11 @@ go test ./internal/scoring/...   # single package
 
 **`model` package has zero logic and zero internal imports.** This is the cycle-breaker. All other packages import `model`; `model` imports nothing internal.
 
-**Competition state cache:** `atomic.Pointer[model.Competition]` updated on every write. Hot-path handlers (countdown, jury IP check, form-open check) read from cache — no DB hit.
+**Competition state cache:** `atomic.Pointer[model.Competition]` updated on every write. Hot-path handlers (countdown, jury IP check, form-open check) read from cache, no DB hit.
 
 **Session cache:** `sync.Map[token → *model.Participant]` in `internal/store/session.go`. DB only on cold miss or expiry sweep.
 
-**WS hub:** single goroutine owns `clients` map — no mutex needed. Anonymous connections (no cookie) receive only `CountdownTick` and `ScoreUpdated`.
+**WS hub:** single goroutine owns `clients` map, so no mutex needed. Anonymous connections (no cookie) receive only `CountdownTick` and `ScoreUpdated`.
 
 **Chunked upload:** zero DB writes per chunk. Chunk presence = filesystem file `data/uploads_tmp/{upload_id}/chunk-{n}`. Final assembly via sequential `io.Copy` → `os.Rename` → single DB INSERT.
 
@@ -90,7 +90,7 @@ Cost=8 (not default 10). ~8× faster for bulk import. Acceptable for internal LA
 
 ## Gzip Scope
 
-Only `/leaderboard` and `/jury/scoring` — large repeated payloads. Not global middleware.
+Only `/leaderboard` and `/jury/scoring`, the large repeated payloads. Not global middleware.
 
 ## Branching Strategy
 
@@ -110,18 +110,22 @@ Flow: feature branch → PR into `develop` → `staging` → `main`. Push featur
 <footer>
 ```
 
-- `<type>` — one of `feat` (new feature), `fix` (bug fix), `docs` (documentation), `chore` (maintenance or tooling), `refactor` (neither fixes a bug nor adds a feature), `test`.
-- `<scope>` — the area touched, e.g. `server`, `store`, `web`, `repo`.
+- `<type>`: one of `feat` (new feature), `fix` (bug fix), `docs` (documentation), `chore` (maintenance or tooling), `refactor` (neither fixes a bug nor adds a feature), `test`.
+- `<scope>`: the area touched, e.g. `server`, `store`, `web`, `repo`.
 - Blank line before the body. Body is optional but expected for anything non-trivial: explain the full change and why, not a one-liner.
-- Footer optional — breaking changes or issue references.
+- Footer optional, for breaking changes or issue references.
 
 ### Attribution
 
 Never add Claude attribution to commits, PRs, or issues. No `Co-Authored-By: Claude`, no "Generated with Claude Code", no emoji trailer, no `--author` override.
 
+### Writing Style
+
+No em dashes (`—`) anywhere: commit messages, code comments, docs, PR bodies. Use a comma, a colon, parentheses, or split the sentence. Same for other AI-slop tells: en dashes used as punctuation, `–`, curly quotes, decorative emoji, and filler openers like "In today's fast-paced world" or "It's worth noting that". Plain ASCII punctuation, plain sentences.
+
 ### When to Commit and Push
 
-- Commit after every completed task — do not batch several tasks into one commit.
+- Commit after every completed task. Do not batch several tasks into one commit.
 - Push only at the end of a phase, or when the job is otherwise finished. Intermediate task commits stay local.
 
 ## Pre-commit / Pre-push Hooks
@@ -134,7 +138,7 @@ Set up `lefthook.yml` + `lefthook install` before first commit if not already pr
 
 ## Ambiguity
 
-If a requirement, scope, or design choice is ambiguous, use `AskUserQuestion` before implementing — do not guess.
+If a requirement, scope, or design choice is ambiguous, use `AskUserQuestion` before implementing. Do not guess.
 
 ## Post-Phase Review
 

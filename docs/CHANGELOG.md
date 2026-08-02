@@ -279,7 +279,7 @@ None — Phase 4 complete per spec.
 
 ---
 
-
+## Phase 3 — Static Scaffold + Layouts (2026-07-30) ✅
 
 **Status:** Complete & spec-compliant
 
@@ -434,24 +434,6 @@ internal/
 
 ---
 
-## Next: Phase 4 — Competition Setup
-
-**Scope:**
-- Competition CRUD handlers (`GET/POST /jury/`)
-- Competition state cache (`atomic.Pointer[model.Competition]`)
-- Module queries + cache updates
-- VACUUM INTO backup system (ticker + shutdown hook)
-- `competition.templ` form (jury layout)
-
-**DoD:**
-- Create competition via jury form → row in DB
-- State cache updates on write
-- Backup file created in `data/backups/`
-- `go build` succeeds
-- Manual form test: create/edit competition
-
----
-
 ## Phase 1 — Foundation (2026-07-29) ✅
 
 **Status:** Complete
@@ -525,19 +507,3 @@ CLAUDE.md
 - Leaderboard cache: atomic.Pointer[[]byte] pre-rendered JSON
 - bcrypt cost=8 (8× faster than cost=10, acceptable for LAN competition)
 - Static assets: //go:embed (zero external files)
-
----
-
-## Next: Phase 3 — Static Scaffold + Layouts
-
-**Scope:**
-- Convert login.html → login.templ
-- Create layout_app.templ (jury sidebar)
-- Create layout_guest.templ (participant/public)
-- Convert dashboard inline HTML → participant_dashboard.templ
-- Verify static asset serving + layouts render
-
-**DoD:**
-- `go generate ./...` compiles templ templates
-- Static assets served correctly
-- Layouts render with embedded content

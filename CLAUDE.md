@@ -144,11 +144,20 @@ If a requirement, scope, or design choice is ambiguous, use `AskUserQuestion` be
 
 After finishing any task or implementation phase, review the result against `docs/rebuild-spec.md` (DoD/spec) before considering it done. Confirm it's correct and complete, not just "runs".
 
-When a phase is complete, update `docs/CHANGELOG.md`:
+When a phase or final job is complete, update every documentation file before calling it done.
+
+`docs/CHANGELOG.md`:
 - Add new phase section with completion date and status
 - List all implemented features, files created, routes added
 - Note spec compliance and any deviations
 - Update "Next" section for the upcoming phase
+
+`README.md`:
+- Flip the phase table row from "not started" to "done"
+- Add any new flag, command, or directory the phase introduced
+- Revise the Status paragraph when the project stops being a scaffold
+
+This list is exhaustive as of now. If a new doc file is added later, add it here too.
 
 ## Spec Authority
 

@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/fzrilsh/lks-judge/internal/model"
+import "fmt"
+
+templ Dashboard(p *model.Participant) {
+	@GuestLayout("Dashboard") {
+		<div class="max-w-4xl mx-auto">
+			<div class="bg-surface-container-low rounded-3xl shadow-lg p-8">
+				<h1 class="text-headline-large text-on-surface font-manrope mb-4">Dashboard Peserta</h1>
+				<p class="text-body-large text-on-surface-variant mb-6">
+					Logged in as: <strong class="text-primary">{ p.Name }</strong>
+				</p>
+				<p class="text-body-medium text-on-surface-variant">
+					PC: <strong>{ fmt.Sprintf("%02d", *p.PCNumber) }</strong> |
+					Sekolah: <strong>{ p.School }</strong>
+				</p>
+				<form method="POST" action="/logout" class="mt-8">
+					<button type="submit" class="bg-error text-on-error px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-shadow">
+						Logout
+					</button>
+				</form>
+			</div>
+		</div>
+	}
+}

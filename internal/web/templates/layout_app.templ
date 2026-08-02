@@ -1,0 +1,41 @@
+package templates
+
+templ AppLayout(title string, activePage string) {
+	<!DOCTYPE html>
+	<html lang="id">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ title } - LKS Judge Platform</title>
+		<link rel="stylesheet" href="/static/css/app.css"/>
+	</head>
+	<body class="bg-background text-on-surface min-h-screen font-manrope flex">
+		<aside class="w-64 bg-surface-container-low shrink-0 flex flex-col p-4 gap-1">
+			<p class="text-label-small text-on-surface-variant px-3 py-2 uppercase tracking-wider">Jury Panel</p>
+			@navItem("/jury/", "Competition", activePage == "competition")
+			@navItem("/jury/participants", "Participants", activePage == "participants")
+			@navItem("/jury/modules", "Modules", activePage == "modules")
+			@navItem("/jury/countdown", "Countdown", activePage == "countdown")
+			@navItem("/jury/submissions", "Submissions", activePage == "submissions")
+			@navItem("/jury/scoring", "Scoring", activePage == "scoring")
+			@navItem("/jury/files", "Files", activePage == "files")
+		</aside>
+		<main class="flex-1 p-8">
+			{ children... }
+		</main>
+	</body>
+	</html>
+}
+
+templ navItem(href string, label string, active bool) {
+	<a
+		href={ templ.URL(href) }
+		class={
+			"flex items-center px-3 py-2 rounded-xl text-label-large transition-colors",
+			templ.KV("bg-secondary-container text-on-secondary-container", active),
+			templ.KV("text-on-surface-variant hover:bg-surface-container", !active),
+		}
+	>
+		{ label }
+	</a>
+}

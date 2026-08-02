@@ -150,7 +150,8 @@ When a phase or final job is complete, update every documentation file before ca
 - Add new phase section with completion date and status
 - List all implemented features, files created, routes added
 - Note spec compliance and any deviations
-- Update "Next" section for the upcoming phase
+- Replace the existing "Next" section with one for the upcoming phase. There is exactly one "Next" section in the file at any time, sitting directly under the newest phase. Never leave the old one behind.
+- Every phase section carries a `## Phase N — Title (date) ✅` header. Sections run newest first.
 
 `README.md`:
 - Flip the phase table row from "not started" to "done"

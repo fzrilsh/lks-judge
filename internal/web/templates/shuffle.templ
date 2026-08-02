@@ -1,0 +1,63 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/store"
+)
+
+templ ShufflePage(results []store.ShuffleResult) {
+	@AppLayout("Shuffle", "participants") {
+		<div class="max-w-3xl mx-auto space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-headline-large text-on-surface font-manrope">Shuffle Seats</h1>
+				<a href="/jury/participants"
+					class="px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow">
+					Back
+				</a>
+			</div>
+			if len(results) == 0 {
+				<div class="bg-surface-container-low rounded-3xl shadow-lg p-8 text-center">
+					<p class="text-body-large text-on-surface-variant mb-4">Belum ada peserta untuk di-shuffle.</p>
+					<form method="POST" action="/jury/participants/shuffle">
+						<button type="submit"
+							class="bg-primary text-on-primary font-semibold py-2 px-6 rounded-xl hover:shadow-lg transition-shadow">
+							Run Shuffle
+						</button>
+					</form>
+				</div>
+			} else {
+				<div class="bg-tertiary-container text-on-tertiary-container rounded-xl p-4">
+					<p class="text-body-medium">Shuffle selesai. { fmt.Sprintf("%d", len(results)) } peserta dialokasikan ke seat.</p>
+				</div>
+				<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-hidden">
+					<table class="w-full text-body-medium">
+						<thead class="bg-surface-container text-on-surface-variant">
+							<tr>
+								<th class="text-left px-4 py-3">Seat</th>
+								<th class="text-left px-4 py-3">Nama</th>
+								<th class="text-left px-4 py-3">Sekolah</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, r := range results {
+								<tr class="border-t border-outline-variant">
+									<td class="px-4 py-3 font-mono font-semibold">{ fmt.Sprintf("%02d", r.Seat) }</td>
+									<td class="px-4 py-3">{ r.Name }</td>
+									<td class="px-4 py-3 text-on-surface-variant">{ r.School }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+				<div class="flex justify-end">
+					<form method="POST" action="/jury/participants/shuffle">
+						<button type="submit"
+							class="bg-primary text-on-primary font-semibold py-2 px-6 rounded-xl hover:shadow-lg transition-shadow">
+							Re-Shuffle
+						</button>
+					</form>
+				</div>
+			}
+		</div>
+	}
+}

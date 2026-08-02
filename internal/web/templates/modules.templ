@@ -1,0 +1,124 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
+
+func isCurrentModule(c *model.Competition, m *model.Module) bool {
+	return c.CurrentModuleID != nil && *c.CurrentModuleID == m.ID
+}
+
+templ ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, errMsg string) {
+	@AppLayout("Modul", "modules") {
+		<div class="max-w-4xl mx-auto space-y-6">
+			<h1 class="text-headline-large text-on-surface font-manrope">Modules</h1>
+			if saved {
+				<div class="bg-tertiary-container text-on-tertiary-container rounded-xl p-4">
+					<p class="text-body-medium">Saved successfully.</p>
+				</div>
+			}
+			if errMsg != "" {
+				<div class="bg-error-container text-on-error-container rounded-xl p-4">
+					<p class="text-body-medium">{ errMsg }</p>
+				</div>
+			}
+			<!-- Add single module -->
+			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6">
+				<h2 class="text-title-large text-on-surface font-manrope mb-4">Add Module</h2>
+				<form method="POST" action="/jury/modules" class="flex gap-3 items-end">
+					<div class="flex-1">
+						<label class="block text-label-large text-on-surface mb-1">Name</label>
+						<input type="text" name="name" required
+							class="w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+					</div>
+					<button type="submit"
+						class="bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow">
+						Add
+					</button>
+				</form>
+			</div>
+			<!-- Bulk generate -->
+			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6">
+				<h2 class="text-title-large text-on-surface font-manrope mb-2">Generate Modules</h2>
+				<p class="text-body-small text-on-surface-variant mb-4">Creates MA, MB, MC, ... appended after existing modules.</p>
+				<form method="POST" action="/jury/modules/generate" class="flex gap-3 items-end">
+					<div>
+						<label class="block text-label-large text-on-surface mb-1">Total</label>
+						<select name="total"
+							class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary">
+							for _, n := range []int{1, 2, 3, 4, 5, 6, 7} {
+								<option value={ fmt.Sprint(n) }>{ fmt.Sprint(n) }</option>
+							}
+						</select>
+					</div>
+					<button type="submit"
+						class="bg-secondary text-on-secondary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow">
+						Generate
+					</button>
+				</form>
+			</div>
+			<!-- Module table -->
+			<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-hidden">
+				<table class="w-full text-body-medium">
+					<thead class="bg-surface-container text-on-surface-variant">
+						<tr>
+							<th class="text-left px-4 py-3 w-20">Order</th>
+							<th class="text-left px-4 py-3">Name</th>
+							<th class="px-4 py-3"></th>
+						</tr>
+					</thead>
+					<tbody>
+						if len(modules) == 0 {
+							<tr>
+								<td colspan="3" class="text-center px-4 py-8 text-on-surface-variant">Belum ada modul.</td>
+							</tr>
+						}
+						for _, m := range modules {
+							<tr
+								class={
+									"border-t border-outline-variant",
+									templ.KV("bg-secondary-container text-on-secondary-container", isCurrentModule(comp, m)),
+									templ.KV("hover:bg-surface-container-lowest transition-colors", !isCurrentModule(comp, m)),
+								}
+							>
+								<td class="px-4 py-3 font-mono">{ fmt.Sprint(m.Order) }</td>
+								<td class="px-4 py-3">
+									<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/modules/%d/rename", m.ID)) } class="flex gap-2 items-center">
+										<input type="text" name="name" value={ m.Name } required
+											class="px-2 py-1 bg-surface-container-highest text-on-surface rounded-lg border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+										<button type="submit" class="text-label-small px-3 py-1 bg-surface-container-highest text-on-surface rounded-lg hover:shadow transition-shadow">
+											Rename
+										</button>
+										if isCurrentModule(comp, m) {
+											<span class="text-label-small px-2 py-1 rounded-lg bg-primary text-on-primary">Current</span>
+										}
+									</form>
+								</td>
+								<td class="px-4 py-3">
+									<div class="flex gap-2 justify-end">
+										if !isCurrentModule(comp, m) {
+											<form method="POST" action="/jury/modules/set-current">
+												<input type="hidden" name="module_id" value={ fmt.Sprint(m.ID) }/>
+												<button type="submit" class="text-label-small px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-lg hover:shadow transition-shadow">
+													Set Current
+												</button>
+											</form>
+										}
+										<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/modules/%d/delete", m.ID)) }>
+											<button type="submit"
+												class="text-label-small px-3 py-1 bg-error-container text-on-error-container rounded-lg hover:shadow transition-shadow"
+												onclick="return confirm('Hapus modul ini?')">
+												Delete
+											</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}

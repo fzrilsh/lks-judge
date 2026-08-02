@@ -1,0 +1,18 @@
+# binaries
+/server
+/lks-judge.exe
+
+# runtime data
+/data/
+
+# sqlite files
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# build artifacts
+*.test
+*.out
+
+# macOS
+.DS_Store

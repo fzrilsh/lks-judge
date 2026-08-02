@@ -1,0 +1,24 @@
+pre-commit:
+  parallel: false
+  commands:
+    gofmt:
+      run: |
+        unformatted=$(gofmt -l {staged_files})
+        if [ -n "$unformatted" ]; then
+          echo "unformatted files:"
+          echo "$unformatted"
+          exit 1
+        fi
+      glob: "*.go"
+    vet:
+      run: go vet ./...
+    lint:
+      run: golangci-lint run --fix=false
+
+pre-push:
+  parallel: false
+  commands:
+    build:
+      run: go build ./...
+    test:
+      run: go test ./...

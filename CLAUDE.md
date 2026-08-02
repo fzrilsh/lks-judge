@@ -98,7 +98,31 @@ Only `/leaderboard` and `/jury/scoring` — large repeated payloads. Not global 
 
 ## Git Workflow
 
-Conventional commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`. Flow: feature branch → PR into `develop` → `staging` → `main`. Push feature branches only, never force-push shared branches.
+Flow: feature branch → PR into `develop` → `staging` → `main`. Push feature branches only, never force-push shared branches.
+
+### Commit Message Format
+
+```
+<type>(<scope>): <description>
+
+<body>
+
+<footer>
+```
+
+- `<type>` — one of `feat` (new feature), `fix` (bug fix), `docs` (documentation), `chore` (maintenance or tooling), `refactor` (neither fixes a bug nor adds a feature), `test`.
+- `<scope>` — the area touched, e.g. `server`, `store`, `web`, `repo`.
+- Blank line before the body. Body is optional but expected for anything non-trivial: explain the full change and why, not a one-liner.
+- Footer optional — breaking changes or issue references.
+
+### Attribution
+
+Never add Claude attribution to commits, PRs, or issues. No `Co-Authored-By: Claude`, no "Generated with Claude Code", no emoji trailer, no `--author` override.
+
+### When to Commit and Push
+
+- Commit after every completed task — do not batch several tasks into one commit.
+- Push only at the end of a phase, or when the job is otherwise finished. Intermediate task commits stay local.
 
 ## Pre-commit / Pre-push Hooks
 

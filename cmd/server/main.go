@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/backup"
+	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web"
 )
@@ -62,6 +63,23 @@ func main() {
 	// start backup goroutine
 	go backup.Start(*dataDir, st.Writer, ctx.Done())
 
+	// countdown ticker: drives waiting -> running -> finished and the 1200s form-open threshold
+	cd := &realtime.Countdown{
+		Snapshot: st.CompetitionCache.Load,
+		Transition: func(to string) {
+			c := st.CompetitionCache.Load()
+			if c == nil {
+				return
+			}
+			if err := st.TransitionStatus(c.Status, to); err != nil {
+				log.Printf("countdown transition: %v", err)
+			}
+		},
+		// ponytail: log only until the WS hub lands (Phase 8), then broadcast FormOpened.
+		FormOpened: func(open bool) { log.Printf("FormOpened{status:%v}", open) },
+	}
+	go cd.Run(ctx)
+
 	// router
 	mux := http.NewServeMux()
 
@@ -75,6 +93,10 @@ func main() {
 
 	// protected participant routes
 	mux.Handle("GET /", web.RequireParticipant(st)(http.HandlerFunc(web.HandleDashboard)))
+
+	// public countdown display (projector) and the shared polling endpoint
+	mux.Handle("GET /countdown", web.HandleCountdownPublicGET(st))
+	mux.Handle("GET /countdown/time", web.HandleCountdownTimeGET(st))
 
 	// jury routes
 	juryMw := web.RequireJury(st)
@@ -100,6 +122,13 @@ func main() {
 	mux.Handle("POST /jury/modules/set-current", juryMw(web.HandleModulesSetCurrentPOST(st)))
 	mux.Handle("POST /jury/modules/{id}/rename", juryMw(web.HandleModuleRenamePOST(st)))
 	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st)))
+
+	// jury countdown routes
+	mux.Handle("GET /jury/countdown", juryMw(web.HandleCountdownJuryGET(st)))
+	mux.Handle("POST /jury/countdown", juryMw(web.HandleCountdownJuryPOST(st)))
+	mux.Handle("POST /jury/countdown/pause", juryMw(web.HandleCountdownPause(st)))
+	mux.Handle("POST /jury/countdown/resume", juryMw(web.HandleCountdownResume(st)))
+	mux.Handle("POST /jury/countdown/stop", juryMw(web.HandleCountdownStop(st)))
 
 	// healthz
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

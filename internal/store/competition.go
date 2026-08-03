@@ -130,6 +130,22 @@ func (s *Store) ListModules(competitionID int64) ([]*model.Module, error) {
 	return out, rows.Err()
 }
 
+// GetModuleByID returns one module. Returns ErrModuleNotFound when it does not exist.
+func (s *Store) GetModuleByID(id int64) (*model.Module, error) {
+	var m model.Module
+	err := s.Reader.QueryRow(
+		`SELECT id, competition_id, name, "order", created_at, updated_at
+		 FROM modules WHERE id = ?`, id,
+	).Scan(&m.ID, &m.CompetitionID, &m.Name, &m.Order, &m.CreatedAt, &m.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrModuleNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get module: %w", err)
+	}
+	return &m, nil
+}
+
 // AutoSetCurrentIfFirst points competitions.current_module_id at moduleID only when it is unset.
 func (s *Store) AutoSetCurrentIfFirst(competitionID, moduleID int64) error {
 	_, err := s.Writer.Exec(
@@ -145,7 +161,6 @@ func (s *Store) AutoSetCurrentIfFirst(competitionID, moduleID int64) error {
 
 // SetCurrentModule updates competitions.current_module_id and refreshes the cache.
 // Returns ErrModuleNotFound if moduleID doesn't belong to the competition.
-// ponytail: broadcast ModuleChanged over WS here — add when the Hub exists (Phase 8).
 func (s *Store) SetCurrentModule(competitionID, moduleID int64) error {
 	var exists int
 	err := s.Reader.QueryRow(

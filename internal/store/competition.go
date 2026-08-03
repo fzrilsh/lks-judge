@@ -14,9 +14,12 @@ var ErrModuleNotFound = errors.New("module not found")
 
 // GetCompetition fetches the single competition row. Returns nil, nil if no row exists.
 func (s *Store) GetCompetition() (*model.Competition, error) {
+	// start_date/end_date are CAST so the driver hands back the stored "2006-01-02" text instead
+	// of converting the DATE-declared column into a time.Time (which scans as RFC3339).
 	row := s.Reader.QueryRow(`
 		SELECT id, name, level, allowed_ips, current_module_id,
-		       start_date, end_date, status, remaining_seconds, paused_at,
+		       CAST(start_date AS TEXT), CAST(end_date AS TEXT),
+		       status, remaining_seconds, paused_at,
 		       start_time, end_time, created_at, updated_at
 		FROM competitions LIMIT 1`)
 

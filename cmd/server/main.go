@@ -63,7 +63,12 @@ func main() {
 	// start backup goroutine
 	go backup.Start(*dataDir, st.Writer, ctx.Done())
 
+	// WS hub: one goroutine owns the client set for the life of the process
+	hub := realtime.NewHub()
+	go hub.Run(ctx)
+
 	// countdown ticker: drives waiting -> running -> finished and the 1200s form-open threshold
+	tickCount := 0
 	cd := &realtime.Countdown{
 		Snapshot: st.CompetitionCache.Load,
 		Transition: func(to string) {
@@ -75,8 +80,16 @@ func main() {
 				log.Printf("countdown transition: %v", err)
 			}
 		},
-		// ponytail: log only until the WS hub lands (Phase 8), then broadcast FormOpened.
-		FormOpened: func(open bool) { log.Printf("FormOpened{status:%v}", open) },
+		FormOpened: func(open bool) {
+			hub.Broadcast(realtime.EvFormOpened, map[string]bool{"status": open})
+		},
+		// Tick fires every second; the wire only needs it every 5 (spec §8).
+		Tick: func(seconds int) {
+			tickCount++
+			if tickCount%5 == 0 {
+				hub.Broadcast(realtime.EvCountdownTick, map[string]int{"seconds": seconds})
+			}
+		},
 	}
 	go cd.Run(ctx)
 
@@ -97,6 +110,9 @@ func main() {
 	// public countdown display (projector) and the shared polling endpoint
 	mux.Handle("GET /countdown", web.HandleCountdownPublicGET(st))
 	mux.Handle("GET /countdown/time", web.HandleCountdownTimeGET(st))
+
+	// websocket: auth optional by design (spec §8), anonymous clients get a reduced event set
+	mux.Handle("GET /ws", web.HandleWS(st, hub))
 
 	// jury routes
 	juryMw := web.RequireJury(st)
@@ -119,7 +135,7 @@ func main() {
 	mux.Handle("GET /jury/modules", juryMw(web.HandleModulesGET(st)))
 	mux.Handle("POST /jury/modules", juryMw(web.HandleModulesPOST(st)))
 	mux.Handle("POST /jury/modules/generate", juryMw(web.HandleModulesGeneratePOST(st)))
-	mux.Handle("POST /jury/modules/set-current", juryMw(web.HandleModulesSetCurrentPOST(st)))
+	mux.Handle("POST /jury/modules/set-current", juryMw(web.HandleModulesSetCurrentPOST(st, hub)))
 	mux.Handle("POST /jury/modules/{id}/rename", juryMw(web.HandleModuleRenamePOST(st)))
 	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st)))
 

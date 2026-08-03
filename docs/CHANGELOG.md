@@ -1,5 +1,119 @@
 # LKS Judge Platform — Go Rebuild Changelog
 
+## Phase 7 — Countdown (2026-08-03) ✅
+
+**Status:** Complete & spec-compliant (with intentional deviations noted below)
+
+### Implemented
+- `internal/realtime/countdown.go`: NEW package, imports `context`, `time`, `model` only (no `store`)
+  - `FormOpenSeconds = 1200`: the submission-form threshold from spec §7
+  - `At(date string, t *string) (time.Time, bool)`: joins a DATE with a TIME in the local zone; accepts both `15:04` and `15:04:05`
+  - `TimeLeft(c *model.Competition, now time.Time) (seconds int, transitionTo string)`: pure function, never mutates `c`; returns the transition the caller must apply (`""`, `"running"`, `"finished"`)
+  - `Countdown{Snapshot, Transition, FormOpened, Tick}` + `Run(ctx)` / `step(now, last)`: 1s ticker, every side effect is a callback so Phase 8 can swap the log lines for hub broadcasts
+- `internal/store/countdown.go`: NEW, five mutators, each ending in `LoadCompetitionCache()`
+  - `SetCountdownTimes`: saves the schedule and re-arms (`status='waiting'`, frozen state cleared)
+  - `TransitionStatus(from, to)`: `WHERE status = ?` guard makes it a no-op when someone else already moved it, so the ticker and a jury click cannot fight
+  - `PauseCountdown(remaining, at)`: guarded on `status='running'`
+  - `ResumeCountdown(now)`: guarded on `status='paused'`; reads `remaining_seconds` on the single-connection Writer pool (nothing can interleave), then rewrites `end_date`/`end_time` to `now+remaining`
+  - `StopCountdown`: `status='finished'`, frozen state cleared, schedule kept
+- `internal/web/handlers_countdown.go`: NEW, 7 handlers
+  - `HandleCountdownJuryGET` / `HandleCountdownJuryPOST` (validates both times via `realtime.At`, requires end after start, redirects with an escaped `?error=`)
+  - `HandleCountdownPause` / `HandleCountdownResume` / `HandleCountdownStop`
+  - `HandleCountdownPublicGET`: no auth, tolerates a nil competition
+  - `HandleCountdownTimeGET`: applies any due transition before answering, so the clock stays correct even if the server ticker is behind
+- `internal/web/templates/countdown_jury.templ`: status badge, live clock, pause/resume/stop forms, schedule form, link to the public display
+- `internal/web/templates/countdown_public.templ`: full-screen 22vw clock for a projector, opts into the alert behavior via `data-alert="<competition id>"`
+- `internal/web/static/js/countdown.js`: one shared poller for both pages; only the element carrying `data-alert` plays `/static/sounds/alert.mp3` and blinks at zero, deduped across reloads through `localStorage`
+- `cmd/server/main.go`: countdown ticker wired next to the backup goroutine, sharing the shutdown context
+
+### Fixed
+- `GetCompetition` now selects `CAST(start_date AS TEXT)` and `CAST(end_date AS TEXT)`. The `modernc.org/sqlite` driver converts `DATE`-declared columns into `time.Time` on scan, so the dates arrived as RFC3339 (`2026-01-01T00:00:00Z`), which `realtime.At()` can never parse. Without the cast no countdown boundary would ever resolve.
+
+### Routes Added
+```
+GET     /countdown                    public TV display (no auth)
+GET     /countdown/time               JSON {"seconds":N,"status":"..."} polled 1s by both pages
+GET     /jury/countdown               control page
+POST    /jury/countdown               save schedule (re-arms)
+POST    /jury/countdown/pause         freeze remaining seconds
+POST    /jury/countdown/resume        continue from the frozen value
+POST    /jury/countdown/stop          end the run
+```
+
+### Files Created/Modified
+```
+NEW       internal/realtime/countdown.go
+NEW       internal/realtime/countdown_test.go
+NEW       internal/store/countdown.go
+NEW       internal/store/countdown_test.go
+NEW       internal/web/handlers_countdown.go
+NEW       internal/web/templates/countdown_jury.templ
+NEW       internal/web/templates/countdown_public.templ
+NEW       internal/web/static/js/countdown.js
+MODIFIED  internal/store/competition.go     (DATE cast)
+MODIFIED  cmd/server/main.go                (ticker + 7 routes)
+```
+
+### Spec Compliance
+- ✅ `realtime` imports `model` only; `time.Time` is passed in as a parameter, transitions are returned for the caller to apply
+- ✅ Countdown state machine matches spec §7: waiting → running at start, → finished at end, paused freezes `remaining_seconds`
+- ✅ 1200s crossing fires exactly once per crossing, in both directions
+- ✅ `/countdown` is public; `/jury/countdown` sits behind the IP allowlist
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./... -race`: zero errors
+
+### Testing (DoD), verified against a live server + sqlite3
+- ✅ Save start/end → two polls of `/countdown/time` one second apart decrement
+- ✅ Pause → the same value across 3 seconds; DB shows `status=paused`, `remaining_seconds` set
+- ✅ Resume → continues from the frozen value; `end_date`/`end_time` rewritten to `now+remaining` with seconds precision
+- ✅ Stop → `{"seconds":0,"status":"finished"}`, schedule rows untouched
+- ✅ End time set to `now+20m10s` → `FormOpened{status:true}` logged once at the crossing, not repeated
+- ✅ `GET /countdown` and `GET /countdown/time` → 200 with no cookie; the public page emits `data-alert="1"`
+- ✅ `GET /jury/countdown` from a non-allowlisted IP → 403
+- ✅ `/static/js/countdown.js` and `/static/sounds/alert.mp3` → 200 from the embedded FS
+- ✅ Shutdown backup ran on SIGTERM
+
+### Automated Tests
+| Test | Locks in |
+|---|---|
+| `TestAt` | `15:04` and `15:04:05` both parse; nil, empty, and garbage return `ok=false` |
+| `TestTimeLeft` | every row of the state table, plus a nil competition and a competition with no times |
+| `TestTimeLeftPaused` | paused returns the frozen value and never transitions |
+| `TestCountdownFormOpenedCrossing` | 1202→1199 fires one `true`; pushing the end out fires `false`; pulling it back fires `true` again |
+| `TestCountdownFormOpenedFirstTickInsideWindow` | starting already inside the window fires once |
+| `TestCountdownTransitionAndTick` | callbacks receive the transition and the seconds |
+| `TestCountdownNilCompetitionIsSafe` | no panic when no competition exists |
+| `TestSetCountdownTimesReArms` | saving from paused returns to waiting with the frozen state cleared |
+| `TestTransitionStatusGuarded` | a stale `from` is a no-op |
+| `TestPauseResume` | resume writes today's date and `now+90s` as `15:04:05` |
+| `TestPauseGuard` / `TestResumeGuard` | pausing a non-running or resuming a non-paused countdown does nothing |
+| `TestStop` | status finished, frozen state cleared, schedule kept |
+
+### Known Deviations
+- Pause/resume/stop are `POST`, not the spec's `GET`. They mutate state, and HTML forms give CSRF-free POST for free. Confirmed with the user before implementing.
+- Stop sets `status='finished'` rather than returning to `waiting`. Re-saving the schedule form is what re-arms the countdown.
+- Saving the schedule always re-arms (`status='waiting'`, `remaining_seconds`/`paused_at` cleared) so the new times take effect from a clean state.
+- Resume writes `end_time` with seconds precision (`15:04:05`) to avoid losing up to 59s per pause. `At()` parses both layouts, and the jury form truncates to `HH:MM` for `<input type="time">`.
+- The TV page calls `Audio.play()` directly with no unlock overlay; a browser autoplay rejection is swallowed silently.
+
+### Deferred to Phase 8
+- `FormOpened` and `CountdownTick` WS broadcasts: the `Countdown` struct already exposes both as callbacks; `main.go` logs them behind a `ponytail:` comment pending the Hub.
+
+---
+
+## Next: Phase 8 — WebSocket Hub
+
+**Scope (spec §16 steps 31-33):**
+- `internal/realtime/hub.go`: single goroutine, chan-based broadcast
+- `internal/realtime/handler.go`: WS upgrade, ping/pong keepalive, 5s write deadline, dead-conn eviction
+- `GET /ws`: session cookie optional (anonymous allowed, read-only scope); countdown goroutine pushes `CountdownTick` every 5s
+
+**DoD:**
+- WS with cookie → full events; WS without cookie → only `CountdownTick`/`ScoreUpdated`, action endpoints still reject
+- Kill tab → hub evicts without blocking
+- Swap the Phase 7 `FormOpened` log line and the Phase 6 `ModuleChanged` `ponytail:` marker for real broadcasts
+
+---
+
 ## Phase 6 — Modules (2026-08-01) ✅
 
 **Status:** Complete & spec-compliant (with intentional deviations noted below)
@@ -97,22 +211,6 @@ Verified non-vacuous by mutation: reverting the dedup guard fails `TestGenerateM
 
 ### Deferred to Phase 8
 - `ModuleChanged` WS broadcast on set-current — marked with a `ponytail:` comment in `SetCurrentModule`, pending the Hub.
-
----
-
-## Next: Phase 7 — Countdown
-
-**Scope (spec §16 steps 27–30):**
-- `internal/realtime/countdown.go` — ticker, receives `time.Time` from main (must not import `store`)
-- `GET/POST /jury/countdown` + pause/resume/stop handlers
-- `countdown_jury.templ`, `countdown_public.templ`
-- `GET /countdown/time` — JSON polling endpoint
-
-**DoD:**
-- Set start/end time → poll `/countdown/time` → seconds decrement
-- Pause → remaining frozen; resume → resumes from frozen value
-- 1200s crossing logged (`FormOpened` WS broadcast deferred to Phase 8)
-- `go generate ./...` + `go build ./...` + `go vet ./...` clean
 
 ---
 

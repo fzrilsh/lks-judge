@@ -1,0 +1,80 @@
+package templates
+
+import "github.com/fzrilsh/lks-judge/internal/model"
+
+func timeValue(t *string) string {
+	if t == nil {
+		return ""
+	}
+	if len(*t) > 5 {
+		return (*t)[:5] // <input type="time"> wants HH:MM
+	}
+	return *t
+}
+
+templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
+	@AppLayout("Countdown", "countdown") {
+		<div class="max-w-3xl mx-auto space-y-6">
+			<h1 class="text-headline-large text-on-surface font-manrope">Countdown</h1>
+			if saved {
+				<div class="bg-tertiary-container text-on-tertiary-container rounded-xl p-4">
+					<p class="text-body-medium">Saved. Countdown re-armed.</p>
+				</div>
+			}
+			if errMsg != "" {
+				<div class="bg-error-container text-on-error-container rounded-xl p-4">
+					<p class="text-body-medium">{ errMsg }</p>
+				</div>
+			}
+			<div class="bg-surface-container-low rounded-3xl shadow-lg p-8 text-center space-y-4">
+				<p class="text-label-large text-on-surface-variant uppercase tracking-wider">
+					Status: <span id="cd-status" class="font-semibold">{ comp.Status }</span>
+				</p>
+				<p id="cd-clock" class="text-on-surface font-mono tabular-nums" style="font-size:5rem;line-height:1">--:--:--</p>
+				<div class="flex gap-3 justify-center">
+					<form method="POST" action="/jury/countdown/pause">
+						<button type="submit" class="bg-secondary text-on-secondary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
+							Pause
+						</button>
+					</form>
+					<form method="POST" action="/jury/countdown/resume">
+						<button type="submit" class="bg-primary text-on-primary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
+							Resume
+						</button>
+					</form>
+					<form method="POST" action="/jury/countdown/stop">
+						<button type="submit" onclick="return confirm('Hentikan countdown?')"
+							class="bg-error-container text-on-error-container font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
+							Stop
+						</button>
+					</form>
+				</div>
+				<p class="text-body-small text-on-surface-variant">
+					Public display: <a href="/countdown" target="_blank" class="underline">/countdown</a>
+				</p>
+			</div>
+			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6">
+				<h2 class="text-title-large text-on-surface font-manrope mb-2">Schedule</h2>
+				<p class="text-body-small text-on-surface-variant mb-4">
+					Dates come from the competition setup ({ comp.StartDate } to { comp.EndDate }). Saving restarts the countdown from waiting.
+				</p>
+				<form method="POST" action="/jury/countdown" class="flex gap-3 items-end flex-wrap">
+					<div>
+						<label class="block text-label-large text-on-surface mb-1">Start time</label>
+						<input type="time" name="start_time" required value={ timeValue(comp.StartTime) }
+							class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+					</div>
+					<div>
+						<label class="block text-label-large text-on-surface mb-1">End time</label>
+						<input type="time" name="end_time" required value={ timeValue(comp.EndTime) }
+							class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+					</div>
+					<button type="submit" class="bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow">
+						Save
+					</button>
+				</form>
+			</div>
+		</div>
+		<script src="/static/js/countdown.js" defer></script>
+	}
+}

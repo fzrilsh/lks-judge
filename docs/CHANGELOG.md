@@ -1,5 +1,95 @@
 # LKS Judge Platform — Go Rebuild Changelog
 
+## Phase 8 — WebSocket Hub (2026-08-03) ✅
+
+**Status:** Complete & spec-compliant (with intentional deviations noted below)
+
+### Implemented
+- `internal/realtime/hub.go`: NEW, still `model`-only (the new import is `gorilla/websocket`, external)
+  - Event constants `EvModuleChanged`, `EvFileListUpdated`, `EvFormOpened`, `EvCountdownTick`, `EvScoreUpdated` (spec §8). The two file/score events have no call site yet; those land in Phase 9 and Phase 11.
+  - `WSMessage{Event, Payload}`, `Client{conn, send, authenticated}`, `Hub{clients, broadcast, register, unregister, done}`
+  - `Run(ctx)`: one goroutine owns `clients`, so the map needs no mutex. Cancel closes every `send` and returns.
+  - `done chan struct{}`, closed by `Run`: `ServeWS` and `readPump` select on it, so a late register/unregister after shutdown cannot deadlock on an unbuffered channel.
+  - Broadcast is non-blocking at both ends. A full hub queue drops the event rather than stalling the caller (the countdown ticker, a jury POST), and a client whose 32-frame buffer is full is evicted instead of holding up every other connection.
+  - `anonymousEvents` gates the fan-out: an unauthenticated client only ever sees `CountdownTick` and `ScoreUpdated`.
+- `internal/realtime/handler.go`: NEW
+  - `ServeWS(h, authenticated, w, r)`: `authenticated` is a parameter, not something this package computes, which is what keeps `realtime` free of `store` and session logic.
+  - `upgrader` accepts any origin: the server only ever runs on a closed competition LAN.
+  - `writePump`: owns every write including pings, `SetWriteDeadline(now+5s)` per frame (spec §11a), ping every 30s.
+  - `readPump`: exists only to notice pongs and closes against a 60s read deadline; inbound frames are read and discarded because clients never send commands. 512-byte read limit.
+- `internal/web/handlers_ws.go`: NEW. `HandleWS` decides `authenticated` from a valid `participant_session` cookie or an allowlisted jury IP, then hands off.
+- `internal/web/middleware.go`: the IP check moves out of `RequireJury` into `juryAllowed(st, r) (string, bool)` so both callers share one copy.
+- `internal/store/competition.go`: `GetModuleByID` added to supply the `{id, name, order}` payload; the `ponytail:` marker on `SetCurrentModule` is gone.
+- `internal/web/handlers_modules.go`: `HandleModulesSetCurrentPOST(st, hub)` broadcasts `ModuleChanged` after the write succeeds.
+- `cmd/server/main.go`: `hub := realtime.NewHub()` + `go hub.Run(ctx)` on the shared shutdown context; `GET /ws` registered; the Phase 7 `FormOpened` log line replaced with a real broadcast; `Tick` (which fires every second) throttled to a `CountdownTick` every fifth tick, with the counter held here so `realtime` keeps no state.
+
+### Routes Added
+```
+GET     /ws     WebSocket upgrade, auth optional by design (spec §8)
+```
+
+### Files Created/Modified
+```
+NEW       internal/realtime/hub.go
+NEW       internal/realtime/handler.go
+NEW       internal/realtime/hub_test.go
+NEW       internal/web/handlers_ws.go
+MODIFIED  internal/web/middleware.go        (juryAllowed extracted)
+MODIFIED  internal/web/handlers_modules.go  (hub param + ModuleChanged)
+MODIFIED  internal/store/competition.go     (GetModuleByID, ponytail removed)
+MODIFIED  cmd/server/main.go                (hub, /ws, FormOpened + CountdownTick)
+MODIFIED  go.mod / go.sum                   (github.com/gorilla/websocket v1.5.3)
+```
+
+### Spec Compliance
+- ✅ Hub shape matches spec §8: `WSMessage`, `Client`, `Hub`, single-goroutine ownership, no mutex
+- ✅ Anonymous connections receive only `CountdownTick` and `ScoreUpdated`
+- ✅ 5s write deadline (spec §11a), ping/pong keepalive, dead connections evicted
+- ✅ `realtime` still imports `model` only among internal packages; `store` still does not import `realtime`
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `golangci-lint run`, `go test ./... -race`: zero errors, zero issues
+
+### Testing (DoD), verified against a live server
+- ✅ Allowlisted client on `/ws` → `CountdownTick` every 5s plus `FormOpened` and `ModuleChanged`
+- ✅ End time set to `now+20m14s` → `FormOpened{status:false}` on connect, then `{status:true}` as the tick crossed 1200, once
+- ✅ `POST /jury/modules/set-current` → `{"event":"ModuleChanged","payload":{"id":1,"name":"Modul A","order":1}}`
+- ✅ Allowlist changed to a foreign IP → `/jury/` returns 403 and the same `/ws` connection now receives `CountdownTick` only
+- ✅ Three connections killed mid-stream → a following connection still received ticks on schedule; no panic, no error in the log
+- ✅ SIGTERM → shutdown backup ran, server stopped cleanly with the hub attached to the same context
+
+### Automated Tests
+| Test | Locks in |
+|---|---|
+| `TestBroadcastScope` | an anonymous client's first frame is `CountdownTick`, not the earlier `FormOpened`; the authenticated client gets both |
+| `TestSlowClientEvicted` | a client with a full buffer is dropped and its channel closed, while a healthy client still receives every frame |
+| `TestUnregisterClosesChannel` | unregister closes `send` |
+| `TestRunStopsOnContextCancel` | cancel closes every client's `send` and `Run` returns |
+| `TestServeWSAnonymousScope` | the real upgrade path over `httptest`: an anonymous dial reads `CountdownTick` and never sees `FormOpened` |
+
+### Known Deviations
+- The `ModuleChanged` broadcast lives in the handler, not in `store.SetCurrentModule` where the Phase 6 `ponytail:` marker sat. `store` cannot import `realtime` without creating a cycle, so the comment was removed rather than honored in place.
+- `CountdownTick` is throttled in `main.go` with a plain counter rather than a second ticker. The countdown already ticks once a second and the wire only needs every fifth; a separate ticker would drift against it.
+- `Payload` is `interface{}`, matching the spec's literal struct definition rather than the modern `any` alias.
+- `/countdown` and `/countdown/time` keep their 1s polling. Spec §10 asks for that explicitly as a resilience path, so the public display does not depend on the socket.
+
+### Deferred
+- No page currently opens a WS connection. Dashboard wiring is Phase 10 and leaderboard wiring is Phase 11; the `FileListUpdated` and `ScoreUpdated` broadcasts get their call sites in Phase 9 and Phase 11.
+
+---
+
+## Next: Phase 9 — Files
+
+**Scope (spec §16 steps 34-37):**
+- `internal/upload/tracker.go`: FS chunk state, no DB write per chunk
+- `internal/upload/handler.go`: `POST /upload/init`, `PUT /upload/:id/chunk/:n`, `POST /upload/:id/complete` (assemble via `io.Copy`), `GET /upload/:id/status`
+- File handlers: toggle `is_public` (broadcasts `FileListUpdated`), delete, download with Range support
+- `files.templ`: dropzone + file list with toggle
+
+**DoD:**
+- 10MB file uploaded in 2MB chunks assembles byte-identical
+- Toggling visibility fires a `FileListUpdated` frame
+
+---
+
 ## Phase 7 — Countdown (2026-08-03) ✅
 
 **Status:** Complete & spec-compliant (with intentional deviations noted below)
@@ -97,20 +187,6 @@ MODIFIED  cmd/server/main.go                (ticker + 7 routes)
 
 ### Deferred to Phase 8
 - `FormOpened` and `CountdownTick` WS broadcasts: the `Countdown` struct already exposes both as callbacks; `main.go` logs them behind a `ponytail:` comment pending the Hub.
-
----
-
-## Next: Phase 8 — WebSocket Hub
-
-**Scope (spec §16 steps 31-33):**
-- `internal/realtime/hub.go`: single goroutine, chan-based broadcast
-- `internal/realtime/handler.go`: WS upgrade, ping/pong keepalive, 5s write deadline, dead-conn eviction
-- `GET /ws`: session cookie optional (anonymous allowed, read-only scope); countdown goroutine pushes `CountdownTick` every 5s
-
-**DoD:**
-- WS with cookie → full events; WS without cookie → only `CountdownTick`/`ScoreUpdated`, action endpoints still reject
-- Kill tab → hub evicts without blocking
-- Swap the Phase 7 `FormOpened` log line and the Phase 6 `ModuleChanged` `ponytail:` marker for real broadcasts
 
 ---
 

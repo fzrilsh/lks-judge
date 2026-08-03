@@ -39,35 +39,45 @@ func RequireParticipant(st *store.Store) func(http.Handler) http.Handler {
 	}
 }
 
+// juryAllowed reports whether the request comes from an allowlisted jury IP.
+// The list is read from the competition state cache; it falls back to loopback
+// when no competition is configured yet.
+func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		ip = r.RemoteAddr // no port
+	}
+
+	allowlist := []string{"127.0.0.1", "::1"} // fallback
+
+	if c := st.CompetitionCache.Load(); c != nil && c.AllowedIPs != "" && c.AllowedIPs != "[]" {
+		var ips []string
+		if jsonErr := json.Unmarshal([]byte(c.AllowedIPs), &ips); jsonErr == nil && len(ips) > 0 {
+			allowlist = ips
+		}
+	}
+
+	for _, a := range allowlist {
+		if ip == a {
+			return ip, true
+		}
+	}
+	return ip, false
+}
+
 // RequireJury reads AllowedIPs from competition state cache.
 // Falls back to ["127.0.0.1","::1"] if no competition configured yet.
 // ponytail: no IP format validation; add when jury input errors are wired
 func RequireJury(st *store.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				ip = r.RemoteAddr // no port
+			ip, ok := juryAllowed(st, r)
+			if !ok {
+				log.Printf("jury access denied for IP: %s", ip)
+				http.Error(w, "403 Forbidden", http.StatusForbidden)
+				return
 			}
-
-			allowlist := []string{"127.0.0.1", "::1"} // fallback
-
-			if c := st.CompetitionCache.Load(); c != nil && c.AllowedIPs != "" && c.AllowedIPs != "[]" {
-				var ips []string
-				if jsonErr := json.Unmarshal([]byte(c.AllowedIPs), &ips); jsonErr == nil && len(ips) > 0 {
-					allowlist = ips
-				}
-			}
-
-			for _, a := range allowlist {
-				if ip == a {
-					next.ServeHTTP(w, r)
-					return
-				}
-			}
-
-			log.Printf("jury access denied for IP: %s", ip)
-			http.Error(w, "403 Forbidden", http.StatusForbidden)
+			next.ServeHTTP(w, r)
 		})
 	}
 }

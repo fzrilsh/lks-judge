@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web/templates"
 )
@@ -80,7 +81,7 @@ func HandleModulesGeneratePOST(st *store.Store) http.HandlerFunc {
 	}
 }
 
-func HandleModulesSetCurrentPOST(st *store.Store) http.HandlerFunc {
+func HandleModulesSetCurrentPOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		comp := st.CompetitionCache.Load()
 		if comp == nil {
@@ -100,6 +101,13 @@ func HandleModulesSetCurrentPOST(st *store.Store) http.HandlerFunc {
 			log.Printf("set current module: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
+		}
+		if m, err := st.GetModuleByID(moduleID); err == nil {
+			hub.Broadcast(realtime.EvModuleChanged, map[string]any{
+				"id": m.ID, "name": m.Name, "order": m.Order,
+			})
+		} else {
+			log.Printf("module changed broadcast: %v", err)
 		}
 		http.Redirect(w, r, "/jury/modules?saved=1", http.StatusSeeOther)
 	}

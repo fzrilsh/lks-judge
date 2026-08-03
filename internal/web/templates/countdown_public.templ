@@ -1,0 +1,36 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
+
+templ CountdownPublicPage(comp *model.Competition) {
+	@GuestLayout("Countdown") {
+		<div class="w-full text-center space-y-8">
+			if comp != nil {
+				<h1 class="text-headline-large text-on-surface-variant font-manrope">{ comp.Name }</h1>
+			}
+			<p
+				id="cd-clock"
+				if comp != nil {
+					data-alert={ fmt.Sprint(comp.ID) }
+				}
+				class="text-on-surface font-mono tabular-nums"
+				style="font-size:22vw;line-height:1"
+			>
+				--:--:--
+			</p>
+			<p class="text-title-large text-on-surface-variant uppercase tracking-widest">
+				<span id="cd-status">
+					if comp != nil {
+						{ comp.Status }
+					} else {
+						waiting
+					}
+				</span>
+			</p>
+		</div>
+		<script src="/static/js/countdown.js" defer></script>
+	}
+}

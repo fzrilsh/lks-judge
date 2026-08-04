@@ -141,7 +141,7 @@ func main() {
 	mux.Handle("POST /jury/modules/generate", juryMw(web.HandleModulesGeneratePOST(st)))
 	mux.Handle("POST /jury/modules/set-current", juryMw(web.HandleModulesSetCurrentPOST(st, hub)))
 	mux.Handle("POST /jury/modules/{id}/rename", juryMw(web.HandleModuleRenamePOST(st)))
-	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st)))
+	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st, hub)))
 
 	// jury countdown routes
 	mux.Handle("GET /jury/countdown", juryMw(web.HandleCountdownJuryGET(st)))
@@ -163,7 +163,7 @@ func main() {
 	// jury file management
 	mux.Handle("GET /jury/files", juryMw(web.HandleFilesGET(st)))
 	mux.Handle("POST /jury/files/{id}/toggle", juryMw(web.HandleFileTogglePOST(st, hub)))
-	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir)))
+	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir, hub)))
 
 	// jury submissions matrix: per-cell download plus bulk ZIP export
 	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))

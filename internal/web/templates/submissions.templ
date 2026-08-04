@@ -1,0 +1,69 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
+
+// Submissions renders the jury matrix: rows are participants, columns are modules.
+// cell[participantID][moduleID] holds the submission for that pair, or nil.
+templ Submissions(comp *model.Competition, participants []*model.Participant, modules []*model.Module, cell map[int64]map[int64]*model.Submission) {
+	@AppLayout("Submissions", "submissions") {
+		<div class="max-w-6xl mx-auto space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-headline-large text-on-surface font-manrope">Submissions</h1>
+				<a href="/jury/submissions/export.zip"
+					class="text-label-large px-4 py-2 bg-primary text-on-primary rounded-xl hover:shadow transition-shadow">
+					Download semua (.zip)
+				</a>
+			</div>
+			<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-x-auto">
+				<table class="w-full text-body-medium">
+					<thead class="bg-surface-container text-on-surface-variant">
+						<tr>
+							<th class="text-left px-4 py-3">Peserta</th>
+							for _, m := range modules {
+								<th class="px-4 py-3 text-center">{ m.Name }</th>
+							}
+						</tr>
+					</thead>
+					<tbody>
+						if len(participants) == 0 {
+							<tr>
+								<td colspan={ fmt.Sprintf("%d", len(modules)+1) } class="text-center px-4 py-8 text-on-surface-variant">Belum ada peserta.</td>
+							</tr>
+						}
+						for _, p := range participants {
+							<tr class="border-t border-outline-variant hover:bg-surface-container-lowest transition-colors">
+								<td class="px-4 py-3">
+									<div class="text-on-surface">
+										if p.PCNumber != nil {
+											<span class="font-manrope">{ fmt.Sprintf("%02d", *p.PCNumber) }</span>
+										}
+										{ p.Name }
+									</div>
+									<div class="text-label-small text-on-surface-variant">{ p.School }</div>
+								</td>
+								for _, m := range modules {
+									<td class="px-4 py-3 text-center align-top">
+										if sub := cell[p.ID][m.ID]; sub != nil {
+											<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) }
+												class="text-label-small px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg hover:shadow transition-shadow inline-block">
+												Download
+											</a>
+											if sub.SubmittedAt != nil {
+												<div class="text-label-small text-on-surface-variant mt-1">{ sub.SubmittedAt.Local().Format("15:04:05") }</div>
+											}
+										} else {
+											<span class="text-on-surface-variant">&mdash;</span>
+										}
+									</td>
+								}
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}

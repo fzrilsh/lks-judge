@@ -7,9 +7,10 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-Phases 1-8 are done: setup, participants, modules, the competition
-countdown, and the WebSocket hub that pushes live events. The judging loop
-itself (uploads, scoring, leaderboard) is not built yet.
+Phases 1-9 are done: setup, participants, modules, the competition
+countdown, the WebSocket hub that pushes live events, and chunked resumable
+file upload with jury file management. Scoring and the leaderboard are not
+built yet.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -21,7 +22,7 @@ itself (uploads, scoring, leaderboard) is not built yet.
 | 6 | Modules: CRUD, current-module selection | done |
 | 7 | Countdown: jury control, public display, polling endpoint | done |
 | 8 | WebSocket hub: `GET /ws`, live countdown and module events | done |
-| 9 | Chunked upload | not started |
+| 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
 | 10 | Scoring + leaderboard | not started |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
@@ -86,6 +87,7 @@ internal/model/     plain structs, no logic
 internal/store/     SQLite pools, migrations, caches
 internal/web/       handlers, middleware, templ views, embedded static assets
 internal/realtime/  countdown timing and the WebSocket hub
+internal/upload/    filesystem chunk tracker, resumable upload handlers, session cleanup
 internal/excel/     participant import/export
 internal/backup/    periodic VACUUM INTO
 docs/               changelog

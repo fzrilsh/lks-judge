@@ -54,9 +54,25 @@
     list.appendChild(a);
   }
 
-  function onCountdownTick(payload) {
+  var lastSeconds = null; // last value from the server; a local 1s ticker fills the gaps
+  var localTimer = null;
+
+  function paint() {
     var el = document.getElementById("countdown");
-    if (el && payload) el.textContent = fmtTime(payload.seconds);
+    if (el) el.textContent = fmtTime(lastSeconds);
+  }
+
+  function onCountdownTick(payload) {
+    if (!payload) return;
+    lastSeconds = payload.seconds;
+    paint();
+    // Server pushes every 5s; decrement locally each second so the clock is smooth.
+    if (localTimer) clearInterval(localTimer);
+    localTimer = setInterval(function () {
+      if (lastSeconds == null) return;
+      if (lastSeconds > 0) lastSeconds -= 1;
+      paint();
+    }, 1000);
   }
 
   function handle(msg) {

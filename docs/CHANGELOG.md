@@ -161,16 +161,44 @@ MODIFIED  cmd/server/main.go                (upload/file routes + cleanup gorout
 - **`upload_type=submission` at `/upload/complete` → 501.** Submission records need `store.CreateSubmission`, which lands in Phase 10 (confirmed with the user). Init still accepts both types.
 - **Chunk PUT does one `SELECT` (GetUploadSession)** to enforce ownership and expiry. The spec's "zero DB interaction" is read as zero *write*; a read is required to authorize the chunk. No write happens per chunk.
 
-## Next: Phase 10 — Submissions
+## Phase 10 — Submissions (2026-08-04) ✅
 
-**Scope (spec §16 steps 38-40):**
-- `internal/store/submission.go`: submission + score queries (`CreateSubmission`, UNIQUE(participant_id, module_id))
-- Submission handlers: participant upload via the chunked protocol (wire `upload_type=submission` in `HandleCompletePOST`, replacing the 501 stub), jury download
-- Dashboard updates via WS when the current module changes
+**Status:** Complete & spec-compliant (with intentional deviations noted below)
+
+### Implemented
+- `internal/store/submission.go`: `ErrSubmissionNotFound`; `UpsertSubmission` (SELECT old `file_path` on the Writer, then `INSERT ... ON CONFLICT(participant_id, module_id) DO UPDATE`, returning the old path so the caller can unlink); `GetSubmissionByID`; `GetSubmissionForParticipant`; `ListSubmissions` (joins `participants` to filter by competition, ORDER BY participant_id, module_id).
+- `internal/upload/handler.go`: the `upload_type=submission` branch of `HandleCompletePOST` now assembles to `data/submissions/{participant_id}/{module_id}/{id}-{filename}`, upserts, and unlinks the replaced file (best effort). Re-upload replaces on `UNIQUE(participant_id, module_id)`.
+- Server-side form-window gate: `submissionFormOpen(st)` (competition `running` and `0 < TimeLeft <= FormOpenSeconds`) guards both `HandleInitPOST` and `HandleCompletePOST`. A submission outside the window gets 403, not just a hidden overlay.
+- `internal/web/handlers_submissions.go`: `HandleSubmissionsGET` (jury matrix), `HandleSubmissionDownloadGET` (jury-only per-cell download with attachment disposition + Range), `HandleSubmissionsExportZipGET` (jury-only streaming `archive/zip`, entry path `{pc-name}/{module}/{file}`, skips files missing on disk).
+- `internal/web/templates/submissions.templ`: participants x modules matrix, per-cell download + timestamp, "Download semua (.zip)" header link.
+- `internal/web/handlers_auth.go`: `HandleDashboard` is now a store-backed constructor that loads the active module, public files, this participant's existing submission, and the form-open flag.
+- `internal/web/templates/participant_dashboard.templ`: rewritten into the live page (active module, public file list, submission form, `#sensor-layer` overlay toggled by `formOpen`).
+- `internal/web/static/js/dashboard.js`: NEW, first WS client. Authenticated via the `participant_session` cookie, reconnects with backoff, handles `ModuleChanged` (reload), `FormOpened` (toggle overlay), `FileListUpdated` (add/remove public cards), `CountdownTick` (write remaining time).
+- `internal/web/static/js/uploader.js`: parameterized by `data-*` on `#dropzone` (`data-upload-type`, `data-module-id`, `data-success-url`, `data-error-url`) so one chunk slicer serves both jury files and participant submissions.
+- `cmd/server/main.go`: three jury routes wired; `GET /` dashboard route now uses the store-backed `HandleDashboard(st)`.
+
+### Routes Added
+```
+GET     /jury/submissions              matrix
+GET     /jury/submissions/export.zip   bulk ZIP (beyond spec §6)
+GET     /jury/submissions/{id}/download  per-cell download
+```
+
+### Deviations
+- Jury actions are POST routes, not PUT/DELETE (precedent from Phases 5/6/9).
+- The 1200s form window is enforced server-side, beyond the UI-overlay wording of spec §9.
+- `export.zip` bulk download is an addition beyond spec §6.
+
+---
+
+## Next: Phase 11 — Scoring
+
+**Scope (spec §16 steps 43+):**
+- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
+- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
 
 **DoD:**
-- Upload a submission as a participant → appears in the jury matrix
-- Change module → dashboard updates via WS
+- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 

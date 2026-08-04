@@ -165,6 +165,11 @@ func main() {
 	mux.Handle("POST /jury/files/{id}/toggle", juryMw(web.HandleFileTogglePOST(st, hub)))
 	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir)))
 
+	// jury submissions matrix: per-cell download plus bulk ZIP export
+	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))
+	mux.Handle("GET /jury/submissions/export.zip", juryMw(web.HandleSubmissionsExportZipGET(st)))
+	mux.Handle("GET /jury/submissions/{id}/download", juryMw(web.HandleSubmissionDownloadGET(st)))
+
 	// healthz
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

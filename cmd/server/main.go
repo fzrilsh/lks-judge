@@ -15,6 +15,7 @@ import (
 	"github.com/fzrilsh/lks-judge/internal/backup"
 	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
+	"github.com/fzrilsh/lks-judge/internal/upload"
 	"github.com/fzrilsh/lks-judge/internal/web"
 )
 
@@ -62,6 +63,9 @@ func main() {
 
 	// start backup goroutine
 	go backup.Start(*dataDir, st.Writer, ctx.Done())
+
+	// sweep expired upload sessions and their tmp chunk dirs
+	go upload.StartCleanup(st, *dataDir, ctx.Done())
 
 	// WS hub: one goroutine owns the client set for the life of the process
 	hub := realtime.NewHub()
@@ -145,6 +149,21 @@ func main() {
 	mux.Handle("POST /jury/countdown/pause", juryMw(web.HandleCountdownPause(st)))
 	mux.Handle("POST /jury/countdown/resume", juryMw(web.HandleCountdownResume(st)))
 	mux.Handle("POST /jury/countdown/stop", juryMw(web.HandleCountdownStop(st)))
+
+	// chunked upload routes: participant session or allowlisted jury IP
+	upMw := web.RequireUploader(st)
+	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir)))
+	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))
+	mux.Handle("GET /upload/{id}/status", upMw(upload.HandleStatusGET(st, *dataDir)))
+	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, hub)))
+
+	// file download: inline auth (participant session or jury IP), private files hidden from participants
+	mux.Handle("GET /files/{id}/download", web.HandleFileDownloadGET(st, *dataDir))
+
+	// jury file management
+	mux.Handle("GET /jury/files", juryMw(web.HandleFilesGET(st)))
+	mux.Handle("POST /jury/files/{id}/toggle", juryMw(web.HandleFileTogglePOST(st, hub)))
+	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir)))
 
 	// healthz
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

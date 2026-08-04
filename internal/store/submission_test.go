@@ -15,7 +15,7 @@ func TestUpsertSubmissionReplaces(t *testing.T) {
 	if err != nil {
 		t.Fatalf("module: %v", err)
 	}
-	pid, err := s.CreateParticipant(compID, "Peserta", "SMK", nil, "x")
+	pid, err := s.CreateParticipant(compID, "Peserta", "SMK", nil, "x", "")
 	if err != nil {
 		t.Fatalf("participant: %v", err)
 	}

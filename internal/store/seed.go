@@ -46,8 +46,8 @@ func (s *Store) SeedDevData() error {
 
 	// insert participant
 	_, err = tx.Exec(`
-		INSERT INTO participants (id, competition_id, name, school, pc_number, password)
-		VALUES (1, 1, 'Dev Participant', 'Dev School', 1, ?)
+		INSERT INTO participants (id, competition_id, name, school, pc_number, password, plain_password)
+		VALUES (1, 1, 'Dev Participant', 'Dev School', 1, ?, '123456')
 	`, string(hash))
 	if err != nil {
 		return fmt.Errorf("insert participant: %w", err)

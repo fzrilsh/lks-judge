@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -62,6 +63,16 @@ func HandleLoginPOST(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			log.Printf("login: create session: %v", err)
 			return
+		}
+
+		// Record the client IP seen at login (deviation from spec, which sources
+		// IP from the Excel import column only).
+		ip, _, splitErr := net.SplitHostPort(r.RemoteAddr)
+		if splitErr != nil {
+			ip = r.RemoteAddr
+		}
+		if err := st.RecordParticipantIP(participant.ID, ip); err != nil {
+			log.Printf("login: record ip: %v", err)
 		}
 
 		http.SetCookie(w, &http.Cookie{

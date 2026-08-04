@@ -83,6 +83,9 @@ func TestTimeLeft(t *testing.T) {
 		{"running at end", comp("running", "10:00", "11:00"), at("11:00:00"), 0, "finished"},
 		{"running past end", comp("running", "10:00", "11:00"), at("11:05:00"), 0, "finished"},
 		{"finished", comp("finished", "10:00", "11:00"), at("10:30:00"), 0, ""},
+		// Window crossing midnight: end_time <= start_time rolls end to the next day.
+		{"cross-midnight before end", comp("running", "23:55", "00:05"), at("23:58:00"), 420, ""},
+		{"cross-midnight past end same day", comp("running", "23:55", "00:05"), at("23:54:00"), 0, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -143,6 +146,36 @@ func TestCountdownFormOpenedCrossing(t *testing.T) {
 	_ = cd.step(at("10:41:00"), last)
 	if len(opens) != 3 || !opens[2] {
 		t.Fatalf("want a trailing open=true, got %v", opens)
+	}
+}
+
+func TestCountdownFormClosesWhenPaused(t *testing.T) {
+	c := comp("running", "10:00", "11:00")
+	var opens []bool
+	cd := &Countdown{
+		Snapshot:   func() *model.Competition { return c },
+		FormOpened: func(open bool) { opens = append(opens, open) },
+	}
+
+	last := cd.step(at("10:50:00"), -1) // 600 left, open
+	if len(opens) != 1 || !opens[0] {
+		t.Fatalf("want open=true, got %v", opens)
+	}
+
+	// Pause freezes 600s remaining, but the form must close.
+	c.Status = "paused"
+	c.RemainingSeconds = ptrInt(600)
+	last = cd.step(at("10:50:01"), last)
+	if len(opens) != 2 || opens[1] {
+		t.Fatalf("want a trailing open=false on pause, got %v", opens)
+	}
+
+	// Resume inside the window reopens it.
+	c.Status = "running"
+	c.RemainingSeconds = nil
+	_ = cd.step(at("10:50:02"), last)
+	if len(opens) != 3 || !opens[2] {
+		t.Fatalf("want open=true on resume, got %v", opens)
 	}
 }
 

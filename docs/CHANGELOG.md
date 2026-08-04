@@ -140,6 +140,7 @@ MODIFIED  cmd/server/main.go                (upload/file routes + cleanup gorout
 - ✅ Oversize chunk (3MB) → 413; request without owner cookie → 401
 - ✅ Expired session (backdated in DB): chunk PUT and status both → 410
 - ✅ Filename traversal (`../../etc/passwd`) sanitized to basename on init
+- ✅ Toggle over the wire: a jury `/ws` client received `{"event":"FileListUpdated","payload":{...}}` on `POST /jury/files/{id}/toggle` (verified with a gorilla/websocket client dialing the live server)
 
 ### Automated Tests
 | Test | Locks in |

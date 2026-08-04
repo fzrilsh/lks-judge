@@ -138,7 +138,7 @@ func HandleDashboard(st *store.Store) http.HandlerFunc {
 				}
 			}
 			if comp.Status == "running" {
-				seconds, _ := realtime.TimeLeft(comp, time.Now().UTC())
+				seconds, _ := realtime.TimeLeft(comp, time.Now())
 				formOpen = seconds > 0 && seconds <= realtime.FormOpenSeconds
 			}
 		}

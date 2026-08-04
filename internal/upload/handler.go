@@ -69,7 +69,7 @@ func submissionFormOpen(st *store.Store) bool {
 	if c == nil || c.Status != "running" {
 		return false
 	}
-	seconds, _ := realtime.TimeLeft(c, time.Now().UTC())
+	seconds, _ := realtime.TimeLeft(c, time.Now())
 	return seconds > 0 && seconds <= realtime.FormOpenSeconds
 }
 

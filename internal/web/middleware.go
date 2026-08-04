@@ -9,6 +9,7 @@ import (
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
+	"github.com/fzrilsh/lks-judge/internal/upload"
 )
 
 type contextKey string
@@ -86,4 +87,30 @@ func RequireJury(st *store.Store) func(http.Handler) http.Handler {
 func GetParticipant(r *http.Request) *model.Participant {
 	p, _ := r.Context().Value(participantCtxKey).(*model.Participant)
 	return p
+}
+
+// RequireUploader authorizes /upload/* requests: a valid participant session, or
+// failing that an allowlisted jury IP. On success it injects the uploader identity
+// (via the upload package, so the dependency stays web -> upload). On failure it
+// returns 401 JSON, since these endpoints are called from fetch(), not the browser.
+func RequireUploader(st *store.Store) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if cookie, err := r.Cookie("participant_session"); err == nil {
+				if p, err := st.ValidateSession(cookie.Value); err == nil {
+					ctx := upload.WithUploader(r.Context(), upload.Uploader{ID: p.ID, Role: "participant"})
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
+			if _, ok := juryAllowed(st, r); ok {
+				ctx := upload.WithUploader(r.Context(), upload.Uploader{ID: 0, Role: "jury"})
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"unauthenticated"}`))
+		})
+	}
 }

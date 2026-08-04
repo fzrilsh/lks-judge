@@ -109,7 +109,7 @@ func main() {
 	mux.HandleFunc("POST /logout", web.HandleLogoutPOST(st))
 
 	// protected participant routes
-	mux.Handle("GET /", web.RequireParticipant(st)(http.HandlerFunc(web.HandleDashboard)))
+	mux.Handle("GET /", web.RequireParticipant(st)(web.HandleDashboard(st)))
 
 	// public countdown display (projector) and the shared polling endpoint
 	mux.Handle("GET /countdown", web.HandleCountdownPublicGET(st))

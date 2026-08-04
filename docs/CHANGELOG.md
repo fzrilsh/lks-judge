@@ -76,17 +76,100 @@ MODIFIED  go.mod / go.sum                   (github.com/gorilla/websocket v1.5.3
 
 ---
 
-## Next: Phase 9 — Files
+## Phase 9 — Files (2026-08-04) ✅
 
-**Scope (spec §16 steps 34-37):**
-- `internal/upload/tracker.go`: FS chunk state, no DB write per chunk
-- `internal/upload/handler.go`: `POST /upload/init`, `PUT /upload/:id/chunk/:n`, `POST /upload/:id/complete` (assemble via `io.Copy`), `GET /upload/:id/status`
-- File handlers: toggle `is_public` (broadcasts `FileListUpdated`), delete, download with Range support
-- `files.templ`: dropzone + file list with toggle
+**Status:** Complete & spec-compliant (with intentional deviations noted below)
+
+### Implemented
+- `internal/store/file.go`: NEW. `ErrFileNotFound`; `CreateFile`, `GetFileByID` (ErrFileNotFound on no row), `ListFiles(competitionID)` (newest first), `ToggleFilePublic(id)` (flips `is_public`, returns the updated row for the broadcast), `DeleteFile(id)` (returns the on-disk path so the caller can unlink). Reads on `Reader`, writes on `Writer`.
+- `internal/store/upload_session.go`: NEW. `ErrUploadSessionNotFound`; `CreateUploadSession`, `GetUploadSession` (`module_id` via `sql.NullInt64`), `DeleteUploadSession`, `DeleteExpiredUploadSessions(now)` (SELECT expired ids on `Reader`, DELETE on `Writer`, returns the ids for tmp-dir removal).
+- `internal/upload/tracker.go`: NEW, pure filesystem, zero DB. `MaxChunkSize = 2 << 20`; `ErrChunkTooLarge`; `SafeName` (rejects empty/`.`/`..`/separators after `filepath.Base`); `TmpDir` (SafeName on the upload id, so a traversing id cannot escape `data/uploads_tmp`); `WriteChunk` (`.part` temp + `io.LimitReader(r, MaxChunkSize+1)` overflow probe + rename); `ReceivedChunks`; `MissingChunks`; `Assemble` (verify none missing → sequential `io.Copy` to `dst+".part"` → `os.Rename` → `os.RemoveAll` tmp).
+- `internal/upload/handler.go`: NEW. `Uploader{ID, Role}` with `WithUploader`/`UploaderFrom` (context helpers live here, not in `web`, so the graph stays `web → upload`). `HandleInitPOST` validates the manifest (`total_chunks>0`, `total_size>0`, `upload_type` in {file, submission}, `upload_type=file` requires jury role → 403 otherwise) and inserts a 2h session. `session()` enforces ownership (mismatch → 404, never confirming the id to a non-owner) and expiry (410). `HandleChunkPUT` stages one chunk with no DB write, 413 on oversize. `HandleStatusGET` reports received chunks. `HandleCompletePOST` returns 409 on missing chunks, 501 for submissions (Phase 10), else assembles to `data/files/{competition_id}/{id}-{filename}`, inserts the row, deletes the session, and broadcasts `FileListUpdated`.
+- `internal/upload/cleanup.go`: NEW. `StartCleanup` sweeps expired sessions on a 10m ticker (mirrors `backup.Start`), removing each swept id's tmp dir.
+- `internal/web/handlers_files.go`: NEW. `HandleFilesGET` (jury file manager), `HandleFileTogglePOST` (flip + `FileListUpdated` broadcast + 303), `HandleFileDeletePOST` (drop row, then unlink; disk errors logged only), `HandleFileDownloadGET` (inline auth: participant session or jury IP; a participant asking for a non-public file gets 404, not 403; `http.ServeContent` gives Range for free).
+- `internal/web/middleware.go`: `RequireUploader(st)` added. Tries `participant_session` → `ValidateSession` (inject participant identity), else `juryAllowed` (inject jury identity), else 401 JSON since `/upload/*` is called from `fetch()`.
+- `internal/web/templates/files.templ`: NEW. `FilesPage` in `@AppLayout("Files","files")`: dropzone, progress bar, file table (name, public toggle form, download link, delete with `confirm()`), `<script src="/static/js/uploader.js">`.
+- `internal/web/static/js/uploader.js`: NEW. Vanilla IIFE: slices at 2MB, `POST /upload/init` → sequential chunk PUTs (one retry per chunk gated on `GET /upload/{id}/status`) → `POST /upload/{id}/complete` → reload. Drag-and-drop supported.
+- `cmd/server/main.go`: upload + file routes registered under `RequireUploader`/`RequireJury`; `go upload.StartCleanup(st, *dataDir, ctx.Done())`.
+
+### Routes Added
+```
+POST    /upload/init                {filename,total_chunks,total_size,upload_type,module_id?} → {upload_id}
+PUT     /upload/{id}/chunk/{n}      raw chunk bytes, no DB write
+GET     /upload/{id}/status         → {received_chunks:[...],total_chunks:N}
+POST    /upload/{id}/complete       assemble + INSERT + broadcast FileListUpdated (submission → 501)
+GET     /files/{id}/download        inline auth, Range support; private file → 404 for participants
+GET     /jury/files                 jury file manager
+POST    /jury/files/{id}/toggle     flip is_public → broadcast FileListUpdated
+POST    /jury/files/{id}/delete     delete row + disk
+```
+
+### Files Created/Modified
+```
+NEW       internal/store/file.go
+NEW       internal/store/upload_session.go
+NEW       internal/store/file_test.go
+NEW       internal/store/upload_session_test.go
+NEW       internal/upload/tracker.go
+NEW       internal/upload/tracker_test.go
+NEW       internal/upload/handler.go
+NEW       internal/upload/handler_test.go
+NEW       internal/upload/cleanup.go
+NEW       internal/web/handlers_files.go
+NEW       internal/web/templates/files.templ
+NEW       internal/web/static/js/uploader.js
+MODIFIED  internal/web/middleware.go        (RequireUploader)
+MODIFIED  cmd/server/main.go                (upload/file routes + cleanup goroutine)
+```
+
+### Spec Compliance
+- ✅ Zero DB write per chunk PUT; chunk presence is the filesystem receipt (spec §"Chunked Upload")
+- ✅ Complete stream-assembles via sequential `io.Copy` → `os.Rename` → single INSERT → `os.RemoveAll` tmp
+- ✅ Final path `data/files/{competition_id}/{uuid}-{filename}` (spec §data layout)
+- ✅ 2h session expiry; background cleanup goroutine removes expired sessions + tmp dirs
+- ✅ `/files/{id}/download` checks is_public (participant) or jury IP, with Range support
+- ✅ Toggle broadcasts `FileListUpdated`
+- ✅ `upload` imports `model, store` only; graph stays acyclic (context helpers kept in `upload`, imported by `web`)
+- ✅ `go generate`, `go build`, `go vet`, `golangci-lint run`, `go test ./... -race`: zero errors, zero issues
+
+### Testing (DoD), verified against a live server
+- ✅ 10MB file split into 5×2MB chunks, uploaded via curl init → 5 PUTs → complete: assembled file sha256 identical to source, tmp dir removed
+- ✅ `curl -H "Range: bytes=0-99"` → 206 Partial Content, `Content-Range: bytes 0-99/10485760`, 100 bytes
+- ✅ Participant download: public file → 200, private file → 404; anonymous → 404; jury → 200
+- ✅ Participant `upload_type=file` → 403; `upload_type=submission` → session opens, complete → 501; anonymous init → 401
+- ✅ Oversize chunk (3MB) → 413; request without owner cookie → 401
+- ✅ Expired session (backdated in DB): chunk PUT and status both → 410
+- ✅ Filename traversal (`../../etc/passwd`) sanitized to basename on init
+
+### Automated Tests
+| Test | Locks in |
+| ---- | -------- |
+| `store.TestFile*` | file CRUD roundtrip, toggle flip, delete returns path |
+| `store.TestUploadSession*` | create/get, expiry sweep removes only expired |
+| `upload.TestAssembleRoundtrip` | 5-chunk assemble is byte-identical (sha256) |
+| `upload.TestAssembleMissingChunk` | assemble with a hole errors, leaves no dest |
+| `upload.TestWriteChunkRejectsOversize` | >2MB chunk rejected, not staged |
+| `upload.TestSafeNameRejectsTraversal` | traversal filenames sanitized/rejected |
+| `upload.TestTmpDirContainsTraversal` | traversing upload id stays under uploads_tmp |
+| `upload.TestUploadEndToEndFile` | init→chunk→status→complete, file row + assembled bytes, session gone |
+| `upload.TestCompleteSubmissionStub501` | submission complete → 501 |
+| `upload.TestChunkExpiredSession` | chunk to expired session → 410 |
+
+### Deviations
+- **`PUT /jury/files/{id}/toggle` and `DELETE /jury/files/{id}` → `POST .../toggle` and `POST .../delete`.** HTML forms only speak GET/POST and the repo has no method-override shim (same choice as Phase 5/6). Behavior matches the spec; only the verb differs.
+- **`upload_type=submission` at `/upload/complete` → 501.** Submission records need `store.CreateSubmission`, which lands in Phase 10 (confirmed with the user). Init still accepts both types.
+- **Chunk PUT does one `SELECT` (GetUploadSession)** to enforce ownership and expiry. The spec's "zero DB interaction" is read as zero *write*; a read is required to authorize the chunk. No write happens per chunk.
+
+## Next: Phase 10 — Submissions
+
+**Scope (spec §16 steps 38-40):**
+- `internal/store/submission.go`: submission + score queries (`CreateSubmission`, UNIQUE(participant_id, module_id))
+- Submission handlers: participant upload via the chunked protocol (wire `upload_type=submission` in `HandleCompletePOST`, replacing the 501 stub), jury download
+- Dashboard updates via WS when the current module changes
 
 **DoD:**
-- 10MB file uploaded in 2MB chunks assembles byte-identical
-- Toggling visibility fires a `FileListUpdated` frame
+- Upload a submission as a participant → appears in the jury matrix
+- Change module → dashboard updates via WS
 
 ---
 

@@ -176,6 +176,9 @@ MODIFIED  cmd/server/main.go                (upload/file routes + cleanup gorout
 - `internal/web/static/js/dashboard.js`: NEW, first WS client. Authenticated via the `participant_session` cookie, reconnects with backoff, handles `ModuleChanged` (reload), `FormOpened` (toggle overlay), `FileListUpdated` (add/remove public cards), `CountdownTick` (write remaining time).
 - `internal/web/static/js/uploader.js`: parameterized by `data-*` on `#dropzone` (`data-upload-type`, `data-module-id`, `data-success-url`, `data-error-url`) so one chunk slicer serves both jury files and participant submissions.
 - `cmd/server/main.go`: three jury routes wired; `GET /` dashboard route now uses the store-backed `HandleDashboard(st)`.
+- Plaintext password persistence: new `participants.plain_password` column, `model.Participant.PlainPassword`, scanned/inserted across `participant.go`, dev seed, and manual create. Jury participants table shows a Password column; xlsx export gains a `PASSWORD` column so credentials survive re-export.
+- IP-on-login: `RecordParticipantIP` writes the client `RemoteAddr` into `participants.ip_address` on successful login.
+- WS live fixes: deleting a public file broadcasts `FileListUpdated {is_public:false}` (dashboard drops the card); deleting the current module broadcasts `ModuleChanged {id:nil}` (dashboard reloads).
 
 ### Routes Added
 ```
@@ -188,6 +191,8 @@ GET     /jury/submissions/{id}/download  per-cell download
 - Jury actions are POST routes, not PUT/DELETE (precedent from Phases 5/6/9).
 - The 1200s form window is enforced server-side, beyond the UI-overlay wording of spec §9.
 - `export.zip` bulk download is an addition beyond spec §6.
+- Plaintext passwords are persisted (`plain_password`) so the jury table and xlsx export can show them. Security tradeoff accepted for the internal LAN. Spec stores only the bcrypt hash.
+- Participant IP is recorded at login. Spec sources participant IP from the Excel import column only.
 
 ---
 

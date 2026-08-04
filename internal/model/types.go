@@ -36,9 +36,10 @@ type Participant struct {
 	ID            int64
 	CompetitionID int64
 	Name          string
-	School        string // "member" column in Excel
-	PCNumber      *int   // seat number; NULL = not yet seated
-	Password      string // bcrypt hash
+	School        string  // "member" column in Excel
+	PCNumber      *int    // seat number; NULL = not yet seated
+	Password      string  // bcrypt hash
+	PlainPassword *string // plaintext, kept for jury re-export (internal LAN tradeoff)
 	IPAddress     *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

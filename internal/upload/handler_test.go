@@ -162,7 +162,7 @@ func TestCompleteSubmissionSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("module: %v", err)
 	}
-	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x")
+	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x", "")
 	if err != nil {
 		t.Fatalf("participant: %v", err)
 	}
@@ -220,7 +220,7 @@ func TestCompleteSubmissionFormClosed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("module: %v", err)
 	}
-	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x")
+	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x", "")
 	if err != nil {
 		t.Fatalf("participant: %v", err)
 	}

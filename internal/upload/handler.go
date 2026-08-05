@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,6 +45,17 @@ func newID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// clientIP returns the request's remote IP without the port. Duplicated from
+// web (different package, and upload must not import web) so upload can log the
+// source of an upload without a new dependency.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
@@ -286,6 +298,9 @@ func HandleCompletePOST(st *store.Store, dataDir string, formOpen func() bool, o
 			if err := st.DeleteUploadSession(sess.ID); err != nil {
 				log.Printf("delete upload session: %v", err)
 			}
+			log.Printf("submission ok: participant_id=%d module_id=%d file=%q size=%d took=%s ip=%s",
+				sess.UploaderID, *sess.ModuleID, sess.Filename, sess.TotalSize,
+				time.Since(sess.CreatedAt).Round(time.Millisecond), clientIP(r))
 			writeJSON(w, http.StatusOK, map[string]string{"submission_id": id})
 			return
 		}
@@ -316,6 +331,9 @@ func HandleCompletePOST(st *store.Store, dataDir string, formOpen func() bool, o
 		if onComplete != nil {
 			onComplete(f)
 		}
+		log.Printf("file uploaded: id=%s name=%q size=%d took=%s ip=%s",
+			f.ID, sess.Filename, sess.TotalSize,
+			time.Since(sess.CreatedAt).Round(time.Millisecond), clientIP(r))
 		writeJSON(w, http.StatusOK, map[string]string{"file_id": f.ID})
 	}
 }

@@ -65,6 +65,15 @@ func HandleJuryPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 
+		// Log an allowlist change: it directly controls jury access, so leave a trail.
+		if prev := st.CompetitionCache.Load(); prev == nil || prev.AllowedIPs != allowedIPs {
+			old := "[]"
+			if prev != nil {
+				old = prev.AllowedIPs
+			}
+			log.Printf("allowed_ips changed: %s -> %s ip=%s", old, allowedIPs, clientIP(r))
+		}
+
 		c := &model.Competition{
 			Name:       r.FormValue("name"),
 			Level:      r.FormValue("level"),

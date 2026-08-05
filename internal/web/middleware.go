@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -63,7 +64,10 @@ func RequireParticipant(st *store.Store) func(http.Handler) http.Handler {
 
 			participant, err := st.ValidateSession(cookie.Value)
 			if err != nil {
-				log.Printf("validate session: %v", err)
+				// A stale/absent session is normal; only log real failures.
+				if !errors.Is(err, store.ErrSessionNotFound) {
+					log.Printf("validate session: %v", err)
+				}
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
@@ -100,6 +104,16 @@ func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
 	return host, false
 }
 
+// clientIP returns the request's remote IP without the port. Falls back to the
+// raw RemoteAddr when it carries no port.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
 // RequireJury reads AllowedIPs from competition state cache.
 // Falls back to ["127.0.0.1","::1"] if no competition configured yet.
 func RequireJury(st *store.Store) func(http.Handler) http.Handler {
@@ -111,6 +125,7 @@ func RequireJury(st *store.Store) func(http.Handler) http.Handler {
 				http.Error(w, "403 Forbidden", http.StatusForbidden)
 				return
 			}
+			log.Printf("jury access: ip=%s %s %s", ip, r.Method, r.URL.Path)
 			next.ServeHTTP(w, r)
 		})
 	}

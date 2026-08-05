@@ -22,10 +22,11 @@ func RunOnce(dataDir string, writer *sql.DB) error {
 	// Single-quotes are the only SQL metacharacter that matters inside the
 	// VACUUM INTO string literal; double them per SQLite escaping rules.
 	safeDest := "'" + strings.ReplaceAll(dest, "'", "''") + "'"
+	start := time.Now()
 	if _, err := writer.Exec("VACUUM INTO " + safeDest); err != nil {
 		return fmt.Errorf("backup vacuum: %w", err)
 	}
-	log.Printf("backup: created %s", name)
+	log.Printf("backup: created %s took=%s", name, time.Since(start).Round(time.Millisecond))
 	return pruneBackups(dir)
 }
 

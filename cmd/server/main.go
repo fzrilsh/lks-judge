@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/backup"
+	"github.com/fzrilsh/lks-judge/internal/logfile"
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
@@ -25,6 +27,16 @@ func main() {
 	listen := flag.String("listen", "0.0.0.0:8080", "HTTP listen address")
 	dev := flag.Bool("dev", false, "enable dev mode (seed default data)")
 	flag.Parse()
+
+	// Tee logs to a per-day file under {data}/logs so a run leaves a record,
+	// not just the terminal. Set up before anything else logs.
+	logDir := filepath.Join(*dataDir, "logs")
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		log.Fatalf("mkdir logs: %v", err)
+	}
+	rotator := logfile.New(logDir)
+	defer func() { _ = rotator.Close() }()
+	log.SetOutput(io.MultiWriter(os.Stderr, rotator))
 
 	log.Printf("starting LKS Judge server")
 	log.Printf("data directory: %s", *dataDir)

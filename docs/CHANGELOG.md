@@ -1,5 +1,50 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Cleanup & Docs Pass (2026-08-05) ✅
+
+**Status:** Complete. Documentation alignment, dead-code removal, duplication cleanup, and low/medium security hardening across Phase 1-10. No new features.
+
+### Fixed
+- `internal/excel/excel.go`: `RandomPassword` restored to 6-digit numeric per spec §7 (was an alphanumeric variant); export score cells now filled via `make([]string, len(modules))` instead of a dead per-module loop.
+- `internal/web/static/css/app.css`: Material Symbols `@font-face` src pointed at a stale `/build/assets/...` path; corrected to `/static/fonts/material-symbols.woff2` so jury sidebar icons load.
+- `internal/backup/backup.go`: `VACUUM INTO` destination now escapes single-quotes; prune advances only on successful removal so a stuck oldest file no longer causes a newer backup to be dropped.
+- `cmd/server/main.go`: `http.Server` gains `ReadHeaderTimeout` (10s) and `IdleTimeout` (120s).
+- `internal/web/handlers_participants.go`: participant import body capped at 20 MiB via `http.MaxBytesReader`.
+- `internal/upload/handler.go`: init JSON body capped at 4 KiB.
+- `internal/web/handlers_files.go`, `internal/web/handlers_submissions.go`: `Content-Disposition` filenames escape backslash and double-quote.
+
+### Removed
+- `model.Session` struct (zero references); `idx_participants_ip` (no query filters `ip_address`). `idx_files_competition` changed from `(competition_id, is_public)` to `(competition_id, created_at)` to match `ListFiles` ORDER BY.
+
+### Refactored
+- `internal/store/file.go`, `internal/store/submission.go`: extracted `fileCols` / `submissionCols` column constants.
+- `internal/realtime/countdown.go`: exported `FormOpen(c, seconds)`; removed the three duplicated window checks in `main.go`, `handlers_auth.go`, and the upload submission gate.
+
+### Docs
+- `CLAUDE.md`: scoring, leaderboard cache, gzip, and awards marked as Phase 11 (not yet built); package graph corrected (`scoring` absent, `excel ← store` only, `cmd/server` does not import `excel`); em-dash rule notes the historical CHANGELOG phase-header exception; session-cache "expiry sweep" marked Phase 12.
+- `docs/rebuild-spec.md`: synced to Phase 10 code (countdown pause/resume/stop are POST, `/countdown/time` returns `{seconds,status}`, `idx_sessions_token` dropped, `idx_participants_pc` UNIQUE partial); removed the never-implemented Prepared Statement Cache claim.
+- `README.md`: corrected public-route count and `docs/` description.
+
+### Retained as Phase 11 scaffolding (not dead)
+- `model.Score` + `WSIScore`, `realtime.EvScoreUpdated`, nav `/jury/scoring`, `idx_scores_lookup`, `imgs/logo-worldskills.jpg`.
+
+### Verification
+- ✅ gofmt, `go vet ./...`, `go build ./...`, `go test ./...`, golangci-lint: clean
+- ✅ `go test -race` on `store`, `web`, `upload`: clean
+
+---
+
+## Next: Phase 11 - Scoring
+
+**Scope (spec §16 steps 43+):**
+- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
+- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
+
+**DoD:**
+- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
+
+---
+
 ## Test & Review Pass (2026-08-05) ✅
 
 **Status:** Complete. Regression tests for the remediation changes plus test files for previously untested features. No new features. Fixes 2 defects found during review.
@@ -25,7 +70,7 @@
 ### Verification
 - ✅ gofmt, `go vet ./...`, `go build ./...`, `go test ./...`: clean
 - ✅ `go test -race` on `store`, `web`, `upload` (shared global cache state): clean
-- ✅ Coverage: excel 85.6%, store 72.5%, backup 56.5%, web 22.7% (render paths intentionally untested)
+- ✅ Coverage: excel 85.4%, store 72.8%, upload 56.1%, backup 56.0%, web 18.0% (render paths intentionally untested)
 
 ---
 
@@ -83,17 +128,6 @@ GET     /jury/submissions/{id}/download  per-cell download
 - `export.zip` bulk download is an addition beyond spec §6.
 - Plaintext passwords are persisted (`plain_password`) so the jury table and xlsx export can show them. Security tradeoff accepted for the internal LAN. Spec stores only the bcrypt hash.
 - Participant IP is recorded at login. Spec sources participant IP from the Excel import column only.
-
----
-
-## Next: Phase 11 — Scoring
-
-**Scope (spec §16 steps 43+):**
-- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
-- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
-
-**DoD:**
-- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 

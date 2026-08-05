@@ -49,7 +49,7 @@ func TestUploadEndToEndFile(t *testing.T) {
 		Filename: "brief.pdf", TotalChunks: 3, TotalSize: 30, UploadType: "file",
 	})
 	rec := httptest.NewRecorder()
-	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	HandleInitPOST(st, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -271,7 +271,7 @@ func TestCompleteInvokesOnComplete(t *testing.T) {
 		Filename: "brief.pdf", TotalChunks: 1, TotalSize: 3, UploadType: "file",
 	})
 	rec := httptest.NewRecorder()
-	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	HandleInitPOST(st, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
 	}

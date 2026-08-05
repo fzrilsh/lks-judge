@@ -69,8 +69,9 @@ type Submission struct {
 	UpdatedAt     time.Time
 }
 
-// Score maps to the scores table.
-// wsi_score is pre-computed on every upsert — never derived at query time.
+// Score maps to the scores table (Phase 11 scoring; the type and table exist
+// as scaffolding, no scoring code reads or writes it yet).
+// wsi_score is pre-computed on every upsert, never derived at query time.
 // UNIQUE(participant_id, module_id)
 type Score struct {
 	ID            int64
@@ -80,15 +81,6 @@ type Score struct {
 	WSIScore      *int // 700 + (raw-median)*2.8, clamped [0,1000]
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
-}
-
-// Session maps to the sessions table.
-// Jury is stateless (IP-only); only participants have rows here.
-// expires_at = 9999-12-31 sentinel (lifetime session).
-type Session struct {
-	Token     string
-	OwnerID   int64 // participants.id
-	ExpiresAt time.Time
 }
 
 // UploadSession maps to the upload_sessions table.

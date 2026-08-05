@@ -137,7 +137,6 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 	g, _ := errgroup.WithContext(context.Background())
 	g.SetLimit(runtime.NumCPU())
 	for i := range parsed {
-		i := i
 		g.Go(func() error {
 			plain, err := RandomPassword()
 			if err != nil {
@@ -227,11 +226,9 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 		}
 		vals := []string{pcStr, ipStr, p.School, p.Name, pwStr}
 
-		_ = modules // module scores not fetched here — ponytail: add score join when Phase 11 adds score queries
-		for _, m := range modules {
-			_ = m
-			vals = append(vals, "")
-		}
+		// Module score cells stay blank: no scoring data exists until Phase 11.
+		// ponytail: fill from a score join once store has ListScoresByCompetition.
+		vals = append(vals, make([]string, len(modules))...)
 		for col, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(col+1, rowNum)
 			if err := f.SetCellValue(sheet, cell, v); err != nil {
@@ -247,19 +244,16 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// RandomPassword generates an 8-character password from an unambiguous
-// alphanumeric alphabet. Longer and larger keyspace than the old 6-digit numeric
-// (~47 bits vs ~20), which was brute-forceable in minutes on a LAN.
+// RandomPassword generates a 6-digit numeric password (spec §7). Plain-text is
+// kept for jury re-export; acceptable on the closed internal LAN.
 func RandomPassword() (string, error) {
-	// No 0/O/1/I/l to keep hand-typed passwords unambiguous.
-	const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz"
-	b := make([]byte, 8)
+	b := make([]byte, 6)
 	for i := range b {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		n, err := rand.Int(rand.Reader, big.NewInt(10))
 		if err != nil {
 			return "", err
 		}
-		b[i] = alphabet[n.Int64()]
+		b[i] = byte('0' + n.Int64())
 	}
 	return string(b), nil
 }

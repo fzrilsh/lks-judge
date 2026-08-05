@@ -12,6 +12,8 @@ import (
 // ErrFileNotFound is returned when a file ID doesn't exist.
 var ErrFileNotFound = errors.New("file not found")
 
+const fileCols = `id, competition_id, name, path, is_public, created_at, updated_at`
+
 // CreateFile inserts a jury-uploaded file row. ID and Path must already be set.
 func (s *Store) CreateFile(f *model.File) error {
 	now := time.Now().UTC()
@@ -31,7 +33,7 @@ func (s *Store) CreateFile(f *model.File) error {
 func (s *Store) GetFileByID(id string) (*model.File, error) {
 	var f model.File
 	err := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, path, is_public, created_at, updated_at
+		`SELECT `+fileCols+`
 		 FROM files WHERE id = ?`, id,
 	).Scan(&f.ID, &f.CompetitionID, &f.Name, &f.Path, &f.IsPublic, &f.CreatedAt, &f.UpdatedAt)
 	if err == sql.ErrNoRows {
@@ -46,7 +48,7 @@ func (s *Store) GetFileByID(id string) (*model.File, error) {
 // ListFiles returns all files for a competition, newest first.
 func (s *Store) ListFiles(competitionID int64) ([]*model.File, error) {
 	rows, err := s.Reader.Query(
-		`SELECT id, competition_id, name, path, is_public, created_at, updated_at
+		`SELECT `+fileCols+`
 		 FROM files WHERE competition_id = ? ORDER BY created_at DESC`, competitionID)
 	if err != nil {
 		return nil, fmt.Errorf("list files: %w", err)

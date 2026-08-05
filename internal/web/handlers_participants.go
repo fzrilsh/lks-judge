@@ -98,6 +98,8 @@ func HandleParticipantDeletePOST(st *store.Store) http.HandlerFunc {
 
 func HandleParticipantsImportPOST(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Cap the upload before parsing so a large xlsx cannot exhaust memory.
+		r.Body = http.MaxBytesReader(w, r.Body, 20<<20)
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return

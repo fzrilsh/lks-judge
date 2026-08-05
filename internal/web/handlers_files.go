@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
@@ -57,7 +58,7 @@ func HandleFileTogglePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 // HandleFileDeletePOST removes the DB row then the on-disk file. Disk errors are
 // logged only: the row is already gone, so the file is unreachable regardless.
 // Broadcasts is_public:false so participant dashboards drop the card live.
-func HandleFileDeletePOST(st *store.Store, _ string, hub *realtime.Hub) http.HandlerFunc {
+func HandleFileDeletePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		path, err := st.DeleteFile(id)
@@ -78,11 +79,19 @@ func HandleFileDeletePOST(st *store.Store, _ string, hub *realtime.Hub) http.Han
 	}
 }
 
+// cdFilename returns a base filename safe to embed in a quoted Content-Disposition
+// value: backslash and double-quote are escaped so they cannot break out of the quotes.
+func cdFilename(name string) string {
+	base := filepath.Base(name)
+	base = strings.ReplaceAll(base, `\`, `\\`)
+	return strings.ReplaceAll(base, `"`, `\"`)
+}
+
 // HandleFileDownloadGET serves a file with Range support via http.ServeContent.
 // Auth is inline: a valid participant session or an allowlisted jury IP. A
 // participant requesting a non-public file gets 404, not 403, so the file's
 // existence is never confirmed to someone not entitled to it.
-func HandleFileDownloadGET(st *store.Store, _ string) http.HandlerFunc {
+func HandleFileDownloadGET(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f, err := st.GetFileByID(r.PathValue("id"))
 		if errors.Is(err, store.ErrFileNotFound) {
@@ -123,7 +132,7 @@ func HandleFileDownloadGET(st *store.Store, _ string) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(f.Name)+`"`)
+		w.Header().Set("Content-Disposition", `attachment; filename="`+cdFilename(f.Name)+`"`)
 		http.ServeContent(w, r, f.Name, info.ModTime(), file)
 	}
 }

@@ -57,7 +57,7 @@ func HandleFileTogglePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 // HandleFileDeletePOST removes the DB row then the on-disk file. Disk errors are
 // logged only: the row is already gone, so the file is unreachable regardless.
 // Broadcasts is_public:false so participant dashboards drop the card live.
-func HandleFileDeletePOST(st *store.Store, _ string, hub *realtime.Hub) http.HandlerFunc {
+func HandleFileDeletePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		path, err := st.DeleteFile(id)
@@ -82,7 +82,7 @@ func HandleFileDeletePOST(st *store.Store, _ string, hub *realtime.Hub) http.Han
 // Auth is inline: a valid participant session or an allowlisted jury IP. A
 // participant requesting a non-public file gets 404, not 403, so the file's
 // existence is never confirmed to someone not entitled to it.
-func HandleFileDownloadGET(st *store.Store, _ string) http.HandlerFunc {
+func HandleFileDownloadGET(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f, err := st.GetFileByID(r.PathValue("id"))
 		if errors.Is(err, store.ErrFileNotFound) {

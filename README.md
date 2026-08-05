@@ -71,13 +71,15 @@ competition with `--dev`.**
 
 There are no environment variables, all configuration is flags.
 
-Two routes are public, everything else is behind the jury IP allowlist or a
-participant session:
+These routes need no session; everything else sits behind the jury IP allowlist
+or a participant session:
 
 | Route | Purpose |
 | ----- | ------- |
 | `GET /countdown` | Full-screen countdown for a projector; plays an alert at zero |
 | `GET /countdown/time` | `{"seconds":N,"status":"..."}`, polled once a second |
+| `GET /ws` | WebSocket; anonymous clients get a reduced event set (countdown + score only) |
+| `GET /healthz` | Liveness check |
 
 ## Layout
 

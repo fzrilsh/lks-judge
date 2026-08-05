@@ -103,6 +103,7 @@ func HandleModulesSetCurrentPOST(st *store.Store, hub *realtime.Hub) http.Handle
 			return
 		}
 		if m, err := st.GetModuleByID(moduleID); err == nil {
+			log.Printf("module set current: id=%d name=%q ip=%s", m.ID, m.Name, clientIP(r))
 			hub.Broadcast(realtime.EvModuleChanged, map[string]any{
 				"id": m.ID, "name": m.Name, "order": m.Order,
 			})
@@ -150,6 +151,7 @@ func HandleModuleDeletePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("module deleted: id=%d ip=%s", id, clientIP(r))
 		if wasCurrent {
 			hub.Broadcast(realtime.EvModuleChanged, map[string]any{"id": nil})
 		}

@@ -42,6 +42,7 @@ func HandleParticipantsPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 		if err := r.ParseForm(); err != nil {
+			log.Printf("participant create: parse form: %v", err)
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
@@ -62,11 +63,13 @@ func HandleParticipantsPOST(st *store.Store) http.HandlerFunc {
 
 		plain, err := excel.RandomPassword()
 		if err != nil {
+			log.Printf("participant create: random password: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(plain), 8)
 		if err != nil {
+			log.Printf("participant create: bcrypt: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -76,6 +79,7 @@ func HandleParticipantsPOST(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("participant created: name=%q school=%q ip=%s", name, school, clientIP(r))
 		http.Redirect(w, r, "/jury/participants?saved=1", http.StatusSeeOther)
 	}
 }
@@ -92,6 +96,7 @@ func HandleParticipantDeletePOST(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("participant deleted: id=%d ip=%s", id, clientIP(r))
 		http.Redirect(w, r, "/jury/participants?saved=1", http.StatusSeeOther)
 	}
 }
@@ -101,6 +106,7 @@ func HandleParticipantsImportPOST(st *store.Store) http.HandlerFunc {
 		// Cap the upload before parsing so a large xlsx cannot exhaust memory.
 		r.Body = http.MaxBytesReader(w, r.Body, 20<<20)
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
+			log.Printf("import participants: parse form: %v", err)
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
@@ -113,6 +119,7 @@ func HandleParticipantsImportPOST(st *store.Store) http.HandlerFunc {
 
 		data, err := io.ReadAll(file)
 		if err != nil {
+			log.Printf("import participants: read: %v", err)
 			http.Error(w, "read error", http.StatusInternalServerError)
 			return
 		}
@@ -123,7 +130,7 @@ func HandleParticipantsImportPOST(st *store.Store) http.HandlerFunc {
 			http.Redirect(w, r, "/jury/participants?error=import+failed:+"+err.Error(), http.StatusSeeOther)
 			return
 		}
-		log.Printf("imported %d participants", len(imported))
+		log.Printf("imported %d participants ip=%s", len(imported), clientIP(r))
 		http.Redirect(w, r, "/jury/participants?saved=1", http.StatusSeeOther)
 	}
 }

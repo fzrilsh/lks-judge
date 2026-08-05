@@ -73,8 +73,9 @@ competition with `--dev`.**
 There are no environment variables, all configuration is flags.
 
 Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/`
-(participant work, laid out `submissions/{participant_id}/{module_id}/`), and
-`uploads_tmp/` (in-flight chunks) alongside `lks.sqlite`.
+(participant work, laid out `submissions/{participant_id}/{module_id}/`),
+`uploads_tmp/` (in-flight chunks), and `logs/` (per-day `YYYY-MM-DD.log`, also
+teed to the terminal) alongside `lks.sqlite`.
 
 Four routes are public, everything else is behind the jury IP allowlist or a
 participant session (plus `GET /login` and the `GET /static/` asset tree):

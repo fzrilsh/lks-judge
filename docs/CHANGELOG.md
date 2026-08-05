@@ -1,4 +1,26 @@
-# LKS Judge Platform — Go Rebuild Changelog
+# LKS Judge Platform: Go Rebuild Changelog
+
+## Security & Spec Remediation (2026-08-05) ✅
+
+**Status:** Complete. Review pass for performance, security, efficiency, and spec compliance. No new features.
+
+### Implemented
+- `internal/store/competition.go`, `internal/store/db.go`, `internal/web/middleware.go`: jury allowlist now parsed once per competition write into a cached `[]net.IPNet` (`allowedNets atomic.Pointer`), read via `AllowedNets()`. Removes the per-request JSON decode + IP parse from every `/jury/*` and `/upload/*` request. Empty set falls back to loopback only. Single IPs get a full-length mask (/32 or /128); malformed entries are logged and skipped.
+- `internal/upload/handler.go`: `HandleCompletePOST` no longer imports `realtime`. It takes an `onComplete func(*model.File)` callback injected by `main`, restoring the spec §11 rule that `upload` depends on `model` and `store` only. Verified with `go list -deps`.
+- `internal/store/participant.go`, `internal/store/migrations/001_initial.sql`, `internal/model/types.go`, `internal/excel/excel.go`: plaintext password persisted in `plain_password` (spec §5, §7). Threaded through `CreateParticipant`, `UpsertParticipantByName`, and `scanParticipant`; Excel export emits a `PASSWORD` column (order: NO PC, IP_ADDRESS, MEMBER, NAME, PASSWORD, modules). Internal LAN tradeoff, documented on the model field.
+- `internal/web/handlers_auth.go`, `internal/store/participant.go`: participant `ip_address` recorded on successful login via `UpdateParticipantIP` (spec §5). Best-effort: a write failure is logged, login still succeeds.
+
+### Spec Compliance
+- ✅ `upload` imports `model, store` only; graph acyclic again (spec §11)
+- ✅ `plain_password` column and export column present (spec §5, §7)
+- ✅ `ip_address` populated at login (spec §5)
+- ✅ `go build ./...`, `go vet ./...`, `go test ./...`, gofmt + golangci-lint: zero errors
+
+### Deviations
+- Cookie is `HttpOnly` + `SameSite=Strict`, no `Secure` flag: the server runs plain HTTP on a closed LAN (confirmed with the user).
+- Historical phase entries below still use em dashes in prose. Left as-is to avoid churning committed history; the em dash rule applies to new writing.
+
+---
 
 ## Phase 8 — WebSocket Hub (2026-08-03) ✅
 

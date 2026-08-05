@@ -39,7 +39,7 @@ type Participant struct {
 	School        string  // "member" column in Excel
 	PCNumber      *int    // seat number; NULL = not yet seated
 	Password      string  // bcrypt hash
-	PlainPassword *string // plaintext, kept for jury re-export (internal LAN tradeoff)
+	PlainPassword *string // plaintext, kept for jury re-export (internal LAN tradeoff, spec §5)
 	IPAddress     *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

@@ -51,13 +51,16 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 
 	// parse header
 	header := rows[0]
-	fixed := map[string]int{"no_pc": -1, "ip_address": -1, "member": -1, "name": -1}
+	// password is a fixed column so a re-imported export file does not treat
+	// "PASSWORD" as a module; the space->underscore normalize makes the
+	// uppercase export header ("NO PC") round-trip to the "no_pc" key.
+	fixed := map[string]int{"no_pc": -1, "ip_address": -1, "member": -1, "name": -1, "password": -1}
 	var moduleCols []struct {
 		idx  int
 		name string
 	}
 	for i, h := range header {
-		key := strings.ToLower(strings.TrimSpace(h))
+		key := strings.ReplaceAll(strings.ToLower(strings.TrimSpace(h)), " ", "_")
 		if _, ok := fixed[key]; ok {
 			fixed[key] = i
 		} else if key != "" {
@@ -244,13 +247,21 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// RandomPassword generates a 6-digit random numeric password for participant import.
+// RandomPassword generates an 8-character password from an unambiguous
+// alphanumeric alphabet. Longer and larger keyspace than the old 6-digit numeric
+// (~47 bits vs ~20), which was brute-forceable in minutes on a LAN.
 func RandomPassword() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
-	if err != nil {
-		return "", err
+	// No 0/O/1/I/l to keep hand-typed passwords unambiguous.
+	const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz"
+	b := make([]byte, 8)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = alphabet[n.Int64()]
 	}
-	return fmt.Sprintf("%06d", n.Int64()), nil
+	return string(b), nil
 }
 
 // ponytail: ExportParticipants score cells are empty — add score JOIN in Phase 11 when store/submission.go has ListScoresByCompetition.

@@ -3,6 +3,7 @@ package realtime
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,11 +16,27 @@ const (
 	sendBuffer = 32
 )
 
-// upgrader accepts any origin: this server only ever runs on a closed competition LAN.
+// upgrader rejects cross-origin handshakes: a browser page on another origin must
+// not be able to open an authenticated socket. A missing Origin (non-browser client)
+// is allowed.
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
+	CheckOrigin:     sameOrigin,
+}
+
+// sameOrigin reports whether the Origin header host matches the request host.
+// No Origin header means a non-browser client, which is allowed.
+func sameOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	return u.Host == r.Host
 }
 
 // ServeWS upgrades the request and attaches the connection to the hub. The caller decides

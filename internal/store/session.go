@@ -35,7 +35,7 @@ func (s *Store) CreateSession(participantID int64) (string, error) {
 	}
 
 	// load participant and cache
-	participant, err := s.getParticipantByID(participantID)
+	participant, err := s.GetParticipantByID(participantID)
 	if err != nil {
 		return "", fmt.Errorf("load participant: %w", err)
 	}
@@ -72,7 +72,7 @@ func (s *Store) ValidateSession(token string) (*model.Participant, error) {
 	}
 
 	// load participant
-	participant, err := s.getParticipantByID(ownerID)
+	participant, err := s.GetParticipantByID(ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("load participant: %w", err)
 	}
@@ -93,6 +93,23 @@ func (s *Store) DeleteSession(token string) error {
 	return nil
 }
 
+// invalidateParticipant evicts every cached session belonging to a participant,
+// forcing the next ValidateSession to reload from DB. Called after any write
+// that changes a participant (edit, seat shuffle, delete) so the cache cannot
+// serve stale pc_number/school/password.
+func invalidateParticipant(ids ...int64) {
+	want := make(map[int64]bool, len(ids))
+	for _, id := range ids {
+		want[id] = true
+	}
+	sessionCache.Range(func(k, v any) bool {
+		if p, ok := v.(*model.Participant); ok && want[p.ID] {
+			sessionCache.Delete(k)
+		}
+		return true
+	})
+}
+
 // generateToken creates a 32-byte random hex string.
 func generateToken() (string, error) {
 	b := make([]byte, 32)
@@ -100,27 +117,4 @@ func generateToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
-}
-
-// getParticipantByID loads participant from DB (internal helper).
-func (s *Store) getParticipantByID(id int64) (*model.Participant, error) {
-	var p model.Participant
-	err := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, school, pc_number, password, ip_address, created_at, updated_at
-		 FROM participants WHERE id = ?`,
-		id,
-	).Scan(
-		&p.ID, &p.CompetitionID, &p.Name, &p.School,
-		&p.PCNumber, &p.Password, &p.IPAddress,
-		&p.CreatedAt, &p.UpdatedAt,
-	)
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("participant not found")
-	}
-	if err != nil {
-		return nil, fmt.Errorf("query participant: %w", err)
-	}
-
-	return &p, nil
 }

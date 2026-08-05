@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/backup"
+	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/upload"
@@ -152,10 +153,24 @@ func main() {
 
 	// chunked upload routes: participant session or allowlisted jury IP
 	upMw := web.RequireUploader(st)
-	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir)))
+	// submissionOpen re-derives the submission window from the competition cache.
+	// Injected so upload need not import realtime (spec §11 package graph).
+	submissionOpen := func() bool {
+		c := st.CompetitionCache.Load()
+		if c == nil || c.Status != "running" {
+			return false
+		}
+		seconds, _ := realtime.TimeLeft(c, time.Now())
+		return seconds > 0 && seconds <= realtime.FormOpenSeconds
+	}
+	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir, submissionOpen)))
 	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))
 	mux.Handle("GET /upload/{id}/status", upMw(upload.HandleStatusGET(st, *dataDir)))
-	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, hub)))
+	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, submissionOpen, func(f *model.File) {
+		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
+			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
+		})
+	})))
 
 	// file download: inline auth (participant session or jury IP), private files hidden from participants
 	mux.Handle("GET /files/{id}/download", web.HandleFileDownloadGET(st, *dataDir))
@@ -178,7 +193,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    *listen,
-		Handler: mux,
+		Handler: web.CSRFProtect(mux),
 	}
 
 	go func() {
@@ -191,15 +206,17 @@ func main() {
 	<-ctx.Done()
 	log.Println("shutting down...")
 
-	if err := backup.RunOnce(*dataDir, st.Writer); err != nil {
-		log.Printf("shutdown backup: %v", err)
-	}
-
+	// Drain HTTP first: no in-flight request should still be writing when the
+	// backup snapshots the DB.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("server shutdown: %v", err)
+	}
+
+	if err := backup.RunOnce(*dataDir, st.Writer); err != nil {
+		log.Printf("shutdown backup: %v", err)
 	}
 
 	log.Println("server stopped")

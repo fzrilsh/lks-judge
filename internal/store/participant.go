@@ -141,6 +141,7 @@ func (s *Store) UpsertParticipantByName(competitionID int64, name, school string
 	if err != nil {
 		return 0, "", fmt.Errorf("update participant: %w", err)
 	}
+	invalidateParticipant(id)
 	return id, "", nil // password unchanged on update
 }
 
@@ -150,6 +151,7 @@ func (s *Store) DeleteParticipant(id int64) error {
 	if err != nil {
 		return fmt.Errorf("delete participant: %w", err)
 	}
+	invalidateParticipant(id)
 	return nil
 }
 
@@ -171,7 +173,15 @@ func (s *Store) UpdateParticipantSeats(assignments []ShuffleResult) error {
 			return fmt.Errorf("shuffle seats: update id=%d: %w", a.ID, err)
 		}
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	ids := make([]int64, len(assignments))
+	for i, a := range assignments {
+		ids[i] = a.ID
+	}
+	invalidateParticipant(ids...)
+	return nil
 }
 
 // ShuffleSeats assigns seats 1..N to all participants in random order.

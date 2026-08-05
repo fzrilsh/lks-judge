@@ -87,7 +87,7 @@ func HandleSubmissionDownloadGET(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(sub.Name)+`"`)
+		w.Header().Set("Content-Disposition", `attachment; filename="`+cdFilename(sub.Name)+`"`)
 		http.ServeContent(w, r, sub.Name, info.ModTime(), file)
 	}
 }

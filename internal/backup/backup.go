@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -18,7 +19,10 @@ func RunOnce(dataDir string, writer *sql.DB) error {
 	name := fmt.Sprintf("lks-%s.sqlite", time.Now().UTC().Format("20060102-150405"))
 	dest := filepath.Join(dir, name)
 
-	if _, err := writer.Exec(fmt.Sprintf("VACUUM INTO '%s'", dest)); err != nil {
+	// Single-quotes are the only SQL metacharacter that matters inside the
+	// VACUUM INTO string literal; double them per SQLite escaping rules.
+	safeDest := "'" + strings.ReplaceAll(dest, "'", "''") + "'"
+	if _, err := writer.Exec("VACUUM INTO " + safeDest); err != nil {
 		return fmt.Errorf("backup vacuum: %w", err)
 	}
 	log.Printf("backup: created %s", name)
@@ -48,8 +52,11 @@ func pruneBackups(dir string) error {
 	}
 	sort.Strings(entries) // lexicographic = chronological given format "20060102-150405"
 	for len(entries) > maxBackups {
-		if err := os.Remove(entries[0]); err != nil {
+		// Advance only on a real removal: if the oldest can't be deleted, stop
+		// so a stuck file doesn't cause the newer ones to be pruned instead.
+		if err := os.Remove(entries[0]); err != nil && !os.IsNotExist(err) {
 			log.Printf("backup prune: %v", err)
+			break
 		}
 		entries = entries[1:]
 	}

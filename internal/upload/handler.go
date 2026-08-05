@@ -78,7 +78,8 @@ func HandleInitPOST(st *store.Store, formOpen func() bool) http.HandlerFunc {
 		}
 
 		var req initRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// The manifest is tiny; cap the body so a bad client can't stream forever.
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
 			return
 		}

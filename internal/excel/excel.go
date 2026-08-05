@@ -240,13 +240,21 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// RandomPassword generates a 6-digit random numeric password for participant import.
+// RandomPassword generates an 8-character password from an unambiguous
+// alphanumeric alphabet. Longer and larger keyspace than the old 6-digit numeric
+// (~47 bits vs ~20), which was brute-forceable in minutes on a LAN.
 func RandomPassword() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
-	if err != nil {
-		return "", err
+	// No 0/O/1/I/l to keep hand-typed passwords unambiguous.
+	const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz"
+	b := make([]byte, 8)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = alphabet[n.Int64()]
 	}
-	return fmt.Sprintf("%06d", n.Int64()), nil
+	return string(b), nil
 }
 
 // ponytail: ExportParticipants score cells are empty — add score JOIN in Phase 11 when store/submission.go has ListScoresByCompetition.

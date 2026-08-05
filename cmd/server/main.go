@@ -157,13 +157,10 @@ func main() {
 	// Injected so upload need not import realtime (spec §11 package graph).
 	submissionOpen := func() bool {
 		c := st.CompetitionCache.Load()
-		if c == nil || c.Status != "running" {
-			return false
-		}
 		seconds, _ := realtime.TimeLeft(c, time.Now())
-		return seconds > 0 && seconds <= realtime.FormOpenSeconds
+		return realtime.FormOpen(c, seconds)
 	}
-	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir, submissionOpen)))
+	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, submissionOpen)))
 	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))
 	mux.Handle("GET /upload/{id}/status", upMw(upload.HandleStatusGET(st, *dataDir)))
 	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, submissionOpen, func(f *model.File) {
@@ -173,12 +170,12 @@ func main() {
 	})))
 
 	// file download: inline auth (participant session or jury IP), private files hidden from participants
-	mux.Handle("GET /files/{id}/download", web.HandleFileDownloadGET(st, *dataDir))
+	mux.Handle("GET /files/{id}/download", web.HandleFileDownloadGET(st))
 
 	// jury file management
 	mux.Handle("GET /jury/files", juryMw(web.HandleFilesGET(st)))
 	mux.Handle("POST /jury/files/{id}/toggle", juryMw(web.HandleFileTogglePOST(st, hub)))
-	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir, hub)))
+	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, hub)))
 
 	// jury submissions matrix: per-cell download plus bulk ZIP export
 	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))
@@ -192,8 +189,10 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    *listen,
-		Handler: web.CSRFProtect(mux),
+		Addr:              *listen,
+		Handler:           web.CSRFProtect(mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	go func() {

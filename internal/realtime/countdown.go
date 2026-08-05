@@ -124,7 +124,7 @@ func (cd *Countdown) step(now time.Time, last int) int {
 		// The form is open only while the competition is actually running and
 		// inside the window. A paused run freezes remaining > 0 but must close
 		// the form, so status is part of the condition, not just seconds.
-		open := formOpen(c, seconds)
+		open := FormOpen(c, seconds)
 		wasOpen := last > 0 && last <= FormOpenSeconds
 		if last == -1 {
 			if open {
@@ -143,8 +143,9 @@ func (cd *Countdown) step(now time.Time, last int) int {
 	return seconds
 }
 
-// formOpen reports whether the submission form should be open: the competition
-// is running and the remaining time is inside the window.
-func formOpen(c *model.Competition, seconds int) bool {
+// FormOpen reports whether the submission form should be open: the competition
+// is running and the remaining time is inside the window. Exported so the web
+// and cmd layers derive the window the same way instead of reimplementing it.
+func FormOpen(c *model.Competition, seconds int) bool {
 	return c != nil && c.Status == "running" && seconds > 0 && seconds <= FormOpenSeconds
 }

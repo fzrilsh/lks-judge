@@ -64,7 +64,7 @@ type initRequest struct {
 // 2-hour expiry, and returns {"upload_id": ...}. formOpen reports whether the
 // submission window is currently open; main injects it so upload need not import
 // realtime (spec §11 package graph: upload depends on model+store only).
-func HandleInitPOST(st *store.Store, _ string, formOpen func() bool) http.HandlerFunc {
+func HandleInitPOST(st *store.Store, formOpen func() bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, ok := UploaderFrom(r.Context())
 		if !ok {
@@ -78,7 +78,8 @@ func HandleInitPOST(st *store.Store, _ string, formOpen func() bool) http.Handle
 		}
 
 		var req initRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// The manifest is tiny; cap the body so a bad client can't stream forever.
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
 			return
 		}

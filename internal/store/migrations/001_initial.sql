@@ -106,7 +106,8 @@ CREATE TABLE IF NOT EXISTS upload_sessions (
 -- separate idx_sessions_token needed.
 -- seated pc_number must be unique per competition; NULL (unseated) is exempt.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_pc ON participants(competition_id, pc_number) WHERE pc_number IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_participants_ip    ON participants(ip_address);
+-- Phase 11: scoring reads scores by (participant_id, module_id); kept as scaffolding.
 CREATE INDEX IF NOT EXISTS idx_scores_lookup      ON scores(participant_id, module_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_lookup ON submissions(participant_id, module_id);
-CREATE INDEX IF NOT EXISTS idx_files_competition  ON files(competition_id, is_public);
+-- ListFiles filters competition_id and orders by created_at DESC.
+CREATE INDEX IF NOT EXISTS idx_files_competition  ON files(competition_id, created_at);

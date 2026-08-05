@@ -190,22 +190,19 @@ func TestExportThenImportPreservesSeats(t *testing.T) {
 	}
 }
 
-func TestRandomPasswordAlphabetAndLength(t *testing.T) {
-	const banned = "0O1Il"
+func TestRandomPasswordDigitsAndLength(t *testing.T) {
 	seen := map[string]bool{}
 	for range 200 {
 		pw, err := RandomPassword()
 		if err != nil {
 			t.Fatalf("gen: %v", err)
 		}
-		if len(pw) != 8 {
-			t.Fatalf("len = %d, want 8", len(pw))
+		if len(pw) != 6 {
+			t.Fatalf("len = %d, want 6", len(pw))
 		}
 		for _, c := range pw {
-			for _, b := range banned {
-				if c == b {
-					t.Fatalf("ambiguous char %q in %q", c, pw)
-				}
+			if c < '0' || c > '9' {
+				t.Fatalf("non-digit char %q in %q", c, pw)
 			}
 		}
 		seen[pw] = true

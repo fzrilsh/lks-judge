@@ -12,6 +12,8 @@ import (
 // ErrSubmissionNotFound is returned when a submission ID doesn't exist.
 var ErrSubmissionNotFound = errors.New("submission not found")
 
+const submissionCols = `id, participant_id, module_id, name, file_path, submitted_at, created_at, updated_at`
+
 // UpsertSubmission inserts or replaces the submission for a participant+module.
 // It honors UNIQUE(participant_id, module_id): a re-submit updates the row in place.
 // oldPath is the previous file_path (empty when this is the first submission), so the
@@ -44,7 +46,7 @@ func (s *Store) UpsertSubmission(sub *model.Submission) (oldPath string, err err
 // GetSubmissionByID returns one submission. Returns ErrSubmissionNotFound when absent.
 func (s *Store) GetSubmissionByID(id string) (*model.Submission, error) {
 	sub, err := scanSubmission(s.Reader.QueryRow(
-		`SELECT id, participant_id, module_id, name, file_path, submitted_at, created_at, updated_at
+		`SELECT `+submissionCols+`
 		 FROM submissions WHERE id = ?`, id))
 	if err == sql.ErrNoRows {
 		return nil, ErrSubmissionNotFound
@@ -59,7 +61,7 @@ func (s *Store) GetSubmissionByID(id string) (*model.Submission, error) {
 // ErrSubmissionNotFound. Used by the dashboard to show what was already submitted.
 func (s *Store) GetSubmissionForParticipant(participantID, moduleID int64) (*model.Submission, error) {
 	sub, err := scanSubmission(s.Reader.QueryRow(
-		`SELECT id, participant_id, module_id, name, file_path, submitted_at, created_at, updated_at
+		`SELECT `+submissionCols+`
 		 FROM submissions WHERE participant_id = ? AND module_id = ?`, participantID, moduleID))
 	if err == sql.ErrNoRows {
 		return nil, ErrSubmissionNotFound

@@ -23,9 +23,10 @@ func scanParticipant(row interface {
 	var p model.Participant
 	var pcNumber sql.NullInt64
 	var ipAddress sql.NullString
+	var plainPassword sql.NullString
 	err := row.Scan(
 		&p.ID, &p.CompetitionID, &p.Name, &p.School,
-		&pcNumber, &p.Password, &ipAddress,
+		&pcNumber, &p.Password, &plainPassword, &ipAddress,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
@@ -35,16 +36,19 @@ func scanParticipant(row interface {
 		v := int(pcNumber.Int64)
 		p.PCNumber = &v
 	}
+	p.PlainPassword = plainPassword.String
 	if ipAddress.Valid {
 		p.IPAddress = &ipAddress.String
 	}
 	return &p, nil
 }
 
+const participantCols = `id, competition_id, name, school, pc_number, password, plain_password, ip_address, created_at, updated_at`
+
 // GetParticipantByPCNumber queries a participant by pc_number within a competition.
 func (s *Store) GetParticipantByPCNumber(competitionID int64, pcNumber int) (*model.Participant, error) {
 	row := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, school, pc_number, password, ip_address, created_at, updated_at
+		`SELECT `+participantCols+`
 		 FROM participants WHERE competition_id = ? AND pc_number = ?`, competitionID, pcNumber)
 	p, err := scanParticipant(row)
 	if err == sql.ErrNoRows {
@@ -59,7 +63,7 @@ func (s *Store) GetParticipantByPCNumber(competitionID int64, pcNumber int) (*mo
 // GetParticipantByID queries a participant by id.
 func (s *Store) GetParticipantByID(id int64) (*model.Participant, error) {
 	row := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, school, pc_number, password, ip_address, created_at, updated_at
+		`SELECT `+participantCols+`
 		 FROM participants WHERE id = ?`, id)
 	p, err := scanParticipant(row)
 	if err == sql.ErrNoRows {
@@ -74,7 +78,7 @@ func (s *Store) GetParticipantByID(id int64) (*model.Participant, error) {
 // ListParticipants returns all participants for a competition, seated first then unseated by name.
 func (s *Store) ListParticipants(competitionID int64) ([]*model.Participant, error) {
 	rows, err := s.Reader.Query(
-		`SELECT id, competition_id, name, school, pc_number, password, ip_address, created_at, updated_at
+		`SELECT `+participantCols+`
 		 FROM participants WHERE competition_id = ?
 		 ORDER BY pc_number ASC NULLS LAST, name ASC`, competitionID)
 	if err != nil {
@@ -94,12 +98,12 @@ func (s *Store) ListParticipants(competitionID int64) ([]*model.Participant, err
 }
 
 // CreateParticipant inserts a new participant and returns the new ID.
-func (s *Store) CreateParticipant(competitionID int64, name, school string, pcNumber *int, passwordHash string) (int64, error) {
+func (s *Store) CreateParticipant(competitionID int64, name, school string, pcNumber *int, passwordHash, plainPwd string) (int64, error) {
 	now := time.Now().UTC()
 	res, err := s.Writer.Exec(
-		`INSERT INTO participants(competition_id, name, school, pc_number, password, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		competitionID, name, school, pcNumber, passwordHash, now, now,
+		`INSERT INTO participants(competition_id, name, school, pc_number, password, plain_password, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		competitionID, name, school, pcNumber, passwordHash, plainPwd, now, now,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("create participant: %w", err)
@@ -120,9 +124,9 @@ func (s *Store) UpsertParticipantByName(competitionID int64, name, school string
 
 	if err == sql.ErrNoRows {
 		res, err := s.Writer.Exec(
-			`INSERT INTO participants(competition_id, name, school, pc_number, ip_address, password, created_at, updated_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			competitionID, name, school, pcNumber, ipAddress, passwordHash, now, now,
+			`INSERT INTO participants(competition_id, name, school, pc_number, ip_address, password, plain_password, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			competitionID, name, school, pcNumber, ipAddress, passwordHash, plainPwd, now, now,
 		)
 		if err != nil {
 			return 0, "", fmt.Errorf("insert participant: %w", err)

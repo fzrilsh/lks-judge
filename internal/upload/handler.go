@@ -89,6 +89,17 @@ func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "total_chunks and total_size must be positive"})
 			return
 		}
+		if req.TotalSize > MaxUploadSize {
+			writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{"error": "total_size exceeds limit"})
+			return
+		}
+		// Bound chunk count so a manifest cannot exhaust inodes: at least enough
+		// chunks to carry the bytes at the 2 MiB cap, and no more than MaxChunks.
+		// The exact assembled size is verified again at Assemble.
+		if minChunks := int((req.TotalSize + MaxChunkSize - 1) / MaxChunkSize); req.TotalChunks < minChunks || req.TotalChunks > MaxChunks {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "total_chunks out of range for total_size"})
+			return
+		}
 		if req.UploadType != "file" && req.UploadType != "submission" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "upload_type must be file or submission"})
 			return
@@ -228,7 +239,7 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 			return
 		}
 		dst := filepath.Join(dataDir, "files", strconv.FormatInt(sess.CompetitionID, 10), id+"-"+sess.Filename)
-		if err := Assemble(dataDir, sess.ID, sess.TotalChunks, dst); err != nil {
+		if err := Assemble(dataDir, sess.ID, sess.TotalChunks, sess.TotalSize, dst); err != nil {
 			log.Printf("assemble: %v", err)
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
 			return

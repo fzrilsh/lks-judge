@@ -51,13 +51,16 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 
 	// parse header
 	header := rows[0]
-	fixed := map[string]int{"no_pc": -1, "ip_address": -1, "member": -1, "name": -1}
+	// password is a fixed column so a re-imported export file does not treat
+	// "PASSWORD" as a module; the space->underscore normalize makes the
+	// uppercase export header ("NO PC") round-trip to the "no_pc" key.
+	fixed := map[string]int{"no_pc": -1, "ip_address": -1, "member": -1, "name": -1, "password": -1}
 	var moduleCols []struct {
 		idx  int
 		name string
 	}
 	for i, h := range header {
-		key := strings.ToLower(strings.TrimSpace(h))
+		key := strings.ReplaceAll(strings.ToLower(strings.TrimSpace(h)), " ", "_")
 		if _, ok := fixed[key]; ok {
 			fixed[key] = i
 		} else if key != "" {

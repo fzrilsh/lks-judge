@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
@@ -15,6 +16,40 @@ import (
 type contextKey string
 
 const participantCtxKey contextKey = "participant"
+
+// CSRFProtect rejects state-changing requests (anything but GET/HEAD/OPTIONS)
+// whose Origin or Referer host does not match the request host. Jury auth is
+// IP-only with no token, so without this a page on the jury's machine could
+// silently POST to /jury/*. A request with neither header is rejected.
+func CSRFProtect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+			next.ServeHTTP(w, r)
+			return
+		}
+		if !originMatchesHost(r) {
+			http.Error(w, "403 Forbidden: cross-origin request rejected", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// originMatchesHost checks the Origin header first, then Referer, against r.Host.
+func originMatchesHost(r *http.Request) bool {
+	for _, h := range []string{r.Header.Get("Origin"), r.Header.Get("Referer")} {
+		if h == "" {
+			continue
+		}
+		u, err := url.Parse(h)
+		if err != nil {
+			return false
+		}
+		return u.Host == r.Host
+	}
+	return false // no Origin and no Referer on a state-changing request
+}
 
 // RequireParticipant validates session cookie and injects participant into context.
 // Redirects to /login if invalid.
@@ -42,33 +77,48 @@ func RequireParticipant(st *store.Store) func(http.Handler) http.Handler {
 
 // juryAllowed reports whether the request comes from an allowlisted jury IP.
 // The list is read from the competition state cache; it falls back to loopback
-// when no competition is configured yet.
+// when no competition is configured yet. Entries may be plain IPs (v4 or v6,
+// matched by value so IPv4-mapped IPv6 normalizes) or CIDR ranges.
 func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		ip = r.RemoteAddr // no port
+		host = r.RemoteAddr // no port
 	}
+	remote := net.ParseIP(host)
 
 	allowlist := []string{"127.0.0.1", "::1"} // fallback
 
 	if c := st.CompetitionCache.Load(); c != nil && c.AllowedIPs != "" && c.AllowedIPs != "[]" {
 		var ips []string
-		if jsonErr := json.Unmarshal([]byte(c.AllowedIPs), &ips); jsonErr == nil && len(ips) > 0 {
+		if jsonErr := json.Unmarshal([]byte(c.AllowedIPs), &ips); jsonErr != nil {
+			log.Printf("jury allowlist: malformed allowed_ips, using loopback fallback: %v", jsonErr)
+		} else if len(ips) > 0 {
 			allowlist = ips
 		}
 	}
 
 	for _, a := range allowlist {
-		if ip == a {
-			return ip, true
+		if _, cidr, err := net.ParseCIDR(a); err == nil {
+			if remote != nil && cidr.Contains(remote) {
+				return host, true
+			}
+			continue
+		}
+		if allowed := net.ParseIP(a); allowed != nil && remote != nil {
+			if allowed.Equal(remote) {
+				return host, true
+			}
+			continue
+		}
+		if host == a { // last resort exact match
+			return host, true
 		}
 	}
-	return ip, false
+	return host, false
 }
 
 // RequireJury reads AllowedIPs from competition state cache.
 // Falls back to ["127.0.0.1","::1"] if no competition configured yet.
-// ponytail: no IP format validation; add when jury input errors are wired
 func RequireJury(st *store.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

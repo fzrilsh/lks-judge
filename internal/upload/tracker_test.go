@@ -34,7 +34,7 @@ func TestAssembleRoundtrip(t *testing.T) {
 	}
 
 	dst := filepath.Join(dir, "files", "1", "out.bin")
-	if err := Assemble(dir, "u1", 5, dst); err != nil {
+	if err := Assemble(dir, "u1", 5, int64(want.Len()), dst); err != nil {
 		t.Fatalf("assemble: %v", err)
 	}
 
@@ -67,7 +67,7 @@ func TestAssembleMissingChunk(t *testing.T) {
 	}
 
 	dst := filepath.Join(dir, "out.bin")
-	if err := Assemble(dir, "u1", 3, dst); err == nil {
+	if err := Assemble(dir, "u1", 3, 2, dst); err == nil {
 		t.Fatal("want error assembling with a hole")
 	}
 	if _, err := os.Stat(dst); !os.IsNotExist(err) {
@@ -89,6 +89,20 @@ func TestWriteChunkRejectsOversize(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Fatalf("oversize chunk was staged anyway: %v", got)
+	}
+}
+
+func TestAssembleSizeMismatch(t *testing.T) {
+	dir := t.TempDir()
+	if err := WriteChunk(dir, "u1", 0, bytes.NewReader([]byte("hello"))); err != nil {
+		t.Fatalf("write chunk: %v", err)
+	}
+	dst := filepath.Join(dir, "out.bin")
+	if err := Assemble(dir, "u1", 1, 99, dst); err == nil {
+		t.Fatal("want error on size mismatch")
+	}
+	if _, err := os.Stat(dst); !os.IsNotExist(err) {
+		t.Fatal("size-mismatch assemble left a destination file behind")
 	}
 }
 

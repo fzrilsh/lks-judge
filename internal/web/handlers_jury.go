@@ -1,13 +1,36 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web/templates"
 )
+
+// validateAllowedIPs parses the JSON allowlist and rejects any entry that is
+// not a valid IP or CIDR, so a typo cannot silently lock the jury out (a
+// malformed list falls back to loopback at request time).
+func validateAllowedIPs(raw string) error {
+	var ips []string
+	if err := json.Unmarshal([]byte(raw), &ips); err != nil {
+		return fmt.Errorf("allowed_ips must be a JSON array: %w", err)
+	}
+	for _, s := range ips {
+		if net.ParseIP(s) != nil {
+			continue
+		}
+		if _, _, err := net.ParseCIDR(s); err == nil {
+			continue
+		}
+		return fmt.Errorf("invalid IP or CIDR: %q", s)
+	}
+	return nil
+}
 
 func HandleJuryGET(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +58,11 @@ func HandleJuryPOST(st *store.Store) http.HandlerFunc {
 		allowedIPs := r.FormValue("allowed_ips")
 		if allowedIPs == "" {
 			allowedIPs = "[]"
+		}
+		if err := validateAllowedIPs(allowedIPs); err != nil {
+			log.Printf("reject allowed_ips: %v", err)
+			http.Error(w, "bad request: "+err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		c := &model.Competition{

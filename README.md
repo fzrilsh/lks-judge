@@ -83,6 +83,8 @@ participant session:
 | ----- | ------- |
 | `GET /countdown` | Full-screen countdown for a projector; plays an alert at zero |
 | `GET /countdown/time` | `{"seconds":N,"status":"..."}`, polled once a second |
+| `GET /ws` | WebSocket; anonymous clients get a reduced event set (countdown + score only) |
+| `GET /healthz` | Liveness check |
 
 ## Layout
 

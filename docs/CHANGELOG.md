@@ -1,4 +1,55 @@
-# LKS Judge Platform — Go Rebuild Changelog
+# LKS Judge Platform: Go Rebuild Changelog
+
+## Test & Review Pass (2026-08-05) ✅
+
+**Status:** Complete. Regression tests for the remediation changes plus test files for previously untested features. No new features. Fixes 2 defects found during review.
+
+### Fixed
+- `internal/excel/excel.go`: import header key now normalizes whitespace (`strings.ReplaceAll(..., " ", "_")`) and `password` is in the `fixed` map. Before, the exported header `NO PC` became `no pc` (never `no_pc`) and `PASSWORD` was absent from `fixed`, so both landed in `moduleCols`. Re-importing an exported file minted phantom `NO PC` / `PASSWORD` modules and, because every row's `pcNumber` was nil, the update branch nulled `pc_number` for all participants (seating-plan data loss). Import still always mints fresh passwords; the column is consumed and ignored.
+- `internal/store/session.go`: deleted the private `getParticipantByID`, whose SELECT omitted `plain_password`, so participants loaded through the session cache carried `PlainPassword == ""`. Both call sites use the exported `GetParticipantByID`. Net removal; column drift now structurally impossible.
+- `internal/store/db.go`, `internal/store/migrations/002_plain_password.sql`: `plain_password` was added inside 001's `CREATE TABLE IF NOT EXISTS`, so databases created before it never gained the column and every `participantCols` query failed `no such column`. Added an idempotent `002` (`ALTER TABLE ADD COLUMN`) run only when `pragma_table_info` shows the column absent (SQLite ALTER has no IF NOT EXISTS).
+
+### Tests Added
+- `internal/web/middleware_test.go`, `internal/web/handlers_auth_test.go`: CSRF origin check, jury IP allowlist matching (/32, /24, IPv6, no-port, malformed, empty=loopback), allowlist reload on competition upsert, participant/uploader middleware, and the full login/logout flow (cookie attrs incl. no `Secure` flag, IP recording, bad-credential rejection, 5-attempt lockout).
+- `internal/store/participant_test.go`, `internal/store/session_test.go`, `internal/store/migration_test.go`: `plain_password` roundtrip and null-scan, upsert insert-then-update, IP-update cache eviction, seat shuffle, session cache hit + DB fallback, session participant carries plain password (fences the `getParticipantByID` fix), and the 002 upgrade on an old-schema DB.
+- `internal/excel/excel_test.go`: import creates participants + modules (blank rows skipped), missing-name error writes nothing, second run returns empty passwords, export header/row shape, export-then-import preserves seats (fences the header fix), random password alphabet/length.
+- `internal/backup/backup_test.go`: `RunOnce` writes a readable snapshot; `pruneBackups` keeps the 12 newest of 15.
+- `internal/upload/handler_test.go`: `HandleCompletePOST` invokes the injected `onComplete` with the persisted file.
+
+### Reviewed, Not Changed
+- Backup filenames are second-granular: a shutdown backup colliding with a tick backup in the same second is logged, not fixed here.
+- `internal/backup/backup.go`: the `VACUUM INTO` destination is interpolated via `fmt.Sprintf` (the operator's `-data` flag reaches SQL unquoted). Trusted-operator input; noted for a later pass.
+- `templates/participant_dashboard.templ`: `*p.PCNumber` dereferenced without a nil guard. Noted, not touched this branch.
+- Intentional behavior dropped earlier: non-IP allowlist entries no longer match as string literals, and an unparseable `RemoteAddr` is rejected outright.
+
+### Verification
+- ✅ gofmt, `go vet ./...`, `go build ./...`, `go test ./...`: clean
+- ✅ `go test -race` on `store`, `web`, `upload` (shared global cache state): clean
+- ✅ Coverage: excel 85.6%, store 72.5%, backup 56.5%, web 22.7% (render paths intentionally untested)
+
+---
+
+## Security & Spec Remediation (2026-08-05) ✅
+
+**Status:** Complete. Review pass for performance, security, efficiency, and spec compliance. No new features.
+
+### Implemented
+- `internal/store/competition.go`, `internal/store/db.go`, `internal/web/middleware.go`: jury allowlist now parsed once per competition write into a cached `[]net.IPNet` (`allowedNets atomic.Pointer`), read via `AllowedNets()`. Removes the per-request JSON decode + IP parse from every `/jury/*` and `/upload/*` request. Empty set falls back to loopback only. Single IPs get a full-length mask (/32 or /128); malformed entries are logged and skipped.
+- `internal/upload/handler.go`: `HandleCompletePOST` no longer imports `realtime`. It takes an `onComplete func(*model.File)` callback injected by `main`, restoring the spec §11 rule that `upload` depends on `model` and `store` only. Verified with `go list -deps`.
+- `internal/store/participant.go`, `internal/store/migrations/001_initial.sql`, `internal/model/types.go`, `internal/excel/excel.go`: plaintext password persisted in `plain_password` (spec §5, §7). Threaded through `CreateParticipant`, `UpsertParticipantByName`, and `scanParticipant`; Excel export emits a `PASSWORD` column (order: NO PC, IP_ADDRESS, MEMBER, NAME, PASSWORD, modules). Internal LAN tradeoff, documented on the model field.
+- `internal/web/handlers_auth.go`, `internal/store/participant.go`: participant `ip_address` recorded on successful login via `UpdateParticipantIP` (spec §5). Best-effort: a write failure is logged, login still succeeds.
+
+### Spec Compliance
+- ✅ `upload` imports `model, store` only; graph acyclic again (spec §11)
+- ✅ `plain_password` column and export column present (spec §5, §7)
+- ✅ `ip_address` populated at login (spec §5)
+- ✅ `go build ./...`, `go vet ./...`, `go test ./...`, gofmt + golangci-lint: zero errors
+
+### Deviations
+- Cookie is `HttpOnly` + `SameSite=Strict`, no `Secure` flag: the server runs plain HTTP on a closed LAN (confirmed with the user).
+- Historical phase entries below still use em dashes in prose. Left as-is to avoid churning committed history; the em dash rule applies to new writing.
+
+---
 
 ## Phase 10 — Submissions (2026-08-04) ✅
 

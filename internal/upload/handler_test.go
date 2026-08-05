@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
-	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 )
 
@@ -44,15 +43,13 @@ func nowMinus1m() time.Time { return time.Now().UTC().Add(-time.Minute) }
 
 func TestUploadEndToEndFile(t *testing.T) {
 	st, _, dir := newTestStore(t)
-	hub := realtime.NewHub()
-	go hub.Run(t.Context())
 
 	// init
 	body, _ := json.Marshal(initRequest{
 		Filename: "brief.pdf", TotalChunks: 3, TotalSize: 30, UploadType: "file",
 	})
 	rec := httptest.NewRecorder()
-	HandleInitPOST(st, dir)(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -95,7 +92,7 @@ func TestUploadEndToEndFile(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
 	req.SetPathValue("id", uid)
-	HandleCompletePOST(st, dir, hub)(rec, req)
+	HandleCompletePOST(st, dir, func() bool { return true }, nil)(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -155,8 +152,6 @@ func runningStore(t *testing.T, left time.Duration) (*store.Store, int64, string
 
 func TestCompleteSubmissionSuccess(t *testing.T) {
 	st, compID, dir := runningStore(t, 10*time.Minute) // inside the 1200s window
-	hub := realtime.NewHub()
-	go hub.Run(t.Context())
 
 	modID, err := st.UpsertModuleByName(compID, "MA")
 	if err != nil {
@@ -184,7 +179,7 @@ func TestCompleteSubmissionSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/x", nil).WithContext(
 		WithUploader(context.Background(), Uploader{ID: pid, Role: "participant"}))
 	req.SetPathValue("id", "sub1")
-	HandleCompletePOST(st, dir, hub)(rec, req)
+	HandleCompletePOST(st, dir, func() bool { return true }, nil)(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("submission complete: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -213,8 +208,6 @@ func TestCompleteSubmissionSuccess(t *testing.T) {
 
 func TestCompleteSubmissionFormClosed(t *testing.T) {
 	st, compID, dir := newTestStore(t) // "waiting" competition => form closed
-	hub := realtime.NewHub()
-	go hub.Run(t.Context())
 
 	modID, err := st.UpsertModuleByName(compID, "MA")
 	if err != nil {
@@ -241,7 +234,7 @@ func TestCompleteSubmissionFormClosed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/x", nil).WithContext(
 		WithUploader(context.Background(), Uploader{ID: pid, Role: "participant"}))
 	req.SetPathValue("id", "sub1")
-	HandleCompletePOST(st, dir, hub)(rec, req)
+	HandleCompletePOST(st, dir, func() bool { return false }, nil)(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("submission complete with form closed: want 403, got %d: %s", rec.Code, rec.Body)
 	}
@@ -249,6 +242,7 @@ func TestCompleteSubmissionFormClosed(t *testing.T) {
 
 func TestChunkExpiredSession(t *testing.T) {
 	st, compID, dir := newTestStore(t)
+
 	sess := &model.UploadSession{
 		ID: "old1", UploaderID: 0, UploaderRole: "jury", CompetitionID: compID,
 		Filename: "f", TotalChunks: 1, TotalSize: 1, UploadType: "file",
@@ -265,5 +259,64 @@ func TestChunkExpiredSession(t *testing.T) {
 	HandleChunkPUT(st, dir)(rec, req)
 	if rec.Code != http.StatusGone {
 		t.Fatalf("expired chunk: want 410, got %d: %s", rec.Code, rec.Body)
+	}
+}
+
+// TestCompleteInvokesOnComplete proves the onComplete callback fires with a
+// persisted *model.File whose ID matches the JSON file_id.
+func TestCompleteInvokesOnComplete(t *testing.T) {
+	st, _, dir := newTestStore(t)
+
+	body, _ := json.Marshal(initRequest{
+		Filename: "brief.pdf", TotalChunks: 1, TotalSize: 3, UploadType: "file",
+	})
+	rec := httptest.NewRecorder()
+	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	var initResp struct {
+		UploadID string `json:"upload_id"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &initResp); err != nil {
+		t.Fatalf("decode init: %v", err)
+	}
+	uid := initResp.UploadID
+
+	rec = httptest.NewRecorder()
+	req := juryReq(httptest.NewRequest(http.MethodPut, "/x", bytes.NewReader([]byte("abc"))))
+	req.SetPathValue("id", uid)
+	req.SetPathValue("n", "0")
+	HandleChunkPUT(st, dir)(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("chunk: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+
+	var got *model.File
+	onComplete := func(f *model.File) {
+		got = f
+		// file must be persisted by the time the callback fires
+		if _, err := st.GetFileByID(f.ID); err != nil {
+			t.Errorf("file not persisted when callback fired: %v", err)
+		}
+	}
+
+	rec = httptest.NewRecorder()
+	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
+	req.SetPathValue("id", uid)
+	HandleCompletePOST(st, dir, func() bool { return true }, onComplete)(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	if got == nil {
+		t.Fatal("onComplete not invoked")
+	}
+
+	var comp struct {
+		FileID string `json:"file_id"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &comp)
+	if got.ID != comp.FileID {
+		t.Fatalf("callback file ID %q != json file_id %q", got.ID, comp.FileID)
 	}
 }

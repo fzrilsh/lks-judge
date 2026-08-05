@@ -11,6 +11,7 @@ import (
 
 // ShuffleResult is one assigned seat from a shuffle run.
 type ShuffleResult struct {
+	ID     int64
 	Seat   int
 	Name   string
 	School string
@@ -44,11 +45,13 @@ func scanParticipant(row interface {
 	return &p, nil
 }
 
-// GetParticipantByPCNumber queries a participant by pc_number.
-func (s *Store) GetParticipantByPCNumber(pcNumber int) (*model.Participant, error) {
+const participantCols = `id, competition_id, name, school, pc_number, password, plain_password, ip_address, created_at, updated_at`
+
+// GetParticipantByPCNumber queries a participant by pc_number within a competition.
+func (s *Store) GetParticipantByPCNumber(competitionID int64, pcNumber int) (*model.Participant, error) {
 	row := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, school, pc_number, password, plain_password, ip_address, created_at, updated_at
-		 FROM participants WHERE pc_number = ?`, pcNumber)
+		`SELECT `+participantCols+`
+		 FROM participants WHERE competition_id = ? AND pc_number = ?`, competitionID, pcNumber)
 	p, err := scanParticipant(row)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("participant not found")
@@ -62,7 +65,7 @@ func (s *Store) GetParticipantByPCNumber(pcNumber int) (*model.Participant, erro
 // GetParticipantByID queries a participant by id.
 func (s *Store) GetParticipantByID(id int64) (*model.Participant, error) {
 	row := s.Reader.QueryRow(
-		`SELECT id, competition_id, name, school, pc_number, password, plain_password, ip_address, created_at, updated_at
+		`SELECT `+participantCols+`
 		 FROM participants WHERE id = ?`, id)
 	p, err := scanParticipant(row)
 	if err == sql.ErrNoRows {
@@ -77,7 +80,7 @@ func (s *Store) GetParticipantByID(id int64) (*model.Participant, error) {
 // ListParticipants returns all participants for a competition, seated first then unseated by name.
 func (s *Store) ListParticipants(competitionID int64) ([]*model.Participant, error) {
 	rows, err := s.Reader.Query(
-		`SELECT id, competition_id, name, school, pc_number, password, plain_password, ip_address, created_at, updated_at
+		`SELECT `+participantCols+`
 		 FROM participants WHERE competition_id = ?
 		 ORDER BY pc_number ASC NULLS LAST, name ASC`, competitionID)
 	if err != nil {
@@ -144,7 +147,21 @@ func (s *Store) UpsertParticipantByName(competitionID int64, name, school string
 	if err != nil {
 		return 0, "", fmt.Errorf("update participant: %w", err)
 	}
+	invalidateParticipant(id)
 	return id, "", nil // password unchanged on update
+}
+
+// UpdateParticipantIP records the client IP on login (spec §5).
+func (s *Store) UpdateParticipantIP(id int64, ip string) error {
+	_, err := s.Writer.Exec(
+		`UPDATE participants SET ip_address=?, updated_at=? WHERE id=?`,
+		ip, time.Now().UTC(), id,
+	)
+	if err != nil {
+		return fmt.Errorf("update participant ip: %w", err)
+	}
+	invalidateParticipant(id)
+	return nil
 }
 
 // DeleteParticipant removes a participant by ID.
@@ -153,19 +170,7 @@ func (s *Store) DeleteParticipant(id int64) error {
 	if err != nil {
 		return fmt.Errorf("delete participant: %w", err)
 	}
-	return nil
-}
-
-// RecordParticipantIP stores the client IP seen at login. Deviation from spec:
-// spec sources IP only from the Excel import column.
-func (s *Store) RecordParticipantIP(id int64, ip string) error {
-	_, err := s.Writer.Exec(
-		`UPDATE participants SET ip_address = ?, updated_at = ? WHERE id = ?`,
-		ip, time.Now().UTC(), id,
-	)
-	if err != nil {
-		return fmt.Errorf("record participant ip: %w", err)
-	}
+	invalidateParticipant(id)
 	return nil
 }
 
@@ -180,14 +185,22 @@ func (s *Store) UpdateParticipantSeats(assignments []ShuffleResult) error {
 	now := time.Now().UTC()
 	for _, a := range assignments {
 		_, err = tx.Exec(
-			`UPDATE participants SET pc_number = ?, updated_at = ? WHERE name = ?`,
-			a.Seat, now, a.Name,
+			`UPDATE participants SET pc_number = ?, updated_at = ? WHERE id = ?`,
+			a.Seat, now, a.ID,
 		)
 		if err != nil {
-			return fmt.Errorf("shuffle seats: update %s: %w", a.Name, err)
+			return fmt.Errorf("shuffle seats: update id=%d: %w", a.ID, err)
 		}
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	ids := make([]int64, len(assignments))
+	for i, a := range assignments {
+		ids[i] = a.ID
+	}
+	invalidateParticipant(ids...)
+	return nil
 }
 
 // ShuffleSeats assigns seats 1..N to all participants in random order.
@@ -200,7 +213,7 @@ func ShuffleSeats(participants []*model.Participant) []ShuffleResult {
 	rand.Shuffle(len(seats), func(i, j int) { seats[i], seats[j] = seats[j], seats[i] })
 	results := make([]ShuffleResult, len(participants))
 	for i, p := range participants {
-		results[i] = ShuffleResult{Seat: seats[i], Name: p.Name, School: p.School}
+		results[i] = ShuffleResult{ID: p.ID, Seat: seats[i], Name: p.Name, School: p.School}
 	}
 	return results
 }

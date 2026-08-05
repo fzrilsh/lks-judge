@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
-	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 )
 
@@ -61,21 +60,11 @@ type initRequest struct {
 	ModuleID    *int64 `json:"module_id"`
 }
 
-// submissionFormOpen reports whether participants may submit right now: the
-// competition must be running and inside the last FormOpenSeconds (spec §7/§9).
-// Enforced server-side so the dashboard overlay isn't the only gate.
-func submissionFormOpen(st *store.Store) bool {
-	c := st.CompetitionCache.Load()
-	if c == nil || c.Status != "running" {
-		return false
-	}
-	seconds, _ := realtime.TimeLeft(c, time.Now())
-	return seconds > 0 && seconds <= realtime.FormOpenSeconds
-}
-
 // HandleInitPOST validates the manifest, inserts an upload_sessions row with a
-// 2-hour expiry, and returns {"upload_id": ...}.
-func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
+// 2-hour expiry, and returns {"upload_id": ...}. formOpen reports whether the
+// submission window is currently open; main injects it so upload need not import
+// realtime (spec §11 package graph: upload depends on model+store only).
+func HandleInitPOST(st *store.Store, _ string, formOpen func() bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, ok := UploaderFrom(r.Context())
 		if !ok {
@@ -102,6 +91,17 @@ func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "total_chunks and total_size must be positive"})
 			return
 		}
+		if req.TotalSize > MaxUploadSize {
+			writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{"error": "total_size exceeds limit"})
+			return
+		}
+		// Bound chunk count so a manifest cannot exhaust inodes: at least enough
+		// chunks to carry the bytes at the 2 MiB cap, and no more than MaxChunks.
+		// The exact assembled size is verified again at Assemble.
+		if minChunks := int((req.TotalSize + MaxChunkSize - 1) / MaxChunkSize); req.TotalChunks < minChunks || req.TotalChunks > MaxChunks {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "total_chunks out of range for total_size"})
+			return
+		}
 		if req.UploadType != "file" && req.UploadType != "submission" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "upload_type must be file or submission"})
 			return
@@ -116,7 +116,7 @@ func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "module_id required for submission"})
 				return
 			}
-			if !submissionFormOpen(st) {
+			if !formOpen() {
 				writeJSON(w, http.StatusForbidden, map[string]string{"error": "submission form is closed"})
 				return
 			}
@@ -221,7 +221,10 @@ func HandleStatusGET(st *store.Store, dataDir string) http.HandlerFunc {
 
 // HandleCompletePOST assembles the file and records it. Submissions land under
 // data/submissions/{participant_id}/{module_id}/; jury files under data/files/.
-func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http.HandlerFunc {
+// formOpen re-checks the submission window; onComplete fires after a jury file
+// record is created, letting main wire in the WS broadcast without upload
+// importing realtime (spec §11 package graph: upload depends on model+store only).
+func HandleCompletePOST(st *store.Store, dataDir string, formOpen func() bool, onComplete func(*model.File)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := session(w, r, st)
 		if !ok {
@@ -240,7 +243,7 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 
 		if sess.UploadType == "submission" {
 			// Re-check the window: init may have passed, then time ran out before complete.
-			if !submissionFormOpen(st) {
+			if !formOpen() {
 				writeJSON(w, http.StatusForbidden, map[string]string{"error": "submission form is closed"})
 				return
 			}
@@ -258,7 +261,7 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 				strconv.FormatInt(sess.UploaderID, 10),
 				strconv.FormatInt(*sess.ModuleID, 10),
 				id+"-"+sess.Filename)
-			if err := Assemble(dataDir, sess.ID, sess.TotalChunks, dst); err != nil {
+			if err := Assemble(dataDir, sess.ID, sess.TotalChunks, sess.TotalSize, dst); err != nil {
 				log.Printf("assemble submission: %v", err)
 				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
 				return
@@ -293,7 +296,7 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 			return
 		}
 		dst := filepath.Join(dataDir, "files", strconv.FormatInt(sess.CompetitionID, 10), id+"-"+sess.Filename)
-		if err := Assemble(dataDir, sess.ID, sess.TotalChunks, dst); err != nil {
+		if err := Assemble(dataDir, sess.ID, sess.TotalChunks, sess.TotalSize, dst); err != nil {
 			log.Printf("assemble: %v", err)
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
 			return
@@ -309,9 +312,9 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 			log.Printf("delete upload session: %v", err)
 		}
 
-		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
-			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
-		})
+		if onComplete != nil {
+			onComplete(f)
+		}
 		writeJSON(w, http.StatusOK, map[string]string{"file_id": f.ID})
 	}
 }

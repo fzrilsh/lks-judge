@@ -15,6 +15,14 @@ func hashPw(t *testing.T, pw string) string {
 	return string(h)
 }
 
+// plainPw derefs the *string plain password, returning "" for nil.
+func plainPw(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
 func TestCreateParticipantRoundtripsPlainPassword(t *testing.T) {
 	s, compID := newTestStore(t)
 	pc := 3
@@ -35,10 +43,10 @@ func TestCreateParticipantRoundtripsPlainPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
-	if byID.PlainPassword != "pw12345" || byPC.PlainPassword != "pw12345" {
-		t.Fatalf("plain password lost: byID=%q byPC=%q", byID.PlainPassword, byPC.PlainPassword)
+	if plainPw(byID.PlainPassword) != "pw12345" || plainPw(byPC.PlainPassword) != "pw12345" {
+		t.Fatalf("plain password lost: byID=%q byPC=%q", plainPw(byID.PlainPassword), plainPw(byPC.PlainPassword))
 	}
-	if len(list) != 1 || list[0].PlainPassword != "pw12345" {
+	if len(list) != 1 || plainPw(list[0].PlainPassword) != "pw12345" {
 		t.Fatalf("list plain password lost: %+v", list)
 	}
 }
@@ -55,7 +63,7 @@ func TestScanParticipantNullPlainPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
-	if len(list) != 1 || list[0].PlainPassword != "" {
+	if len(list) != 1 || plainPw(list[0].PlainPassword) != "" {
 		t.Fatalf("want empty plain password, got %+v", list)
 	}
 }
@@ -94,8 +102,8 @@ func TestUpsertParticipantByNameInsertThenUpdate(t *testing.T) {
 	if got.IPAddress == nil || *got.IPAddress != "10.0.0.9" {
 		t.Fatalf("ip not updated: %v", got.IPAddress)
 	}
-	if got.PlainPassword != "first" {
-		t.Fatalf("plain password should survive update, got %q", got.PlainPassword)
+	if plainPw(got.PlainPassword) != "first" {
+		t.Fatalf("plain password should survive update, got %q", plainPw(got.PlainPassword))
 	}
 	list, _ := s.ListParticipants(compID)
 	if len(list) != 1 {

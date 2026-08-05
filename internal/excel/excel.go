@@ -221,7 +221,11 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 		if p.IPAddress != nil {
 			ipStr = *p.IPAddress
 		}
-		vals := []string{pcStr, ipStr, p.School, p.Name, p.PlainPassword}
+		pwStr := ""
+		if p.PlainPassword != nil {
+			pwStr = *p.PlainPassword
+		}
+		vals := []string{pcStr, ipStr, p.School, p.Name, pwStr}
 
 		_ = modules // module scores not fetched here — ponytail: add score join when Phase 11 adds score queries
 		for _, m := range modules {

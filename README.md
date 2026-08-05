@@ -7,10 +7,10 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-Phases 1-9 are done: setup, participants, modules, the competition
-countdown, the WebSocket hub that pushes live events, and chunked resumable
-file upload with jury file management. Scoring and the leaderboard are not
-built yet.
+Phases 1-10 are done: setup, participants, modules, the competition
+countdown, the WebSocket hub that pushes live events, chunked resumable
+file upload with jury file management, and participant submissions with the
+jury review matrix. Scoring and the leaderboard are not built yet.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -23,7 +23,8 @@ built yet.
 | 7 | Countdown: jury control, public display, polling endpoint | done |
 | 8 | WebSocket hub: `GET /ws`, live countdown and module events | done |
 | 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
-| 10 | Scoring + leaderboard | not started |
+| 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
+| 11 | Scoring + leaderboard | not started |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -71,8 +72,12 @@ competition with `--dev`.**
 
 There are no environment variables, all configuration is flags.
 
-These routes need no session; everything else sits behind the jury IP allowlist
-or a participant session:
+Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/`
+(participant work, laid out `submissions/{participant_id}/{module_id}/`), and
+`uploads_tmp/` (in-flight chunks) alongside `lks.sqlite`.
+
+Two routes are public, everything else is behind the jury IP allowlist or a
+participant session:
 
 | Route | Purpose |
 | ----- | ------- |

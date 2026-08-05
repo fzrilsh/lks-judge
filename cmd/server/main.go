@@ -110,7 +110,7 @@ func main() {
 	mux.HandleFunc("POST /logout", web.HandleLogoutPOST(st))
 
 	// protected participant routes
-	mux.Handle("GET /", web.RequireParticipant(st)(http.HandlerFunc(web.HandleDashboard)))
+	mux.Handle("GET /", web.RequireParticipant(st)(web.HandleDashboard(st)))
 
 	// public countdown display (projector) and the shared polling endpoint
 	mux.Handle("GET /countdown", web.HandleCountdownPublicGET(st))
@@ -142,7 +142,7 @@ func main() {
 	mux.Handle("POST /jury/modules/generate", juryMw(web.HandleModulesGeneratePOST(st)))
 	mux.Handle("POST /jury/modules/set-current", juryMw(web.HandleModulesSetCurrentPOST(st, hub)))
 	mux.Handle("POST /jury/modules/{id}/rename", juryMw(web.HandleModuleRenamePOST(st)))
-	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st)))
+	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st, hub)))
 
 	// jury countdown routes
 	mux.Handle("GET /jury/countdown", juryMw(web.HandleCountdownJuryGET(st)))
@@ -153,10 +153,20 @@ func main() {
 
 	// chunked upload routes: participant session or allowlisted jury IP
 	upMw := web.RequireUploader(st)
-	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir)))
+	// submissionOpen re-derives the submission window from the competition cache.
+	// Injected so upload need not import realtime (spec §11 package graph).
+	submissionOpen := func() bool {
+		c := st.CompetitionCache.Load()
+		if c == nil || c.Status != "running" {
+			return false
+		}
+		seconds, _ := realtime.TimeLeft(c, time.Now())
+		return seconds > 0 && seconds <= realtime.FormOpenSeconds
+	}
+	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir, submissionOpen)))
 	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))
 	mux.Handle("GET /upload/{id}/status", upMw(upload.HandleStatusGET(st, *dataDir)))
-	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, func(f *model.File) {
+	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, submissionOpen, func(f *model.File) {
 		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
 			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
 		})
@@ -168,7 +178,12 @@ func main() {
 	// jury file management
 	mux.Handle("GET /jury/files", juryMw(web.HandleFilesGET(st)))
 	mux.Handle("POST /jury/files/{id}/toggle", juryMw(web.HandleFileTogglePOST(st, hub)))
-	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir)))
+	mux.Handle("POST /jury/files/{id}/delete", juryMw(web.HandleFileDeletePOST(st, *dataDir, hub)))
+
+	// jury submissions matrix: per-cell download plus bulk ZIP export
+	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))
+	mux.Handle("GET /jury/submissions/export.zip", juryMw(web.HandleSubmissionsExportZipGET(st)))
+	mux.Handle("GET /jury/submissions/{id}/download", juryMw(web.HandleSubmissionDownloadGET(st)))
 
 	// healthz
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

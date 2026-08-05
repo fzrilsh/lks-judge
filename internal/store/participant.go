@@ -23,10 +23,10 @@ func scanParticipant(row interface {
 	var p model.Participant
 	var pcNumber sql.NullInt64
 	var ipAddress sql.NullString
-	var plainPassword sql.NullString
+	var plainPwd sql.NullString
 	err := row.Scan(
 		&p.ID, &p.CompetitionID, &p.Name, &p.School,
-		&pcNumber, &p.Password, &plainPassword, &ipAddress,
+		&pcNumber, &p.Password, &plainPwd, &ipAddress,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
@@ -36,7 +36,9 @@ func scanParticipant(row interface {
 		v := int(pcNumber.Int64)
 		p.PCNumber = &v
 	}
-	p.PlainPassword = plainPassword.String
+	if plainPwd.Valid {
+		p.PlainPassword = &plainPwd.String
+	}
 	if ipAddress.Valid {
 		p.IPAddress = &ipAddress.String
 	}

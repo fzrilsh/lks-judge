@@ -43,10 +43,29 @@ func TimeLeft(c *model.Competition, now time.Time) (seconds int, transitionTo st
 		return 0, ""
 
 	case "waiting", "running":
-		start, okStart := At(c.StartDate, c.StartTime)
-		end, okEnd := At(c.EndDate, c.EndTime)
+		// Times are anchored to the current day, not the stored dates: a LAN
+		// competition runs on whatever day the jury starts it. The stored
+		// start_date/end_date are kept for the record only.
+		today := now.Format("2006-01-02")
+		start, okStart := At(today, c.StartTime)
+		end, okEnd := At(today, c.EndTime)
 		if !okStart || !okEnd {
 			return 0, ""
+		}
+		wraps := !end.After(start) // end_time <= start_time means the window crosses midnight
+		if wraps {
+			end = end.AddDate(0, 0, 1)
+			// After midnight, the live occurrence started yesterday. Shift to it
+			// only when now actually falls inside yesterday's window, so a pre-start
+			// "now" still reads as upcoming rather than finished.
+			// ponytail: assumes the run is same-day-ish; a now far from either
+			// window edge just reads as upcoming/finished. Fine for a LAN comp.
+			if now.Before(start) {
+				ys, ye := start.AddDate(0, 0, -1), end.AddDate(0, 0, -1)
+				if !now.Before(ys) && now.Before(ye) {
+					start, end = ys, ye
+				}
+			}
 		}
 		if !now.Before(end) {
 			return 0, "finished"
@@ -91,7 +110,8 @@ func (cd *Countdown) Run(ctx context.Context) {
 
 // step applies one tick and returns the seconds value to remember. last is -1 on the first tick.
 func (cd *Countdown) step(now time.Time, last int) int {
-	seconds, transitionTo := TimeLeft(cd.Snapshot(), now)
+	c := cd.Snapshot()
+	seconds, transitionTo := TimeLeft(c, now)
 
 	if transitionTo != "" && cd.Transition != nil {
 		cd.Transition(transitionTo)
@@ -101,7 +121,10 @@ func (cd *Countdown) step(now time.Time, last int) int {
 	}
 
 	if cd.FormOpened != nil {
-		open := seconds > 0 && seconds <= FormOpenSeconds
+		// The form is open only while the competition is actually running and
+		// inside the window. A paused run freezes remaining > 0 but must close
+		// the form, so status is part of the condition, not just seconds.
+		open := formOpen(c, seconds)
 		wasOpen := last > 0 && last <= FormOpenSeconds
 		if last == -1 {
 			if open {
@@ -112,5 +135,16 @@ func (cd *Countdown) step(now time.Time, last int) int {
 		}
 	}
 
+	// Remember a sentinel that also encodes "closed": if the form is closed,
+	// return a value outside the open band so the next tick sees the change.
+	if c == nil || c.Status != "running" {
+		return 0
+	}
 	return seconds
+}
+
+// formOpen reports whether the submission form should be open: the competition
+// is running and the remaining time is inside the window.
+func formOpen(c *model.Competition, seconds int) bool {
+	return c != nil && c.Status == "running" && seconds > 0 && seconds <= FormOpenSeconds
 }

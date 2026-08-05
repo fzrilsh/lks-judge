@@ -38,14 +38,18 @@ func HandleCountdownJuryPOST(st *store.Store) http.HandlerFunc {
 		startTime := r.FormValue("start_time")
 		endTime := r.FormValue("end_time")
 
-		start, okStart := realtime.At(comp.StartDate, &startTime)
-		end, okEnd := realtime.At(comp.EndDate, &endTime)
+		// Anchored to the current day. end_time not after start_time means the
+		// window crosses midnight and ends the next day (see realtime.TimeLeft),
+		// which is valid; only reject an empty window (equal times).
+		today := time.Now().Format("2006-01-02")
+		start, okStart := realtime.At(today, &startTime)
+		end, okEnd := realtime.At(today, &endTime)
 		if !okStart || !okEnd {
 			http.Redirect(w, r, "/jury/countdown?error=start+and+end+time+are+required", http.StatusSeeOther)
 			return
 		}
-		if !end.After(start) {
-			http.Redirect(w, r, "/jury/countdown?error=end+must+be+after+start", http.StatusSeeOther)
+		if end.Equal(start) {
+			http.Redirect(w, r, "/jury/countdown?error=end+must+differ+from+start", http.StatusSeeOther)
 			return
 		}
 

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
-	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 )
 
@@ -44,8 +43,6 @@ func nowMinus1m() time.Time { return time.Now().UTC().Add(-time.Minute) }
 
 func TestUploadEndToEndFile(t *testing.T) {
 	st, _, dir := newTestStore(t)
-	hub := realtime.NewHub()
-	go hub.Run(t.Context())
 
 	// init
 	body, _ := json.Marshal(initRequest{
@@ -95,7 +92,7 @@ func TestUploadEndToEndFile(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
 	req.SetPathValue("id", uid)
-	HandleCompletePOST(st, dir, hub)(rec, req)
+	HandleCompletePOST(st, dir, nil)(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -126,8 +123,6 @@ func TestUploadEndToEndFile(t *testing.T) {
 
 func TestCompleteSubmissionStub501(t *testing.T) {
 	st, _, dir := newTestStore(t)
-	hub := realtime.NewHub()
-	go hub.Run(t.Context())
 
 	sess := &model.UploadSession{
 		ID: "sub1", UploaderID: 7, UploaderRole: "participant",
@@ -146,7 +141,7 @@ func TestCompleteSubmissionStub501(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/x", nil).WithContext(
 		WithUploader(context.Background(), Uploader{ID: 7, Role: "participant"}))
 	req.SetPathValue("id", "sub1")
-	HandleCompletePOST(st, dir, hub)(rec, req)
+	HandleCompletePOST(st, dir, nil)(rec, req)
 	if rec.Code != http.StatusNotImplemented {
 		t.Fatalf("submission complete: want 501, got %d: %s", rec.Code, rec.Body)
 	}

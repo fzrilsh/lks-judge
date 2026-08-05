@@ -1,5 +1,35 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Logging Pass (2026-08-06) ✅
+
+**Status:** Complete. Richer operational logging plus a per-day log file. No behavior change to request handling.
+
+### Added
+- `internal/logfile/logfile.go`: daily-rotating `io.Writer`. Writes `{data}/logs/YYYY-MM-DD.log` (append), reopening when the local date changes. No size cap or compression (YAGNI for a single-day LAN event). `logfile_test.go` fences the rotation.
+- `cmd/server/main.go`: `log.SetOutput(io.MultiWriter(os.Stderr, rotator))` so every log line hits the terminal and the file. `{data}/logs` created at startup.
+- Event logging: participant login (`pc_number`, `participant_id`, IP); jury access to every `/jury/*` request (IP, method, path); `allowed_ips` changes (old to new, IP); submission upload success with elapsed time and size; jury file upload success with elapsed time; module set-current and delete; file toggle and delete; participant create/delete/import; countdown schedule/pause/resume/stop; backup elapsed time. All carry the acting IP where one exists.
+- Audited every `http.Error` / `http.NotFound` path across the web handlers; previously silent 4xx/5xx branches (participant create/import parse and hashing failures) now log.
+
+### Changed
+- `internal/store/session.go`: `ValidateSession` returns the new `ErrSessionNotFound` sentinel instead of an ad-hoc error. `internal/web/middleware.go` skips logging that case (stale/absent cookie is normal), so the `validate session: session not found` line no longer spams the log.
+- Added a `clientIP(r)` helper in both `web` and `upload` (duplicated deliberately: `upload` must not import `web`, spec §11 package graph).
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
+
+---
+
+## Next: Phase 11 - Scoring
+
+**Scope (spec §16 steps 43+):**
+- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
+- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
+
+**DoD:**
+- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
+
+---
+
 ## Cleanup & Docs Pass (2026-08-05) ✅
 
 **Status:** Complete. Documentation alignment, dead-code removal, duplication cleanup, and low/medium security hardening across Phase 1-10. No new features.
@@ -31,17 +61,6 @@
 ### Verification
 - ✅ gofmt, `go vet ./...`, `go build ./...`, `go test ./...`, golangci-lint: clean
 - ✅ `go test -race` on `store`, `web`, `upload`: clean
-
----
-
-## Next: Phase 11 - Scoring
-
-**Scope (spec §16 steps 43+):**
-- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
-- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
-
-**DoD:**
-- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 

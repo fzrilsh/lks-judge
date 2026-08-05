@@ -3,7 +3,6 @@ package web
 import (
 	"errors"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -127,13 +126,11 @@ func HandleLoginPOST(st *store.Store) http.HandlerFunc {
 		limiter.success(pcNumber)
 
 		// record login IP (spec §5); best-effort, failure must not block login
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			host = r.RemoteAddr
-		}
+		host := clientIP(r)
 		if err := st.UpdateParticipantIP(participant.ID, host); err != nil {
 			log.Printf("login: update ip: %v", err)
 		}
+		log.Printf("login ok: pc_number=%d participant_id=%d ip=%s", pcNumber, participant.ID, host)
 
 		token, err := st.CreateSession(participant.ID)
 		if err != nil {

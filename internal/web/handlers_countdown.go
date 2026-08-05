@@ -58,6 +58,7 @@ func HandleCountdownJuryPOST(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("countdown scheduled: start=%s end=%s ip=%s", startTime, endTime, clientIP(r))
 		http.Redirect(w, r, "/jury/countdown?saved=1", http.StatusSeeOther)
 	}
 }
@@ -75,6 +76,7 @@ func HandleCountdownPause(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("countdown paused: remaining=%ds ip=%s", remaining, clientIP(r))
 		http.Redirect(w, r, "/jury/countdown", http.StatusSeeOther)
 	}
 }
@@ -86,6 +88,7 @@ func HandleCountdownResume(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("countdown resumed: ip=%s", clientIP(r))
 		http.Redirect(w, r, "/jury/countdown", http.StatusSeeOther)
 	}
 }
@@ -97,6 +100,7 @@ func HandleCountdownStop(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("countdown stopped: ip=%s", clientIP(r))
 		http.Redirect(w, r, "/jury/countdown", http.StatusSeeOther)
 	}
 }

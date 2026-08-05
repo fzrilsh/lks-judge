@@ -51,6 +51,7 @@ func HandleFileTogglePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
 			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
 		})
+		log.Printf("file toggle: id=%s name=%q is_public=%t ip=%s", f.ID, f.Name, f.IsPublic, clientIP(r))
 		http.Redirect(w, r, "/jury/files?saved=1", http.StatusSeeOther)
 	}
 }
@@ -74,6 +75,7 @@ func HandleFileDeletePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 			log.Printf("delete file %s from disk: %v", path, err)
 		}
+		log.Printf("file deleted: id=%s path=%s ip=%s", id, path, clientIP(r))
 		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{"id": id, "is_public": false})
 		http.Redirect(w, r, "/jury/files?saved=1", http.StatusSeeOther)
 	}

@@ -88,6 +88,7 @@ func HandleSubmissionDownloadGET(st *store.Store) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Disposition", `attachment; filename="`+cdFilename(sub.Name)+`"`)
+		log.Printf("submission download: id=%s name=%q ip=%s", sub.ID, sub.Name, clientIP(r))
 		http.ServeContent(w, r, sub.Name, info.ModTime(), file)
 	}
 }

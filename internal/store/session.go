@@ -4,12 +4,17 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 )
+
+// ErrSessionNotFound means the token has no matching sessions row. Expected for
+// stale/absent cookies, so callers may skip logging it.
+var ErrSessionNotFound = errors.New("session not found")
 
 // sessionCache holds validated tokens → participant objects.
 // Reduces DB reads on every request.
@@ -61,7 +66,7 @@ func (s *Store) ValidateSession(token string) (*model.Participant, error) {
 	).Scan(&ownerID, &expiresAt)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("session not found")
+		return nil, ErrSessionNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query session: %w", err)

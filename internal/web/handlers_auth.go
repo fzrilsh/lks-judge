@@ -4,17 +4,70 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web/templates"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// loginLimiter throttles password guesses per pc_number. bcrypt is deliberately
+// slow, so this also caps a bcrypt-flood DoS. In-memory is fine: a restart
+// clearing the counters is not a meaningful attack window on a LAN.
+type loginLimiter struct {
+	mu       sync.Mutex
+	attempts map[int]*attempt
+}
+
+type attempt struct {
+	count int
+	until time.Time
+}
+
+const (
+	loginMaxAttempts = 5
+	loginLockWindow  = 1 * time.Minute
+)
+
+func newLoginLimiter() *loginLimiter { return &loginLimiter{attempts: map[int]*attempt{}} }
+
+// locked reports whether this pc_number is currently in a lockout window.
+func (l *loginLimiter) locked(pc int) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	a := l.attempts[pc]
+	return a != nil && a.count >= loginMaxAttempts && time.Now().Before(a.until)
+}
+
+// fail records a failed attempt and (re)arms the lockout window.
+func (l *loginLimiter) fail(pc int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	a := l.attempts[pc]
+	if a == nil || time.Now().After(a.until) {
+		a = &attempt{}
+		l.attempts[pc] = a
+	}
+	a.count++
+	a.until = time.Now().Add(loginLockWindow)
+}
+
+// success clears the counter after a valid login.
+func (l *loginLimiter) success(pc int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	delete(l.attempts, pc)
+}
+
 // HandleLoginGET serves the login form.
 func HandleLoginGET(w http.ResponseWriter, r *http.Request) {
 	errorMsg := ""
-	if r.URL.Query().Get("error") == "invalid" {
+	switch r.URL.Query().Get("error") {
+	case "invalid":
 		errorMsg = "Nomor PC atau password salah"
+	case "locked":
+		errorMsg = "Terlalu banyak percobaan. Coba lagi dalam 1 menit."
 	}
 
 	if err := templates.Login(errorMsg).Render(r.Context(), w); err != nil {
@@ -25,6 +78,7 @@ func HandleLoginGET(w http.ResponseWriter, r *http.Request) {
 
 // HandleLoginPOST validates credentials and creates session.
 func HandleLoginPOST(st *store.Store) http.HandlerFunc {
+	limiter := newLoginLimiter()
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -40,18 +94,27 @@ func HandleLoginPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 
+		if limiter.locked(pcNumber) {
+			log.Printf("login: pc_number=%d locked out", pcNumber)
+			http.Redirect(w, r, "/login?error=locked", http.StatusSeeOther)
+			return
+		}
+
 		participant, err := st.GetParticipantByPCNumber(pcNumber)
 		if err != nil {
 			log.Printf("login: get participant: %v", err)
+			limiter.fail(pcNumber)
 			http.Redirect(w, r, "/login?error=invalid", http.StatusSeeOther)
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(participant.Password), []byte(password)); err != nil {
 			log.Printf("login: bcrypt compare failed for pc_number=%d", pcNumber)
+			limiter.fail(pcNumber)
 			http.Redirect(w, r, "/login?error=invalid", http.StatusSeeOther)
 			return
 		}
+		limiter.success(pcNumber)
 
 		token, err := st.CreateSession(participant.ID)
 		if err != nil {
@@ -65,7 +128,7 @@ func HandleLoginPOST(st *store.Store) http.HandlerFunc {
 			Value:    token,
 			Path:     "/",
 			HttpOnly: true,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			MaxAge:   31536000, // 1 year (lifetime session)
 		})
 

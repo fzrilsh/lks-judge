@@ -16,6 +16,13 @@ import (
 // MaxChunkSize caps a single chunk body at 2 MiB.
 const MaxChunkSize = 2 << 20
 
+// MaxUploadSize caps a whole assembled upload at 2 GiB, bounding chunk count.
+const MaxUploadSize = 2 << 30
+
+// MaxChunks caps the declared chunk count so a manifest cannot exhaust inodes.
+// At the 2 MiB minimum effective chunk size this comfortably covers MaxUploadSize.
+const MaxChunks = 4096
+
 // ErrChunkTooLarge is returned when a chunk body exceeds MaxChunkSize.
 var ErrChunkTooLarge = errors.New("chunk exceeds max size")
 
@@ -55,11 +62,14 @@ func WriteChunk(dataDir, uploadID string, n int, r io.Reader) error {
 		return fmt.Errorf("mkdir chunk dir: %w", err)
 	}
 
-	tmp := chunkPath(dataDir, uploadID, n) + ".part"
-	f, err := os.Create(tmp)
+	// Unique temp name per write: two concurrent PUTs of the same chunk index
+	// must not share a staging path, or one truncates the other mid-copy and
+	// the survivor is silently corrupt.
+	f, err := os.CreateTemp(dir, "chunk-"+strconv.Itoa(n)+"-*.part")
 	if err != nil {
 		return fmt.Errorf("create chunk: %w", err)
 	}
+	tmp := f.Name()
 
 	// One byte over the cap is enough to prove the body is too large.
 	written, err := io.Copy(f, io.LimitReader(r, MaxChunkSize+1))
@@ -132,8 +142,10 @@ func MissingChunks(dataDir, uploadID string, totalChunks int) ([]int, error) {
 
 // Assemble concatenates chunks 0..totalChunks-1 into dst and drops the staging
 // directory. It writes to dst+".part" first so a crash never leaves a truncated
-// file at the final path.
-func Assemble(dataDir, uploadID string, totalChunks int, dst string) error {
+// file at the final path. wantSize is the declared total; assembly fails if the
+// concatenated bytes do not match, so a client cannot short or overrun the
+// manifest.
+func Assemble(dataDir, uploadID string, totalChunks int, wantSize int64, dst string) error {
 	missing, err := MissingChunks(dataDir, uploadID, totalChunks)
 	if err != nil {
 		return err
@@ -151,6 +163,7 @@ func Assemble(dataDir, uploadID string, totalChunks int, dst string) error {
 		return fmt.Errorf("create dest: %w", err)
 	}
 
+	var total int64
 	for n := range totalChunks {
 		in, err := os.Open(chunkPath(dataDir, uploadID, n))
 		if err != nil {
@@ -158,13 +171,19 @@ func Assemble(dataDir, uploadID string, totalChunks int, dst string) error {
 			_ = os.Remove(tmp)
 			return fmt.Errorf("open chunk %d: %w", n, err)
 		}
-		_, cerr := io.Copy(out, in)
+		nc, cerr := io.Copy(out, in)
 		_ = in.Close()
 		if cerr != nil {
 			_ = out.Close()
 			_ = os.Remove(tmp)
 			return fmt.Errorf("copy chunk %d: %w", n, cerr)
 		}
+		total += nc
+	}
+	if total != wantSize {
+		_ = out.Close()
+		_ = os.Remove(tmp)
+		return fmt.Errorf("assemble: size mismatch, got %d want %d", total, wantSize)
 	}
 	if err := out.Close(); err != nil {
 		_ = os.Remove(tmp)

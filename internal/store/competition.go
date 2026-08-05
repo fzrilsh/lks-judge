@@ -2,8 +2,11 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net"
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
@@ -106,6 +109,46 @@ func (s *Store) LoadCompetitionCache() error {
 		return err
 	}
 	s.CompetitionCache.Store(c) // nil if no row — intentional
+	s.reloadAllowedNets(c)
+	return nil
+}
+
+// reloadAllowedNets parses the competition allowlist into net.IPNet once, so
+// request-time jury checks skip JSON + IP parsing. A malformed list stores an
+// empty set: callers treat empty as "loopback only".
+func (s *Store) reloadAllowedNets(c *model.Competition) {
+	nets := []net.IPNet{}
+	if c != nil && c.AllowedIPs != "" && c.AllowedIPs != "[]" {
+		var ips []string
+		if err := json.Unmarshal([]byte(c.AllowedIPs), &ips); err != nil {
+			log.Printf("allowlist: malformed allowed_ips, treating as empty: %v", err)
+		} else {
+			for _, e := range ips {
+				if _, cidr, err := net.ParseCIDR(e); err == nil {
+					nets = append(nets, *cidr)
+				} else if ip := net.ParseIP(e); ip != nil {
+					nets = append(nets, net.IPNet{IP: ip, Mask: fullMask(ip)})
+				}
+			}
+		}
+	}
+	s.allowedNets.Store(&nets)
+}
+
+// fullMask returns a /32 (v4) or /128 (v6) mask so a single-IP entry becomes an
+// IPNet that Contains only itself.
+func fullMask(ip net.IP) net.IPMask {
+	if ip.To4() != nil {
+		return net.CIDRMask(32, 32)
+	}
+	return net.CIDRMask(128, 128)
+}
+
+// AllowedNets returns the parsed jury allowlist. Empty means loopback only.
+func (s *Store) AllowedNets() []net.IPNet {
+	if p := s.allowedNets.Load(); p != nil {
+		return *p
+	}
 	return nil
 }
 

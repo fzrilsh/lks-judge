@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -22,6 +23,10 @@ type Store struct {
 	Writer           *sql.DB
 	Reader           *sql.DB
 	CompetitionCache atomic.Pointer[model.Competition]
+	// allowedNets is the parsed jury allowlist, refreshed alongside
+	// CompetitionCache. Every /jury/* and /upload/* request reads it, so
+	// parsing the JSON + IPs once per write beats doing it per request.
+	allowedNets atomic.Pointer[[]net.IPNet]
 }
 
 // pragmaDSN returns DSN params for SQLite pragmas.

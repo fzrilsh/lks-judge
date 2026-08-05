@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
-	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 )
 
@@ -208,8 +207,10 @@ func HandleStatusGET(st *store.Store, dataDir string) http.HandlerFunc {
 }
 
 // HandleCompletePOST assembles the file and records it. Submissions are stubbed
-// 501 until Phase 10 wires store.CreateSubmission.
-func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http.HandlerFunc {
+// 501 until Phase 10 wires store.CreateSubmission. onComplete fires after a
+// file record is created, letting main wire in the WS broadcast without upload
+// importing realtime (spec §11 package graph: upload depends on model+store only).
+func HandleCompletePOST(st *store.Store, dataDir string, onComplete func(*model.File)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := session(w, r, st)
 		if !ok {
@@ -255,9 +256,9 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 			log.Printf("delete upload session: %v", err)
 		}
 
-		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
-			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
-		})
+		if onComplete != nil {
+			onComplete(f)
+		}
 		writeJSON(w, http.StatusOK, map[string]string{"file_id": f.ID})
 	}
 }

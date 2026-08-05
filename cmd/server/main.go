@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/backup"
+	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/realtime"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/upload"
@@ -155,7 +156,11 @@ func main() {
 	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir)))
 	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))
 	mux.Handle("GET /upload/{id}/status", upMw(upload.HandleStatusGET(st, *dataDir)))
-	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, hub)))
+	mux.Handle("POST /upload/{id}/complete", upMw(upload.HandleCompletePOST(st, *dataDir, func(f *model.File) {
+		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{
+			"id": f.ID, "name": f.Name, "path": f.Path, "is_public": f.IsPublic,
+		})
+	})))
 
 	// file download: inline auth (participant session or jury IP), private files hidden from participants
 	mux.Handle("GET /files/{id}/download", web.HandleFileDownloadGET(st, *dataDir))

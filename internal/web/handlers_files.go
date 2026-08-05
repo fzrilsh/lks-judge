@@ -56,9 +56,11 @@ func HandleFileTogglePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 
 // HandleFileDeletePOST removes the DB row then the on-disk file. Disk errors are
 // logged only: the row is already gone, so the file is unreachable regardless.
-func HandleFileDeletePOST(st *store.Store, _ string) http.HandlerFunc {
+// Broadcasts is_public:false so participant dashboards drop the card live.
+func HandleFileDeletePOST(st *store.Store, _ string, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		path, err := st.DeleteFile(r.PathValue("id"))
+		id := r.PathValue("id")
+		path, err := st.DeleteFile(id)
 		if errors.Is(err, store.ErrFileNotFound) {
 			http.Redirect(w, r, "/jury/files?error=file+not+found", http.StatusSeeOther)
 			return
@@ -71,6 +73,7 @@ func HandleFileDeletePOST(st *store.Store, _ string) http.HandlerFunc {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 			log.Printf("delete file %s from disk: %v", path, err)
 		}
+		hub.Broadcast(realtime.EvFileListUpdated, map[string]any{"id": id, "is_public": false})
 		http.Redirect(w, r, "/jury/files?saved=1", http.StatusSeeOther)
 	}
 }

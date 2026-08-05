@@ -56,7 +56,7 @@ templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
 			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6">
 				<h2 class="text-title-large text-on-surface font-manrope mb-2">Schedule</h2>
 				<p class="text-body-small text-on-surface-variant mb-4">
-					Dates come from the competition setup ({ comp.StartDate } to { comp.EndDate }). Saving restarts the countdown from waiting.
+					Times run on the current day. Saving restarts the countdown from waiting.
 				</p>
 				<form method="POST" action="/jury/countdown" class="flex gap-3 items-end flex-wrap">
 					<div>

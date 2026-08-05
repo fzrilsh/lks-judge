@@ -93,7 +93,7 @@ func TestSessionParticipantHasPlainPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validate: %v", err)
 	}
-	if p.PlainPassword != "secret99" {
-		t.Fatalf("session participant missing plain password, got %q", p.PlainPassword)
+	if plainPw(p.PlainPassword) != "secret99" {
+		t.Fatalf("session participant missing plain password, got %q", plainPw(p.PlainPassword))
 	}
 }

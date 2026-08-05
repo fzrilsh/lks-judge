@@ -49,7 +49,7 @@ func TestUploadEndToEndFile(t *testing.T) {
 		Filename: "brief.pdf", TotalChunks: 3, TotalSize: 30, UploadType: "file",
 	})
 	rec := httptest.NewRecorder()
-	HandleInitPOST(st, dir)(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -92,7 +92,7 @@ func TestUploadEndToEndFile(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
 	req.SetPathValue("id", uid)
-	HandleCompletePOST(st, dir, nil)(rec, req)
+	HandleCompletePOST(st, dir, func() bool { return true }, nil)(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -121,12 +121,50 @@ func TestUploadEndToEndFile(t *testing.T) {
 	}
 }
 
-func TestCompleteSubmissionStub501(t *testing.T) {
-	st, _, dir := newTestStore(t)
+// runningStore returns a store whose competition is running with `left` seconds
+// remaining, so submissionFormOpen is true when left <= FormOpenSeconds.
+func runningStore(t *testing.T, left time.Duration) (*store.Store, int64, string) {
+	t.Helper()
+	dir := t.TempDir()
+	s, err := store.Open(dir)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	now := time.Now()
+	start := now.Add(-time.Hour).Format("15:04:05")
+	end := now.Add(left).Format("15:04:05")
+	day := now.Format("2006-01-02")
+	if err := s.UpsertCompetition(&model.Competition{
+		Name: "Test", Level: "Nasional", AllowedIPs: `["127.0.0.1"]`,
+		StartDate: day, EndDate: day, StartTime: &start, EndTime: &end, Status: "running",
+	}); err != nil {
+		t.Fatalf("upsert competition: %v", err)
+	}
+	if _, err := s.Writer.Exec(`UPDATE competitions SET status='running'`); err != nil {
+		t.Fatalf("set running: %v", err)
+	}
+	if err := s.LoadCompetitionCache(); err != nil {
+		t.Fatalf("reload cache: %v", err)
+	}
+	return s, s.CompetitionCache.Load().ID, dir
+}
+
+func TestCompleteSubmissionSuccess(t *testing.T) {
+	st, compID, dir := runningStore(t, 10*time.Minute) // inside the 1200s window
+
+	modID, err := st.UpsertModuleByName(compID, "MA")
+	if err != nil {
+		t.Fatalf("module: %v", err)
+	}
+	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x", "")
+	if err != nil {
+		t.Fatalf("participant: %v", err)
+	}
 
 	sess := &model.UploadSession{
-		ID: "sub1", UploaderID: 7, UploaderRole: "participant",
-		CompetitionID: st.CompetitionCache.Load().ID, Filename: "answer.zip",
+		ID: "sub1", UploaderID: pid, UploaderRole: "participant",
+		CompetitionID: compID, ModuleID: &modID, Filename: "answer.zip",
 		TotalChunks: 1, TotalSize: 1, UploadType: "submission",
 		ExpiresAt: nowPlus2h(),
 	}
@@ -139,11 +177,66 @@ func TestCompleteSubmissionStub501(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/x", nil).WithContext(
-		WithUploader(context.Background(), Uploader{ID: 7, Role: "participant"}))
+		WithUploader(context.Background(), Uploader{ID: pid, Role: "participant"}))
 	req.SetPathValue("id", "sub1")
-	HandleCompletePOST(st, dir, nil)(rec, req)
-	if rec.Code != http.StatusNotImplemented {
-		t.Fatalf("submission complete: want 501, got %d: %s", rec.Code, rec.Body)
+	HandleCompletePOST(st, dir, func() bool { return true }, nil)(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("submission complete: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	var resp struct {
+		SubmissionID string `json:"submission_id"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	sub, err := st.GetSubmissionByID(resp.SubmissionID)
+	if err != nil {
+		t.Fatalf("get submission: %v", err)
+	}
+	wantDir := filepath.Join(dir, "submissions", strconv.FormatInt(pid, 10), strconv.FormatInt(modID, 10))
+	if filepath.Dir(sub.FilePath) != wantDir {
+		t.Fatalf("submission dir: got %s, want under %s", sub.FilePath, wantDir)
+	}
+	if _, err := os.Stat(sub.FilePath); err != nil {
+		t.Fatalf("assembled submission missing: %v", err)
+	}
+	if _, err := st.GetUploadSession("sub1"); err == nil {
+		t.Fatal("upload session survived complete")
+	}
+}
+
+func TestCompleteSubmissionFormClosed(t *testing.T) {
+	st, compID, dir := newTestStore(t) // "waiting" competition => form closed
+
+	modID, err := st.UpsertModuleByName(compID, "MA")
+	if err != nil {
+		t.Fatalf("module: %v", err)
+	}
+	pid, err := st.CreateParticipant(compID, "Peserta", "SMK", nil, "x", "")
+	if err != nil {
+		t.Fatalf("participant: %v", err)
+	}
+	sess := &model.UploadSession{
+		ID: "sub1", UploaderID: pid, UploaderRole: "participant",
+		CompetitionID: compID, ModuleID: &modID, Filename: "answer.zip",
+		TotalChunks: 1, TotalSize: 1, UploadType: "submission",
+		ExpiresAt: nowPlus2h(),
+	}
+	if err := st.CreateUploadSession(sess); err != nil {
+		t.Fatalf("create session: %v", err)
+	}
+	if err := WriteChunk(dir, "sub1", 0, bytes.NewReader([]byte("x"))); err != nil {
+		t.Fatalf("write chunk: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/x", nil).WithContext(
+		WithUploader(context.Background(), Uploader{ID: pid, Role: "participant"}))
+	req.SetPathValue("id", "sub1")
+	HandleCompletePOST(st, dir, func() bool { return false }, nil)(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("submission complete with form closed: want 403, got %d: %s", rec.Code, rec.Body)
 	}
 }
 
@@ -178,7 +271,7 @@ func TestCompleteInvokesOnComplete(t *testing.T) {
 		Filename: "brief.pdf", TotalChunks: 1, TotalSize: 3, UploadType: "file",
 	})
 	rec := httptest.NewRecorder()
-	HandleInitPOST(st, dir)(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	HandleInitPOST(st, dir, func() bool { return true })(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
 	}
@@ -211,7 +304,7 @@ func TestCompleteInvokesOnComplete(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
 	req.SetPathValue("id", uid)
-	HandleCompletePOST(st, dir, onComplete)(rec, req)
+	HandleCompletePOST(st, dir, func() bool { return true }, onComplete)(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
 	}

@@ -1,7 +1,14 @@
-// Chunked resumable uploader for the jury file manager (/jury/files).
-// Slices the chosen file into 2MB chunks, POSTs /upload/init to open a session,
-// PUTs each chunk in order (one retry per chunk via /upload/{id}/status), then
-// POSTs /upload/{id}/complete. On success it reloads to show the new row.
+// Chunked resumable uploader, shared by the jury file manager (/jury/files) and
+// the participant dashboard. Slices the chosen file into 2MB chunks, POSTs
+// /upload/init to open a session, PUTs each chunk in order (one retry per chunk
+// via /upload/{id}/status), then POSTs /upload/{id}/complete.
+//
+// Behavior is parameterized by data-* attributes on #dropzone:
+//   data-upload-type  "file" (default) | "submission"
+//   data-module-id    module id, sent with submissions
+//   data-success-url  where to redirect on success (default /jury/files?saved=1)
+//   data-error-url    error redirect base (default /jury/files?error=)
+// A submission with no data-success-url just reloads the current page.
 (function () {
   var CHUNK = 2 * 1024 * 1024; // must match upload.MaxChunkSize
   var input = document.getElementById("file-input");
@@ -11,6 +18,11 @@
   var pct = document.getElementById("progress-pct");
   var nameEl = document.getElementById("progress-name");
   var dropzone = document.getElementById("dropzone");
+
+  var uploadType = dropzone.getAttribute("data-upload-type") || "file";
+  var moduleId = dropzone.getAttribute("data-module-id") || null;
+  var successUrl = dropzone.getAttribute("data-success-url") || "/jury/files?saved=1";
+  var errorUrl = dropzone.getAttribute("data-error-url") || "/jury/files?error=";
 
   function setProgress(done, total, name) {
     wrap.classList.remove("hidden");
@@ -26,15 +38,17 @@
 
   async function upload(file) {
     var total = Math.ceil(file.size / CHUNK);
+    var manifest = {
+      filename: file.name,
+      total_chunks: total,
+      total_size: file.size,
+      upload_type: uploadType,
+    };
+    if (uploadType === "submission" && moduleId) manifest.module_id = parseInt(moduleId, 10);
     var initRes = await fetch("/upload/init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        filename: file.name,
-        total_chunks: total,
-        total_size: file.size,
-        upload_type: "file",
-      }),
+      body: JSON.stringify(manifest),
     });
     if (!initRes.ok) throw new Error("init failed: " + initRes.status);
     var id = (await initRes.json()).upload_id;
@@ -55,7 +69,11 @@
 
     var comp = await fetch("/upload/" + id + "/complete", { method: "POST" });
     if (!comp.ok) throw new Error("complete failed: " + comp.status);
-    window.location.href = "/jury/files?saved=1";
+    if (uploadType === "submission" && successUrl === "/jury/files?saved=1") {
+      window.location.reload();
+    } else {
+      window.location.href = successUrl;
+    }
   }
 
   function start(file) {
@@ -63,7 +81,7 @@
     input.disabled = true;
     setProgress(0, Math.ceil(file.size / CHUNK), file.name);
     upload(file).catch(function (err) {
-      window.location.href = "/jury/files?error=" + encodeURIComponent(err.message);
+      window.location.href = errorUrl + encodeURIComponent(err.message);
     });
   }
 

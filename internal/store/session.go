@@ -93,6 +93,23 @@ func (s *Store) DeleteSession(token string) error {
 	return nil
 }
 
+// invalidateParticipant evicts every cached session belonging to a participant,
+// forcing the next ValidateSession to reload from DB. Called after any write
+// that changes a participant (edit, seat shuffle, delete) so the cache cannot
+// serve stale pc_number/school/password.
+func invalidateParticipant(ids ...int64) {
+	want := make(map[int64]bool, len(ids))
+	for _, id := range ids {
+		want[id] = true
+	}
+	sessionCache.Range(func(k, v any) bool {
+		if p, ok := v.(*model.Participant); ok && want[p.ID] {
+			sessionCache.Delete(k)
+		}
+		return true
+	})
+}
+
 // generateToken creates a 32-byte random hex string.
 func generateToken() (string, error) {
 	b := make([]byte, 32)

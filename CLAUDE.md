@@ -31,7 +31,7 @@ templ templates must be compiled before `go build`. Run `go generate ./...` or `
 
 ```bash
 go test ./...
-go test ./internal/scoring/...   # single package
+go test ./internal/store/...   # single package
 ```
 
 ## Key Architecture Decisions
@@ -42,43 +42,43 @@ go test ./internal/scoring/...   # single package
 
 **Competition state cache:** `atomic.Pointer[model.Competition]` updated on every write. Hot-path handlers (countdown, jury IP check, form-open check) read from cache, no DB hit.
 
-**Session cache:** `sync.Map[token → *model.Participant]` in `internal/store/session.go`. DB only on cold miss or expiry sweep.
+**Session cache:** `sync.Map[token → *model.Participant]` in `internal/store/session.go`. DB only on cold miss. (Periodic expiry sweep is planned for Phase 12; not yet implemented.)
 
 **WS hub:** single goroutine owns `clients` map, so no mutex needed. Anonymous connections (no cookie) receive only `CountdownTick` and `ScoreUpdated`.
 
 **Chunked upload:** zero DB writes per chunk. Chunk presence = filesystem file `data/uploads_tmp/{upload_id}/chunk-{n}`. Final assembly via sequential `io.Copy` → `os.Rename` → single DB INSERT.
 
-**Leaderboard cache:** `atomic.Pointer[[]byte]` pre-rendered JSON in `internal/scoring/cache.go`. Refreshed after every score write. 16 concurrent polls → 0 DB reads.
+**Leaderboard cache (Phase 11, not yet built):** planned `atomic.Pointer[[]byte]` pre-rendered JSON in `internal/scoring/cache.go`, refreshed after every score write. The `scoring` package does not exist yet.
 
 ## Package Dependency Graph
 
 ```
 model    ← nothing internal
 store    ← model
-scoring  ← model, store
 upload   ← model, store
 realtime ← model only (time.Time passed as param; no store dep)
-excel    ← model, store
+excel    ← store only
 backup   ← *sql.DB only
-cmd/server/main.go ← everything (assembler leaf)
+web      ← model, store, realtime, excel, upload
+cmd/server/main.go ← model, store, realtime, upload, backup, web (assembler leaf)
 ```
 
-Cycles are impossible by design. `realtime` must never import `store`.
+Phase 11 adds `scoring ← model, store`. Cycles are impossible by design. `realtime` must never import `store`.
 
 ## Auth
 
 - **Jury:** stateless IP-allowlist check on every `/jury/*` request. No session, no DB lookup. IPs from `competitions.allowed_ips` JSON column, read via competition state cache.
 - **Participant:** `pc_number` + `password` login → session cookie `participant_session`. Passwords are bcrypt(cost=8). Import generates 6-digit random numeric passwords.
 
-## Scoring Formula
+## Scoring Formula (Phase 11, not yet implemented)
 
 ```go
 // scaled = 700 + (raw - median) * 2.8, clamped [0, 1000]
 ```
 
-`wsi_score` written to DB on every score upsert (pre-computed, not derived at query time).
+Planned: `wsi_score` written to DB on every score upsert (pre-computed, not derived at query time). Today `submissions` carries no score and `scores.wsi_score` stays NULL; no code reads or writes it.
 
-Awards: rank 1/2/3 → Gold/Silver/Bronze; rank >3 AND wsi_score ≥ 700 → Medallion for Excellence.
+Planned awards: rank 1/2/3 → Gold/Silver/Bronze; rank >3 AND wsi_score ≥ 700 → Medallion for Excellence.
 
 ## SQLite Pragmas (applied every connection open)
 
@@ -88,9 +88,9 @@ WAL, busy_timeout=5000, foreign_keys=ON, synchronous=NORMAL, cache_size=-32000, 
 
 Cost=8 (not default 10). ~8× faster for bulk import. Acceptable for internal LAN competition.
 
-## Gzip Scope
+## Gzip Scope (Phase 11, not yet implemented)
 
-Only `/leaderboard` and `/jury/scoring`, the large repeated payloads. Not global middleware.
+Planned: gzip only `/leaderboard` and `/jury/scoring`, the large repeated payloads. Not global middleware. No gzip is wired today.
 
 ## Branching Strategy
 
@@ -121,7 +121,7 @@ Never add Claude attribution to commits, PRs, or issues. No `Co-Authored-By: Cla
 
 ### Writing Style
 
-No em dashes (`—`) anywhere: commit messages, code comments, docs, PR bodies. Use a comma, a colon, parentheses, or split the sentence. Same for other AI-slop tells: en dashes used as punctuation, `–`, curly quotes, decorative emoji, and filler openers like "In today's fast-paced world" or "It's worth noting that". Plain ASCII punctuation, plain sentences.
+No em dashes (`—`) anywhere: commit messages, code comments, docs, PR bodies. Use a comma, a colon, parentheses, or split the sentence. The one exception is the historical CHANGELOG phase-header format below (`## Phase N - Title`), which is a fixed template, not prose. Same for other AI-slop tells: en dashes used as punctuation, `–`, curly quotes, decorative emoji, and filler openers like "In today's fast-paced world" or "It's worth noting that". Plain ASCII punctuation, plain sentences.
 
 ### When to Commit and Push
 
@@ -151,7 +151,7 @@ When a phase or final job is complete, update every documentation file before ca
 - List all implemented features, files created, routes added
 - Note spec compliance and any deviations
 - Replace the existing "Next" section with one for the upcoming phase. There is exactly one "Next" section in the file at any time, sitting directly under the newest phase. Never leave the old one behind.
-- Every phase section carries a `## Phase N — Title (date) ✅` header. Sections run newest first.
+- Every phase section carries a `## Phase N - Title (date) ✅` header. Sections run newest first. Non-phase maintenance passes (audits, cleanups) may use a descriptive `## Title (date)` header instead of a `Phase N` number.
 
 `README.md`:
 - Flip the phase table row from "not started" to "done"

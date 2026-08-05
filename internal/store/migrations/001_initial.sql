@@ -102,7 +102,8 @@ CREATE TABLE IF NOT EXISTS upload_sessions (
 
 -- indexes: all hot lookup paths
 CREATE INDEX IF NOT EXISTS idx_sessions_token     ON sessions(token);
-CREATE INDEX IF NOT EXISTS idx_participants_pc    ON participants(competition_id, pc_number);
+-- seated pc_number must be unique per competition; NULL (unseated) is exempt.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_pc ON participants(competition_id, pc_number) WHERE pc_number IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_participants_ip    ON participants(ip_address);
 CREATE INDEX IF NOT EXISTS idx_scores_lookup      ON scores(participant_id, module_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_lookup ON submissions(participant_id, module_id);

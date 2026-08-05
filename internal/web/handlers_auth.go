@@ -100,7 +100,13 @@ func HandleLoginPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 
-		participant, err := st.GetParticipantByPCNumber(pcNumber)
+		comp := st.CompetitionCache.Load()
+		if comp == nil {
+			http.Redirect(w, r, "/login?error=invalid", http.StatusSeeOther)
+			return
+		}
+
+		participant, err := st.GetParticipantByPCNumber(comp.ID, pcNumber)
 		if err != nil {
 			log.Printf("login: get participant: %v", err)
 			limiter.fail(pcNumber)

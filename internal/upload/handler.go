@@ -64,7 +64,7 @@ type initRequest struct {
 // 2-hour expiry, and returns {"upload_id": ...}. formOpen reports whether the
 // submission window is currently open; main injects it so upload need not import
 // realtime (spec §11 package graph: upload depends on model+store only).
-func HandleInitPOST(st *store.Store, _ string, formOpen func() bool) http.HandlerFunc {
+func HandleInitPOST(st *store.Store, formOpen func() bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, ok := UploaderFrom(r.Context())
 		if !ok {

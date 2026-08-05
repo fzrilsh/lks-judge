@@ -226,11 +226,9 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 		}
 		vals := []string{pcStr, ipStr, p.School, p.Name, pwStr}
 
-		_ = modules // module scores not fetched here — ponytail: add score join when Phase 11 adds score queries
-		for _, m := range modules {
-			_ = m
-			vals = append(vals, "")
-		}
+		// Module score cells stay blank: no scoring data exists until Phase 11.
+		// ponytail: fill from a score join once store has ListScoresByCompetition.
+		vals = append(vals, make([]string, len(modules))...)
 		for col, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(col+1, rowNum)
 			if err := f.SetCellValue(sheet, cell, v); err != nil {

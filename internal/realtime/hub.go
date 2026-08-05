@@ -12,7 +12,7 @@ const (
 	EvFileListUpdated = "FileListUpdated"
 	EvFormOpened      = "FormOpened"
 	EvCountdownTick   = "CountdownTick"
-	EvScoreUpdated    = "ScoreUpdated"
+	EvScoreUpdated    = "ScoreUpdated" // Phase 11: broadcast on score upsert; no emitter yet.
 )
 
 // WSMessage is one frame pushed to clients.

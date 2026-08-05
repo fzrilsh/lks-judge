@@ -1,78 +1,48 @@
 # LKS Judge Platform — Go Rebuild Changelog
 
-## Phase 8 — WebSocket Hub (2026-08-03) ✅
+## Phase 10 — Submissions (2026-08-04) ✅
 
 **Status:** Complete & spec-compliant (with intentional deviations noted below)
 
 ### Implemented
-- `internal/realtime/hub.go`: NEW, still `model`-only (the new import is `gorilla/websocket`, external)
-  - Event constants `EvModuleChanged`, `EvFileListUpdated`, `EvFormOpened`, `EvCountdownTick`, `EvScoreUpdated` (spec §8). The two file/score events have no call site yet; those land in Phase 9 and Phase 11.
-  - `WSMessage{Event, Payload}`, `Client{conn, send, authenticated}`, `Hub{clients, broadcast, register, unregister, done}`
-  - `Run(ctx)`: one goroutine owns `clients`, so the map needs no mutex. Cancel closes every `send` and returns.
-  - `done chan struct{}`, closed by `Run`: `ServeWS` and `readPump` select on it, so a late register/unregister after shutdown cannot deadlock on an unbuffered channel.
-  - Broadcast is non-blocking at both ends. A full hub queue drops the event rather than stalling the caller (the countdown ticker, a jury POST), and a client whose 32-frame buffer is full is evicted instead of holding up every other connection.
-  - `anonymousEvents` gates the fan-out: an unauthenticated client only ever sees `CountdownTick` and `ScoreUpdated`.
-- `internal/realtime/handler.go`: NEW
-  - `ServeWS(h, authenticated, w, r)`: `authenticated` is a parameter, not something this package computes, which is what keeps `realtime` free of `store` and session logic.
-  - `upgrader` accepts any origin: the server only ever runs on a closed competition LAN.
-  - `writePump`: owns every write including pings, `SetWriteDeadline(now+5s)` per frame (spec §11a), ping every 30s.
-  - `readPump`: exists only to notice pongs and closes against a 60s read deadline; inbound frames are read and discarded because clients never send commands. 512-byte read limit.
-- `internal/web/handlers_ws.go`: NEW. `HandleWS` decides `authenticated` from a valid `participant_session` cookie or an allowlisted jury IP, then hands off.
-- `internal/web/middleware.go`: the IP check moves out of `RequireJury` into `juryAllowed(st, r) (string, bool)` so both callers share one copy.
-- `internal/store/competition.go`: `GetModuleByID` added to supply the `{id, name, order}` payload; the `ponytail:` marker on `SetCurrentModule` is gone.
-- `internal/web/handlers_modules.go`: `HandleModulesSetCurrentPOST(st, hub)` broadcasts `ModuleChanged` after the write succeeds.
-- `cmd/server/main.go`: `hub := realtime.NewHub()` + `go hub.Run(ctx)` on the shared shutdown context; `GET /ws` registered; the Phase 7 `FormOpened` log line replaced with a real broadcast; `Tick` (which fires every second) throttled to a `CountdownTick` every fifth tick, with the counter held here so `realtime` keeps no state.
+- `internal/store/submission.go`: `ErrSubmissionNotFound`; `UpsertSubmission` (SELECT old `file_path` on the Writer, then `INSERT ... ON CONFLICT(participant_id, module_id) DO UPDATE`, returning the old path so the caller can unlink); `GetSubmissionByID`; `GetSubmissionForParticipant`; `ListSubmissions` (joins `participants` to filter by competition, ORDER BY participant_id, module_id).
+- `internal/upload/handler.go`: the `upload_type=submission` branch of `HandleCompletePOST` now assembles to `data/submissions/{participant_id}/{module_id}/{id}-{filename}`, upserts, and unlinks the replaced file (best effort). Re-upload replaces on `UNIQUE(participant_id, module_id)`.
+- Server-side form-window gate: `submissionFormOpen(st)` (competition `running` and `0 < TimeLeft <= FormOpenSeconds`) guards both `HandleInitPOST` and `HandleCompletePOST`. A submission outside the window gets 403, not just a hidden overlay.
+- `internal/web/handlers_submissions.go`: `HandleSubmissionsGET` (jury matrix), `HandleSubmissionDownloadGET` (jury-only per-cell download with attachment disposition + Range), `HandleSubmissionsExportZipGET` (jury-only streaming `archive/zip`, entry path `{pc-name}/{module}/{file}`, skips files missing on disk).
+- `internal/web/templates/submissions.templ`: participants x modules matrix, per-cell download + timestamp, "Download semua (.zip)" header link.
+- `internal/web/handlers_auth.go`: `HandleDashboard` is now a store-backed constructor that loads the active module, public files, this participant's existing submission, and the form-open flag.
+- `internal/web/templates/participant_dashboard.templ`: rewritten into the live page (active module, public file list, submission form, `#sensor-layer` overlay toggled by `formOpen`).
+- `internal/web/static/js/dashboard.js`: NEW, first WS client. Authenticated via the `participant_session` cookie, reconnects with backoff, handles `ModuleChanged` (reload), `FormOpened` (toggle overlay), `FileListUpdated` (add/remove public cards), `CountdownTick` (write remaining time).
+- `internal/web/static/js/uploader.js`: parameterized by `data-*` on `#dropzone` (`data-upload-type`, `data-module-id`, `data-success-url`, `data-error-url`) so one chunk slicer serves both jury files and participant submissions.
+- `cmd/server/main.go`: three jury routes wired; `GET /` dashboard route now uses the store-backed `HandleDashboard(st)`.
+- Plaintext password persistence: new `participants.plain_password` column, `model.Participant.PlainPassword`, scanned/inserted across `participant.go`, dev seed, and manual create. Jury participants table shows a Password column; xlsx export gains a `PASSWORD` column so credentials survive re-export.
+- IP-on-login: `RecordParticipantIP` writes the client `RemoteAddr` into `participants.ip_address` on successful login.
+- WS live fixes: deleting a public file broadcasts `FileListUpdated {is_public:false}` (dashboard drops the card); deleting the current module broadcasts `ModuleChanged {id:nil}` (dashboard reloads).
 
 ### Routes Added
 ```
-GET     /ws     WebSocket upgrade, auth optional by design (spec §8)
+GET     /jury/submissions              matrix
+GET     /jury/submissions/export.zip   bulk ZIP (beyond spec §6)
+GET     /jury/submissions/{id}/download  per-cell download
 ```
 
-### Files Created/Modified
-```
-NEW       internal/realtime/hub.go
-NEW       internal/realtime/handler.go
-NEW       internal/realtime/hub_test.go
-NEW       internal/web/handlers_ws.go
-MODIFIED  internal/web/middleware.go        (juryAllowed extracted)
-MODIFIED  internal/web/handlers_modules.go  (hub param + ModuleChanged)
-MODIFIED  internal/store/competition.go     (GetModuleByID, ponytail removed)
-MODIFIED  cmd/server/main.go                (hub, /ws, FormOpened + CountdownTick)
-MODIFIED  go.mod / go.sum                   (github.com/gorilla/websocket v1.5.3)
-```
+### Deviations
+- Jury actions are POST routes, not PUT/DELETE (precedent from Phases 5/6/9).
+- The 1200s form window is enforced server-side, beyond the UI-overlay wording of spec §9.
+- `export.zip` bulk download is an addition beyond spec §6.
+- Plaintext passwords are persisted (`plain_password`) so the jury table and xlsx export can show them. Security tradeoff accepted for the internal LAN. Spec stores only the bcrypt hash.
+- Participant IP is recorded at login. Spec sources participant IP from the Excel import column only.
 
-### Spec Compliance
-- ✅ Hub shape matches spec §8: `WSMessage`, `Client`, `Hub`, single-goroutine ownership, no mutex
-- ✅ Anonymous connections receive only `CountdownTick` and `ScoreUpdated`
-- ✅ 5s write deadline (spec §11a), ping/pong keepalive, dead connections evicted
-- ✅ `realtime` still imports `model` only among internal packages; `store` still does not import `realtime`
-- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `golangci-lint run`, `go test ./... -race`: zero errors, zero issues
+---
 
-### Testing (DoD), verified against a live server
-- ✅ Allowlisted client on `/ws` → `CountdownTick` every 5s plus `FormOpened` and `ModuleChanged`
-- ✅ End time set to `now+20m14s` → `FormOpened{status:false}` on connect, then `{status:true}` as the tick crossed 1200, once
-- ✅ `POST /jury/modules/set-current` → `{"event":"ModuleChanged","payload":{"id":1,"name":"Modul A","order":1}}`
-- ✅ Allowlist changed to a foreign IP → `/jury/` returns 403 and the same `/ws` connection now receives `CountdownTick` only
-- ✅ Three connections killed mid-stream → a following connection still received ticks on schedule; no panic, no error in the log
-- ✅ SIGTERM → shutdown backup ran, server stopped cleanly with the hub attached to the same context
+## Next: Phase 11 — Scoring
 
-### Automated Tests
-| Test | Locks in |
-|---|---|
-| `TestBroadcastScope` | an anonymous client's first frame is `CountdownTick`, not the earlier `FormOpened`; the authenticated client gets both |
-| `TestSlowClientEvicted` | a client with a full buffer is dropped and its channel closed, while a healthy client still receives every frame |
-| `TestUnregisterClosesChannel` | unregister closes `send` |
-| `TestRunStopsOnContextCancel` | cancel closes every client's `send` and `Run` returns |
-| `TestServeWSAnonymousScope` | the real upgrade path over `httptest`: an anonymous dial reads `CountdownTick` and never sees `FormOpened` |
+**Scope (spec §16 steps 43+):**
+- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
+- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
 
-### Known Deviations
-- The `ModuleChanged` broadcast lives in the handler, not in `store.SetCurrentModule` where the Phase 6 `ponytail:` marker sat. `store` cannot import `realtime` without creating a cycle, so the comment was removed rather than honored in place.
-- `CountdownTick` is throttled in `main.go` with a plain counter rather than a second ticker. The countdown already ticks once a second and the wire only needs every fifth; a separate ticker would drift against it.
-- `Payload` is `interface{}`, matching the spec's literal struct definition rather than the modern `any` alias.
-- `/countdown` and `/countdown/time` keep their 1s polling. Spec §10 asks for that explicitly as a resilience path, so the public display does not depend on the socket.
-
-### Deferred
-- No page currently opens a WS connection. Dashboard wiring is Phase 10 and leaderboard wiring is Phase 11; the `FileListUpdated` and `ScoreUpdated` broadcasts get their call sites in Phase 9 and Phase 11.
+**DoD:**
+- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 
@@ -161,16 +131,81 @@ MODIFIED  cmd/server/main.go                (upload/file routes + cleanup gorout
 - **`upload_type=submission` at `/upload/complete` → 501.** Submission records need `store.CreateSubmission`, which lands in Phase 10 (confirmed with the user). Init still accepts both types.
 - **Chunk PUT does one `SELECT` (GetUploadSession)** to enforce ownership and expiry. The spec's "zero DB interaction" is read as zero *write*; a read is required to authorize the chunk. No write happens per chunk.
 
-## Next: Phase 10 — Submissions
+---
 
-**Scope (spec §16 steps 38-40):**
-- `internal/store/submission.go`: submission + score queries (`CreateSubmission`, UNIQUE(participant_id, module_id))
-- Submission handlers: participant upload via the chunked protocol (wire `upload_type=submission` in `HandleCompletePOST`, replacing the 501 stub), jury download
-- Dashboard updates via WS when the current module changes
+## Phase 8 — WebSocket Hub (2026-08-03) ✅
 
-**DoD:**
-- Upload a submission as a participant → appears in the jury matrix
-- Change module → dashboard updates via WS
+**Status:** Complete & spec-compliant (with intentional deviations noted below)
+
+### Implemented
+- `internal/realtime/hub.go`: NEW, still `model`-only (the new import is `gorilla/websocket`, external)
+  - Event constants `EvModuleChanged`, `EvFileListUpdated`, `EvFormOpened`, `EvCountdownTick`, `EvScoreUpdated` (spec §8). The two file/score events have no call site yet; those land in Phase 9 and Phase 11.
+  - `WSMessage{Event, Payload}`, `Client{conn, send, authenticated}`, `Hub{clients, broadcast, register, unregister, done}`
+  - `Run(ctx)`: one goroutine owns `clients`, so the map needs no mutex. Cancel closes every `send` and returns.
+  - `done chan struct{}`, closed by `Run`: `ServeWS` and `readPump` select on it, so a late register/unregister after shutdown cannot deadlock on an unbuffered channel.
+  - Broadcast is non-blocking at both ends. A full hub queue drops the event rather than stalling the caller (the countdown ticker, a jury POST), and a client whose 32-frame buffer is full is evicted instead of holding up every other connection.
+  - `anonymousEvents` gates the fan-out: an unauthenticated client only ever sees `CountdownTick` and `ScoreUpdated`.
+- `internal/realtime/handler.go`: NEW
+  - `ServeWS(h, authenticated, w, r)`: `authenticated` is a parameter, not something this package computes, which is what keeps `realtime` free of `store` and session logic.
+  - `upgrader` accepts any origin: the server only ever runs on a closed competition LAN.
+  - `writePump`: owns every write including pings, `SetWriteDeadline(now+5s)` per frame (spec §11a), ping every 30s.
+  - `readPump`: exists only to notice pongs and closes against a 60s read deadline; inbound frames are read and discarded because clients never send commands. 512-byte read limit.
+- `internal/web/handlers_ws.go`: NEW. `HandleWS` decides `authenticated` from a valid `participant_session` cookie or an allowlisted jury IP, then hands off.
+- `internal/web/middleware.go`: the IP check moves out of `RequireJury` into `juryAllowed(st, r) (string, bool)` so both callers share one copy.
+- `internal/store/competition.go`: `GetModuleByID` added to supply the `{id, name, order}` payload; the `ponytail:` marker on `SetCurrentModule` is gone.
+- `internal/web/handlers_modules.go`: `HandleModulesSetCurrentPOST(st, hub)` broadcasts `ModuleChanged` after the write succeeds.
+- `cmd/server/main.go`: `hub := realtime.NewHub()` + `go hub.Run(ctx)` on the shared shutdown context; `GET /ws` registered; the Phase 7 `FormOpened` log line replaced with a real broadcast; `Tick` (which fires every second) throttled to a `CountdownTick` every fifth tick, with the counter held here so `realtime` keeps no state.
+
+### Routes Added
+```
+GET     /ws     WebSocket upgrade, auth optional by design (spec §8)
+```
+
+### Files Created/Modified
+```
+NEW       internal/realtime/hub.go
+NEW       internal/realtime/handler.go
+NEW       internal/realtime/hub_test.go
+NEW       internal/web/handlers_ws.go
+MODIFIED  internal/web/middleware.go        (juryAllowed extracted)
+MODIFIED  internal/web/handlers_modules.go  (hub param + ModuleChanged)
+MODIFIED  internal/store/competition.go     (GetModuleByID, ponytail removed)
+MODIFIED  cmd/server/main.go                (hub, /ws, FormOpened + CountdownTick)
+MODIFIED  go.mod / go.sum                   (github.com/gorilla/websocket v1.5.3)
+```
+
+### Spec Compliance
+- ✅ Hub shape matches spec §8: `WSMessage`, `Client`, `Hub`, single-goroutine ownership, no mutex
+- ✅ Anonymous connections receive only `CountdownTick` and `ScoreUpdated`
+- ✅ 5s write deadline (spec §11a), ping/pong keepalive, dead connections evicted
+- ✅ `realtime` still imports `model` only among internal packages; `store` still does not import `realtime`
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `golangci-lint run`, `go test ./... -race`: zero errors, zero issues
+
+### Testing (DoD), verified against a live server
+- ✅ Allowlisted client on `/ws` → `CountdownTick` every 5s plus `FormOpened` and `ModuleChanged`
+- ✅ End time set to `now+20m14s` → `FormOpened{status:false}` on connect, then `{status:true}` as the tick crossed 1200, once
+- ✅ `POST /jury/modules/set-current` → `{"event":"ModuleChanged","payload":{"id":1,"name":"Modul A","order":1}}`
+- ✅ Allowlist changed to a foreign IP → `/jury/` returns 403 and the same `/ws` connection now receives `CountdownTick` only
+- ✅ Three connections killed mid-stream → a following connection still received ticks on schedule; no panic, no error in the log
+- ✅ SIGTERM → shutdown backup ran, server stopped cleanly with the hub attached to the same context
+
+### Automated Tests
+| Test | Locks in |
+|---|---|
+| `TestBroadcastScope` | an anonymous client's first frame is `CountdownTick`, not the earlier `FormOpened`; the authenticated client gets both |
+| `TestSlowClientEvicted` | a client with a full buffer is dropped and its channel closed, while a healthy client still receives every frame |
+| `TestUnregisterClosesChannel` | unregister closes `send` |
+| `TestRunStopsOnContextCancel` | cancel closes every client's `send` and `Run` returns |
+| `TestServeWSAnonymousScope` | the real upgrade path over `httptest`: an anonymous dial reads `CountdownTick` and never sees `FormOpened` |
+
+### Known Deviations
+- The `ModuleChanged` broadcast lives in the handler, not in `store.SetCurrentModule` where the Phase 6 `ponytail:` marker sat. `store` cannot import `realtime` without creating a cycle, so the comment was removed rather than honored in place.
+- `CountdownTick` is throttled in `main.go` with a plain counter rather than a second ticker. The countdown already ticks once a second and the wire only needs every fifth; a separate ticker would drift against it.
+- `Payload` is `interface{}`, matching the spec's literal struct definition rather than the modern `any` alias.
+- `/countdown` and `/countdown/time` keep their 1s polling. Spec §10 asks for that explicitly as a resilience path, so the public display does not depend on the socket.
+
+### Deferred
+- No page currently opens a WS connection. Dashboard wiring is Phase 10 and leaderboard wiring is Phase 11; the `FileListUpdated` and `ScoreUpdated` broadcasts get their call sites in Phase 9 and Phase 11.
 
 ---
 
@@ -396,7 +431,7 @@ Verified non-vacuous by mutation: reverting the dedup guard fails `TestGenerateM
     - Upserts participants by name (INSERT on new, UPDATE school/pc/ip on existing)
     - Generates bcrypt(cost=8) passwords via goroutine pool (`errgroup.SetLimit(runtime.NumCPU())`)
     - Returns `[]ImportedParticipant{Name, PCNumber, Password}` (plain pwd only on new)
-  - `ExportParticipants` — xlsx with columns `NO PC, IP_ADDRESS, MEMBER, NAME, [modules...]`
+  - `ExportParticipants` — xlsx with columns `NO PC, IP_ADDRESS, MEMBER, NAME, PASSWORD, [modules...]` (PASSWORD added in Phase 10)
   - `RandomPassword` — `crypto/rand` 6-digit numeric
 - `internal/web/handlers_participants.go` — NEW
   - `HandleParticipantsGET`, `HandleParticipantsPOST` (add single)
@@ -404,7 +439,7 @@ Verified non-vacuous by mutation: reverting the dedup guard fails `TestGenerateM
   - `HandleParticipantsImportPOST`, `HandleParticipantsExportGET`
   - `HandleParticipantsShuffleGET`, `HandleParticipantsShufflePOST` (JSON + HTML)
 - `internal/web/templates/participants.templ` — jury participant management page
-  - Table: NO PC (zero-padded) | Nama | Sekolah | IP | Delete action
+  - Table: NO PC (zero-padded) | Nama | Sekolah | Password | IP | Delete action (Password column added in Phase 10)
   - Add participant form, Import Excel form
 - `internal/web/templates/shuffle.templ` — shuffle result page + re-shuffle button
 

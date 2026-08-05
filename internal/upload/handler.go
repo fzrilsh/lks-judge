@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -60,6 +61,18 @@ type initRequest struct {
 	ModuleID    *int64 `json:"module_id"`
 }
 
+// submissionFormOpen reports whether participants may submit right now: the
+// competition must be running and inside the last FormOpenSeconds (spec §7/§9).
+// Enforced server-side so the dashboard overlay isn't the only gate.
+func submissionFormOpen(st *store.Store) bool {
+	c := st.CompetitionCache.Load()
+	if c == nil || c.Status != "running" {
+		return false
+	}
+	seconds, _ := realtime.TimeLeft(c, time.Now())
+	return seconds > 0 && seconds <= realtime.FormOpenSeconds
+}
+
 // HandleInitPOST validates the manifest, inserts an upload_sessions row with a
 // 2-hour expiry, and returns {"upload_id": ...}.
 func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
@@ -97,6 +110,16 @@ func HandleInitPOST(st *store.Store, _ string) http.HandlerFunc {
 		if req.UploadType == "file" && u.Role != "jury" {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "only jury may upload files"})
 			return
+		}
+		if req.UploadType == "submission" {
+			if req.ModuleID == nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "module_id required for submission"})
+				return
+			}
+			if !submissionFormOpen(st) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "submission form is closed"})
+				return
+			}
 		}
 
 		id, err := newID()
@@ -196,8 +219,8 @@ func HandleStatusGET(st *store.Store, dataDir string) http.HandlerFunc {
 	}
 }
 
-// HandleCompletePOST assembles the file and records it. Submissions are stubbed
-// 501 until Phase 10 wires store.CreateSubmission.
+// HandleCompletePOST assembles the file and records it. Submissions land under
+// data/submissions/{participant_id}/{module_id}/; jury files under data/files/.
 func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := session(w, r, st)
@@ -216,8 +239,50 @@ func HandleCompletePOST(st *store.Store, dataDir string, hub *realtime.Hub) http
 		}
 
 		if sess.UploadType == "submission" {
-			// ponytail: submission record needs store.CreateSubmission (Phase 10).
-			writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "submissions not implemented yet"})
+			// Re-check the window: init may have passed, then time ran out before complete.
+			if !submissionFormOpen(st) {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "submission form is closed"})
+				return
+			}
+			if sess.ModuleID == nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing module_id"})
+				return
+			}
+			id, err := newID()
+			if err != nil {
+				log.Printf("complete: id: %v", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+				return
+			}
+			dst := filepath.Join(dataDir, "submissions",
+				strconv.FormatInt(sess.UploaderID, 10),
+				strconv.FormatInt(*sess.ModuleID, 10),
+				id+"-"+sess.Filename)
+			if err := Assemble(dataDir, sess.ID, sess.TotalChunks, dst); err != nil {
+				log.Printf("assemble submission: %v", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+				return
+			}
+			now := time.Now().UTC()
+			oldPath, err := st.UpsertSubmission(&model.Submission{
+				ID: id, ParticipantID: sess.UploaderID, ModuleID: *sess.ModuleID,
+				Name: sess.Filename, FilePath: dst, SubmittedAt: &now,
+			})
+			if err != nil {
+				log.Printf("upsert submission: %v", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+				return
+			}
+			// Replaced an earlier submission: drop the superseded file. Best effort.
+			if oldPath != "" && oldPath != dst {
+				if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+					log.Printf("remove old submission %s: %v", oldPath, err)
+				}
+			}
+			if err := st.DeleteUploadSession(sess.ID); err != nil {
+				log.Printf("delete upload session: %v", err)
+			}
+			writeJSON(w, http.StatusOK, map[string]string{"submission_id": id})
 			return
 		}
 

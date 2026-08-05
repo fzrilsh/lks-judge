@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS participants (
     school         TEXT NOT NULL,
     pc_number      INTEGER,
     password       TEXT NOT NULL,
+    plain_password TEXT,
     ip_address     TEXT,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

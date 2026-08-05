@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net"
 	"net/http"
@@ -76,41 +75,25 @@ func RequireParticipant(st *store.Store) func(http.Handler) http.Handler {
 }
 
 // juryAllowed reports whether the request comes from an allowlisted jury IP.
-// The list is read from the competition state cache; it falls back to loopback
-// when no competition is configured yet. Entries may be plain IPs (v4 or v6,
-// matched by value so IPv4-mapped IPv6 normalizes) or CIDR ranges.
+// The parsed allowlist is read from the store (refreshed on competition write);
+// an empty list falls back to loopback. Single-IP and CIDR entries are both
+// stored as net.IPNet, so IPv4-mapped IPv6 normalizes via Contains.
 func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		host = r.RemoteAddr // no port
 	}
 	remote := net.ParseIP(host)
-
-	allowlist := []string{"127.0.0.1", "::1"} // fallback
-
-	if c := st.CompetitionCache.Load(); c != nil && c.AllowedIPs != "" && c.AllowedIPs != "[]" {
-		var ips []string
-		if jsonErr := json.Unmarshal([]byte(c.AllowedIPs), &ips); jsonErr != nil {
-			log.Printf("jury allowlist: malformed allowed_ips, using loopback fallback: %v", jsonErr)
-		} else if len(ips) > 0 {
-			allowlist = ips
-		}
+	if remote == nil {
+		return host, false
 	}
 
-	for _, a := range allowlist {
-		if _, cidr, err := net.ParseCIDR(a); err == nil {
-			if remote != nil && cidr.Contains(remote) {
-				return host, true
-			}
-			continue
-		}
-		if allowed := net.ParseIP(a); allowed != nil && remote != nil {
-			if allowed.Equal(remote) {
-				return host, true
-			}
-			continue
-		}
-		if host == a { // last resort exact match
+	nets := st.AllowedNets()
+	if len(nets) == 0 {
+		return host, remote.IsLoopback() // no competition / empty list: loopback only
+	}
+	for i := range nets {
+		if nets[i].Contains(remote) {
 			return host, true
 		}
 	}

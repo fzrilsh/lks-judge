@@ -11,6 +11,7 @@ import (
 
 // ShuffleResult is one assigned seat from a shuffle run.
 type ShuffleResult struct {
+	ID     int64
 	Seat   int
 	Name   string
 	School string
@@ -40,11 +41,11 @@ func scanParticipant(row interface {
 	return &p, nil
 }
 
-// GetParticipantByPCNumber queries a participant by pc_number.
-func (s *Store) GetParticipantByPCNumber(pcNumber int) (*model.Participant, error) {
+// GetParticipantByPCNumber queries a participant by pc_number within a competition.
+func (s *Store) GetParticipantByPCNumber(competitionID int64, pcNumber int) (*model.Participant, error) {
 	row := s.Reader.QueryRow(
 		`SELECT id, competition_id, name, school, pc_number, password, ip_address, created_at, updated_at
-		 FROM participants WHERE pc_number = ?`, pcNumber)
+		 FROM participants WHERE competition_id = ? AND pc_number = ?`, competitionID, pcNumber)
 	p, err := scanParticipant(row)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("participant not found")
@@ -163,11 +164,11 @@ func (s *Store) UpdateParticipantSeats(assignments []ShuffleResult) error {
 	now := time.Now().UTC()
 	for _, a := range assignments {
 		_, err = tx.Exec(
-			`UPDATE participants SET pc_number = ?, updated_at = ? WHERE name = ?`,
-			a.Seat, now, a.Name,
+			`UPDATE participants SET pc_number = ?, updated_at = ? WHERE id = ?`,
+			a.Seat, now, a.ID,
 		)
 		if err != nil {
-			return fmt.Errorf("shuffle seats: update %s: %w", a.Name, err)
+			return fmt.Errorf("shuffle seats: update id=%d: %w", a.ID, err)
 		}
 	}
 	return tx.Commit()
@@ -183,7 +184,7 @@ func ShuffleSeats(participants []*model.Participant) []ShuffleResult {
 	rand.Shuffle(len(seats), func(i, j int) { seats[i], seats[j] = seats[j], seats[i] })
 	results := make([]ShuffleResult, len(participants))
 	for i, p := range participants {
-		results[i] = ShuffleResult{Seat: seats[i], Name: p.Name, School: p.School}
+		results[i] = ShuffleResult{ID: p.ID, Seat: seats[i], Name: p.Name, School: p.School}
 	}
 	return results
 }

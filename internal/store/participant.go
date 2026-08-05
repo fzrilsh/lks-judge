@@ -149,6 +149,19 @@ func (s *Store) UpsertParticipantByName(competitionID int64, name, school string
 	return id, "", nil // password unchanged on update
 }
 
+// UpdateParticipantIP records the client IP on login (spec §5).
+func (s *Store) UpdateParticipantIP(id int64, ip string) error {
+	_, err := s.Writer.Exec(
+		`UPDATE participants SET ip_address=?, updated_at=? WHERE id=?`,
+		ip, time.Now().UTC(), id,
+	)
+	if err != nil {
+		return fmt.Errorf("update participant ip: %w", err)
+	}
+	invalidateParticipant(id)
+	return nil
+}
+
 // DeleteParticipant removes a participant by ID.
 func (s *Store) DeleteParticipant(id int64) error {
 	_, err := s.Writer.Exec(`DELETE FROM participants WHERE id = ?`, id)

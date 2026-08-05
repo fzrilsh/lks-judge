@@ -189,8 +189,10 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    *listen,
-		Handler: web.CSRFProtect(mux),
+		Addr:              *listen,
+		Handler:           web.CSRFProtect(mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	go func() {

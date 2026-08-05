@@ -149,6 +149,7 @@ func TestCompleteSubmissionStub501(t *testing.T) {
 
 func TestChunkExpiredSession(t *testing.T) {
 	st, compID, dir := newTestStore(t)
+
 	sess := &model.UploadSession{
 		ID: "old1", UploaderID: 0, UploaderRole: "jury", CompetitionID: compID,
 		Filename: "f", TotalChunks: 1, TotalSize: 1, UploadType: "file",
@@ -165,5 +166,64 @@ func TestChunkExpiredSession(t *testing.T) {
 	HandleChunkPUT(st, dir)(rec, req)
 	if rec.Code != http.StatusGone {
 		t.Fatalf("expired chunk: want 410, got %d: %s", rec.Code, rec.Body)
+	}
+}
+
+// TestCompleteInvokesOnComplete proves the onComplete callback fires with a
+// persisted *model.File whose ID matches the JSON file_id.
+func TestCompleteInvokesOnComplete(t *testing.T) {
+	st, _, dir := newTestStore(t)
+
+	body, _ := json.Marshal(initRequest{
+		Filename: "brief.pdf", TotalChunks: 1, TotalSize: 3, UploadType: "file",
+	})
+	rec := httptest.NewRecorder()
+	HandleInitPOST(st, dir)(rec, juryReq(httptest.NewRequest(http.MethodPost, "/upload/init", bytes.NewReader(body))))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("init: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	var initResp struct {
+		UploadID string `json:"upload_id"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &initResp); err != nil {
+		t.Fatalf("decode init: %v", err)
+	}
+	uid := initResp.UploadID
+
+	rec = httptest.NewRecorder()
+	req := juryReq(httptest.NewRequest(http.MethodPut, "/x", bytes.NewReader([]byte("abc"))))
+	req.SetPathValue("id", uid)
+	req.SetPathValue("n", "0")
+	HandleChunkPUT(st, dir)(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("chunk: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+
+	var got *model.File
+	onComplete := func(f *model.File) {
+		got = f
+		// file must be persisted by the time the callback fires
+		if _, err := st.GetFileByID(f.ID); err != nil {
+			t.Errorf("file not persisted when callback fired: %v", err)
+		}
+	}
+
+	rec = httptest.NewRecorder()
+	req = juryReq(httptest.NewRequest(http.MethodPost, "/x", nil))
+	req.SetPathValue("id", uid)
+	HandleCompletePOST(st, dir, onComplete)(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("complete: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	if got == nil {
+		t.Fatal("onComplete not invoked")
+	}
+
+	var comp struct {
+		FileID string `json:"file_id"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &comp)
+	if got.ID != comp.FileID {
+		t.Fatalf("callback file ID %q != json file_id %q", got.ID, comp.FileID)
 	}
 }

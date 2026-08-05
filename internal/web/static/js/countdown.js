@@ -12,7 +12,7 @@
     var h = Math.floor(s / 3600);
     var m = Math.floor((s % 3600) / 60);
     var sec = s % 60;
-    return h + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+    return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
   }
 
   function alertZero() {

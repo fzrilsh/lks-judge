@@ -19,6 +19,13 @@ func ipStr(p *model.Participant) string {
 	return *p.IPAddress
 }
 
+func pwStr(p *model.Participant) string {
+	if p.PlainPassword == nil || *p.PlainPassword == "" {
+		return "-"
+	}
+	return *p.PlainPassword
+}
+
 templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg string) {
 	@AppLayout("Peserta", "participants") {
 		<div class="max-w-5xl mx-auto space-y-6">
@@ -91,6 +98,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 							<th class="text-left px-4 py-3">NO PC</th>
 							<th class="text-left px-4 py-3">Nama</th>
 							<th class="text-left px-4 py-3">Sekolah</th>
+							<th class="text-left px-4 py-3">Password</th>
 							<th class="text-left px-4 py-3">IP</th>
 							<th class="px-4 py-3"></th>
 						</tr>
@@ -98,7 +106,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 					<tbody>
 						if len(participants) == 0 {
 							<tr>
-								<td colspan="5" class="text-center px-4 py-8 text-on-surface-variant">Belum ada peserta.</td>
+								<td colspan="6" class="text-center px-4 py-8 text-on-surface-variant">Belum ada peserta.</td>
 							</tr>
 						}
 						for _, p := range participants {
@@ -106,6 +114,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 								<td class="px-4 py-3 font-mono">{ pcStr(p) }</td>
 								<td class="px-4 py-3">{ p.Name }</td>
 								<td class="px-4 py-3">{ p.School }</td>
+								<td class="px-4 py-3 font-mono">{ pwStr(p) }</td>
 								<td class="px-4 py-3 font-mono text-on-surface-variant">{ ipStr(p) }</td>
 								<td class="px-4 py-3">
 									<div class="flex gap-2 justify-end">

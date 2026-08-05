@@ -134,17 +134,24 @@ func HandleModuleRenamePOST(st *store.Store) http.HandlerFunc {
 	}
 }
 
-func HandleModuleDeletePOST(st *store.Store) http.HandlerFunc {
+func HandleModuleDeletePOST(st *store.Store, hub *realtime.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 		if err != nil {
 			http.Error(w, "bad id", http.StatusBadRequest)
 			return
 		}
+		// DeleteModule clears current_module_id when it pointed here; note that
+		// before deleting so we can tell participants their active module is gone.
+		comp := st.CompetitionCache.Load()
+		wasCurrent := comp != nil && comp.CurrentModuleID != nil && *comp.CurrentModuleID == id
 		if err := st.DeleteModule(id); err != nil {
 			log.Printf("delete module: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
+		}
+		if wasCurrent {
+			hub.Broadcast(realtime.EvModuleChanged, map[string]any{"id": nil})
 		}
 		http.Redirect(w, r, "/jury/modules?saved=1", http.StatusSeeOther)
 	}

@@ -71,7 +71,7 @@ func HandleParticipantsPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 
-		if _, err := st.CreateParticipant(comp.ID, name, school, pcNumber, string(hash)); err != nil {
+		if _, err := st.CreateParticipant(comp.ID, name, school, pcNumber, string(hash), plain); err != nil {
 			log.Printf("create participant: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return

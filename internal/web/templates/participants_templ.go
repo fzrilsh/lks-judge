@@ -27,6 +27,13 @@ func ipStr(p *model.Participant) string {
 	return *p.IPAddress
 }
 
+func pwStr(p *model.Participant) string {
+	if p.PlainPassword == nil || *p.PlainPassword == "" {
+		return "-"
+	}
+	return *p.PlainPassword
+}
+
 func ParticipantsPage(participants []*model.Participant, saved bool, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -78,7 +85,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 45, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 52, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -89,12 +96,12 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Add single participant --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">Add Participant</h2><form method=\"POST\" action=\"/jury/participants\" class=\"grid grid-cols-4 gap-3 items-end\"><div><label class=\"block text-label-large text-on-surface mb-1\">Name</label> <input type=\"text\" name=\"name\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">School / Member</label> <input type=\"text\" name=\"school\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">PC No (optional)</label> <input type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Add</button></form></div><!-- Import Excel --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-2\">Import Excel</h2><p class=\"text-body-small text-on-surface-variant mb-4\">Header: no_pc, ip_address, member, name, [module columns...]</p><form method=\"POST\" action=\"/jury/participants/import\" enctype=\"multipart/form-data\" class=\"flex gap-3 items-center\"><input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required class=\"flex-1 text-body-medium text-on-surface file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-primary file:text-on-primary\"> <button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Import</button></form></div><!-- Participant table --><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"text-left px-4 py-3\">NO PC</th><th class=\"text-left px-4 py-3\">Nama</th><th class=\"text-left px-4 py-3\">Sekolah</th><th class=\"text-left px-4 py-3\">IP</th><th class=\"px-4 py-3\"></th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Add single participant --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">Add Participant</h2><form method=\"POST\" action=\"/jury/participants\" class=\"grid grid-cols-4 gap-3 items-end\"><div><label class=\"block text-label-large text-on-surface mb-1\">Name</label> <input type=\"text\" name=\"name\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">School / Member</label> <input type=\"text\" name=\"school\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">PC No (optional)</label> <input type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Add</button></form></div><!-- Import Excel --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-2\">Import Excel</h2><p class=\"text-body-small text-on-surface-variant mb-4\">Header: no_pc, ip_address, member, name, [module columns...]</p><form method=\"POST\" action=\"/jury/participants/import\" enctype=\"multipart/form-data\" class=\"flex gap-3 items-center\"><input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required class=\"flex-1 text-body-medium text-on-surface file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-primary file:text-on-primary\"> <button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Import</button></form></div><!-- Participant table --><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"text-left px-4 py-3\">NO PC</th><th class=\"text-left px-4 py-3\">Nama</th><th class=\"text-left px-4 py-3\">Sekolah</th><th class=\"text-left px-4 py-3\">Password</th><th class=\"text-left px-4 py-3\">IP</th><th class=\"px-4 py-3\"></th></tr></thead> <tbody>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(participants) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<tr><td colspan=\"5\" class=\"text-center px-4 py-8 text-on-surface-variant\">Belum ada peserta.</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<tr><td colspan=\"6\" class=\"text-center px-4 py-8 text-on-surface-variant\">Belum ada peserta.</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -107,7 +114,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(pcStr(p))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 106, Col: 50}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 114, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -120,7 +127,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 107, Col: 38}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 115, Col: 38}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -133,44 +140,57 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.School)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 108, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 116, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</td><td class=\"px-4 py-3 font-mono text-on-surface-variant\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</td><td class=\"px-4 py-3 font-mono\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var7 string
-				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(ipStr(p))
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(pwStr(p))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 109, Col: 74}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 117, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td><td class=\"px-4 py-3\"><div class=\"flex gap-2 justify-end\"><form method=\"POST\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td><td class=\"px-4 py-3 font-mono text-on-surface-variant\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var8 templ.SafeURL
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)))
+				var templ_7745c5c3_Var8 string
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ipStr(p))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 112, Col: 99}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 118, Col: 74}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><button type=\"submit\" class=\"text-label-small px-3 py-1 bg-error-container text-on-error-container rounded-lg hover:shadow transition-shadow\" onclick=\"return confirm('Hapus peserta ini?')\">Delete</button></form></div></td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td><td class=\"px-4 py-3\"><div class=\"flex gap-2 justify-end\"><form method=\"POST\" action=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var9 templ.SafeURL
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 121, Col: 99}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><button type=\"submit\" class=\"text-label-small px-3 py-1 bg-error-container text-on-error-container rounded-lg hover:shadow transition-shadow\" onclick=\"return confirm('Hapus peserta ini?')\">Delete</button></form></div></td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</tbody></table></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</tbody></table></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

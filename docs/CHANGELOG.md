@@ -429,7 +429,7 @@ Verified non-vacuous by mutation: reverting the dedup guard fails `TestGenerateM
     - Upserts participants by name (INSERT on new, UPDATE school/pc/ip on existing)
     - Generates bcrypt(cost=8) passwords via goroutine pool (`errgroup.SetLimit(runtime.NumCPU())`)
     - Returns `[]ImportedParticipant{Name, PCNumber, Password}` (plain pwd only on new)
-  - `ExportParticipants` — xlsx with columns `NO PC, IP_ADDRESS, MEMBER, NAME, [modules...]`
+  - `ExportParticipants` — xlsx with columns `NO PC, IP_ADDRESS, MEMBER, NAME, PASSWORD, [modules...]` (PASSWORD added in Phase 10)
   - `RandomPassword` — `crypto/rand` 6-digit numeric
 - `internal/web/handlers_participants.go` — NEW
   - `HandleParticipantsGET`, `HandleParticipantsPOST` (add single)
@@ -437,7 +437,7 @@ Verified non-vacuous by mutation: reverting the dedup guard fails `TestGenerateM
   - `HandleParticipantsImportPOST`, `HandleParticipantsExportGET`
   - `HandleParticipantsShuffleGET`, `HandleParticipantsShufflePOST` (JSON + HTML)
 - `internal/web/templates/participants.templ` — jury participant management page
-  - Table: NO PC (zero-padded) | Nama | Sekolah | IP | Delete action
+  - Table: NO PC (zero-padded) | Nama | Sekolah | Password | IP | Delete action (Password column added in Phase 10)
   - Add participant form, Import Excel form
 - `internal/web/templates/shuffle.templ` — shuffle result page + re-shuffle button
 

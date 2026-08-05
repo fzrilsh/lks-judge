@@ -16,6 +16,9 @@ import (
 //go:embed migrations/001_initial.sql
 var migrationSQL string
 
+//go:embed migrations/002_plain_password.sql
+var migration002SQL string
+
 // Store holds the dual connection pool.
 // writer: serialized single connection (WAL writer).
 // reader: read-only pool, up to 16 concurrent connections.
@@ -83,8 +86,23 @@ func Open(dataDir string) (*Store, error) {
 
 // migrate runs the embedded SQL once, guarded by schema_migrations.
 func migrate(db *sql.DB) error {
-	_, err := db.Exec(migrationSQL)
-	return err
+	if _, err := db.Exec(migrationSQL); err != nil {
+		return err
+	}
+	// 002: ADD COLUMN plain_password on DBs created before 001 carried it.
+	// SQLite ALTER TABLE has no IF NOT EXISTS, so gate on the column's absence.
+	var has bool
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM pragma_table_info('participants') WHERE name = 'plain_password'`,
+	).Scan(&has); err != nil {
+		return err
+	}
+	if !has {
+		if _, err := db.Exec(migration002SQL); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Close closes both pools.

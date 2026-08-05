@@ -215,10 +215,8 @@ func HandleDashboard(st *store.Store) http.HandlerFunc {
 					publicFiles = append(publicFiles, f)
 				}
 			}
-			if comp.Status == "running" {
-				seconds, _ := realtime.TimeLeft(comp, time.Now())
-				formOpen = seconds > 0 && seconds <= realtime.FormOpenSeconds
-			}
+			seconds, _ := realtime.TimeLeft(comp, time.Now())
+			formOpen = realtime.FormOpen(comp, seconds)
 		}
 
 		if err := templates.Dashboard(participant, activeModule, publicFiles, existing, formOpen).Render(r.Context(), w); err != nil {

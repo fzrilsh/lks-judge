@@ -157,11 +157,8 @@ func main() {
 	// Injected so upload need not import realtime (spec §11 package graph).
 	submissionOpen := func() bool {
 		c := st.CompetitionCache.Load()
-		if c == nil || c.Status != "running" {
-			return false
-		}
 		seconds, _ := realtime.TimeLeft(c, time.Now())
-		return seconds > 0 && seconds <= realtime.FormOpenSeconds
+		return realtime.FormOpen(c, seconds)
 	}
 	mux.Handle("POST /upload/init", upMw(upload.HandleInitPOST(st, *dataDir, submissionOpen)))
 	mux.Handle("PUT /upload/{id}/chunk/{n}", upMw(upload.HandleChunkPUT(st, *dataDir)))

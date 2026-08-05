@@ -1,16 +1,5 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
-## Next: Phase 11 - Scoring
-
-**Scope (spec §16 steps 43+):**
-- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
-- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
-
-**DoD:**
-- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
-
----
-
 ## Cleanup & Docs Pass (2026-08-05) ✅
 
 **Status:** Complete. Documentation alignment, dead-code removal, duplication cleanup, and low/medium security hardening across Phase 1-10. No new features.
@@ -42,6 +31,17 @@
 ### Verification
 - ✅ gofmt, `go vet ./...`, `go build ./...`, `go test ./...`, golangci-lint: clean
 - ✅ `go test -race` on `store`, `web`, `upload`: clean
+
+---
+
+## Next: Phase 11 - Scoring
+
+**Scope (spec §16 steps 43+):**
+- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
+- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
+
+**DoD:**
+- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 

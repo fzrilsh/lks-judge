@@ -76,8 +76,8 @@ Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/
 (participant work, laid out `submissions/{participant_id}/{module_id}/`), and
 `uploads_tmp/` (in-flight chunks) alongside `lks.sqlite`.
 
-Two routes are public, everything else is behind the jury IP allowlist or a
-participant session:
+Four routes are public, everything else is behind the jury IP allowlist or a
+participant session (plus `GET /login` and the `GET /static/` asset tree):
 
 | Route | Purpose |
 | ----- | ------- |
@@ -97,7 +97,7 @@ internal/realtime/  countdown timing and the WebSocket hub
 internal/upload/    filesystem chunk tracker, resumable upload handlers, session cleanup
 internal/excel/     participant import/export
 internal/backup/    periodic VACUUM INTO
-docs/               changelog
+docs/               changelog and the rebuild spec (source of truth)
 ```
 
 Two import rules keep the package graph acyclic: `model` imports nothing

@@ -173,7 +173,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    *listen,
-		Handler: mux,
+		Handler: web.CSRFProtect(mux),
 	}
 
 	go func() {

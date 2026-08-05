@@ -186,15 +186,17 @@ func main() {
 	<-ctx.Done()
 	log.Println("shutting down...")
 
-	if err := backup.RunOnce(*dataDir, st.Writer); err != nil {
-		log.Printf("shutdown backup: %v", err)
-	}
-
+	// Drain HTTP first: no in-flight request should still be writing when the
+	// backup snapshots the DB.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("server shutdown: %v", err)
+	}
+
+	if err := backup.RunOnce(*dataDir, st.Writer); err != nil {
+		log.Printf("shutdown backup: %v", err)
 	}
 
 	log.Println("server stopped")

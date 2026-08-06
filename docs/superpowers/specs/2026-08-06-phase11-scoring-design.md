@@ -150,27 +150,11 @@ dependency graph; cycles remain impossible).
 ### `internal/model/types.go`
 - `Score.Score` `*int` → `*float64`; drop `Score.WSIScore`.
 
-### `internal/store/migrations/003_scores_real.sql`
-Rebuild `scores` (SQLite cannot ALTER column type or DROP column pre-3.35 safely
-across our target; do a table rebuild in a transaction):
-```sql
-CREATE TABLE scores_new (
-    id             INTEGER PRIMARY KEY,
-    participant_id INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
-    module_id      INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
-    score          REAL,
-    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(participant_id, module_id)
-);
-INSERT INTO scores_new (id, participant_id, module_id, score, created_at, updated_at)
-    SELECT id, participant_id, module_id, score, created_at, updated_at FROM scores;
-DROP TABLE scores;
-ALTER TABLE scores_new RENAME TO scores;
-CREATE INDEX idx_scores_lookup ON scores(participant_id, module_id);
-```
-Run guarded like migration 002: only when `pragma_table_info(scores)` still shows
-a `wsi_score` column (idempotent).
+### `internal/store/migrations/001_initial.sql` (edit in place)
+DB is disposable (dev, no score data to preserve), so no rebuild migration.
+Edit the initial schema directly: `scores.score` `INTEGER` → `REAL`, drop the
+`scores.wsi_score` column. Old dev DB files are deleted and recreated from the
+edited schema. No `003`, no `scores_new`, one `scores` table only.
 
 ## Routes
 
@@ -232,8 +216,7 @@ only, gated on `Accept-Encoding: gzip`. Not global (small responses pay nothing)
 - `ListParticipantTotals`: SUM correct; participant with no scores → total 0 and
   present; decimal SUM precision.
 - `UpsertScore` decimal roundtrip (`85.5`).
-- Migration 003: old-schema DB (with `wsi_score`, INTEGER score) upgrades; data
-  preserved; `wsi_score` gone; second run is a no-op.
+- Schema: fresh DB has `scores.score` REAL and no `wsi_score` column.
 
 `internal/scoring/cache_test.go`:
 - `Refresh` changes `Snapshot()` bytes after a score write; `Snapshot()` does no
@@ -262,3 +245,7 @@ only, gated on `Accept-Encoding: gzip`. Not global (small responses pay nothing)
 - `README.md`: flip Phase 11 row to done; add `/leaderboard`, `/jury/scoring*`
   routes and the `go-pdf/fpdf` dependency.
 - `internal/model/types.go` comments referencing `wsi_score` cleaned up.
+- `internal/store/submission.go`: `UpsertScore` INSERT drops the `wsi_score`
+  column (and its NULL comment); `score` param `*int` → `*float64`.
+- `internal/store/migrations/001_initial.sql`: `scores.score` REAL, no
+  `wsi_score` (edited in place; dev DB `data/lks.sqlite*` deleted so it rebuilds).

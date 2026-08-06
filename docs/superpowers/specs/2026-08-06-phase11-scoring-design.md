@@ -21,7 +21,8 @@ all docs stay consistent.
    median. A participant with every module blank/0 still has `total_raw = 0` and
    is included in the population.
 
-2. **Participant WSI = `ScaleScore(total_raw, median_of_totals)`.**
+2. **Participant WSI = `ScaleScore(total_raw, median, mad)`** where `median` and
+   `mad` come from the population of per-participant totals.
    One number per participant. Ranking is WSI descending.
 
 3. **WSI is never persisted. It is computed on demand** (leaderboard cache
@@ -34,20 +35,40 @@ all docs stay consistent.
 6. **`/jury/leaderboard` (jury view) is dropped.** Redundant with the public
    `/leaderboard`; jury can open it directly. Deviation from spec §6 route map.
 
-## Formula (unchanged math, spec §7)
+## Formula (robust z-score, reverse-engineered from CIS output)
+
+The original spec §7 said `700 + (raw - median) * 2.8`. That is wrong: it has a
+hardcoded slope and never fits real CIS scaled results. The actual CIS "scale
+results" are a **robust standardised score** (median + MAD), reverse-engineered
+to an exact fit against a 32-competitor ground-truth export:
 
 ```go
-// scaled = 700 + (raw - median) * 2.8, clamped [0, 1000], rounded
-func ScaleScore(raw, median float64) int {
-    s := 700 + (raw-median)*2.8
+// unit = 1.4826 * MAD  (normal-consistent robust SD estimate)
+// scaled = 700 + 30 * (raw - median) / unit, clamped [0, 1000], rounded
+func ScaleScore(raw, median, mad float64) int {
+    unit := 1.4826 * mad
+    if unit == 0 {
+        unit = 1e-9 // degenerate all-equal population; every raw maps to 700
+    }
+    s := 700 + 30*(raw-median)/unit
     if s < 0 { s = 0 }
     if s > 1000 { s = 1000 }
     return int(math.Round(s))
 }
 ```
 
-Median: sort per-participant totals ascending. Odd N → middle element. Even N →
-mean of the two middle elements.
+- `median`: median of the per-participant totals (population, computed on demand).
+- `MAD`: median absolute deviation, `median(|total - median|)`.
+- `1.4826`: standard MAD→SD scale factor (consistency with the normal SD).
+- `30`: points per robust-SD unit; anchors 700 at the median.
+
+Both `median` and `MAD` are recomputed from the population on every render, so
+the scale is fully dynamic (participant count and spread vary per competition).
+The effective slope for the ground-truth data is `30/(1.4826*7.0) ≈ 2.891`, which
+is why an early hardcoded-2.889 fit worked; it is not a constant.
+
+Median/MAD: sort ascending. Odd N → middle element. Even N → mean of the two
+middle elements. Same rule for both the totals and the abs-deviation list.
 
 Awards (by rank, after WSI-desc sort):
 - rank 1 → Gold
@@ -61,7 +82,7 @@ Tie handling: stable sort. Equal WSI keeps input order (participants supplied in
 
 ### Test vector (32 participants, locked into `formula_test.go`)
 
-Per-participant totals below → median = **8.0**.
+Per-participant totals below → median = **8.0**, MAD = **7.0**, unit = 10.3782.
 
 ```
 61.42 54.33 39.58 37.75 35.50 28.75 28.42 28.40 19.00 16.92 13.50 13.05
@@ -69,15 +90,17 @@ Per-participant totals below → median = **8.0**.
 0.75 0.50 0.50 0.50 0.25 0.00
 ```
 
-Expected (rank, raw, wsi, award) - selected rows the test asserts exactly:
+Expected (rank, raw, wsi, award) - rows the test asserts exactly (verified
+against the real CIS export, all 32 match):
 ```
-1   61.42  850  Gold
-2   54.33  830  Silver
-3   39.58  788  Bronze
-4   37.75  783  Medallion
-16   8.75  702  Medallion   <- last Medallion (wsi >= 700)
+1   61.42  854  Gold
+2   54.33  834  Silver
+3   39.58  791  Bronze
+4   37.75  786  Medallion
+5   35.50  779  Medallion
+16   8.75  702  Medallion   <- last Medallion (wsi >= 700), 13 Medallions total
 17   7.25  698  none        <- first below threshold
-32   0.00  678  none
+32   0.00  677  none
 ```
 
 ## Architecture
@@ -87,10 +110,13 @@ dependency graph; cycles remain impossible).
 
 ### `internal/scoring/formula.go`
 - `type Entry struct { ParticipantID int64; Name, School string; PCNumber *int; TotalRaw float64; WSI int; Rank int; Award string }`
-- `ScaleScore(raw, median float64) int`
-- `Median(totals []float64) float64`
-- `Rank(entries []Entry) []Entry` - pure: computes median from `TotalRaw`, fills
-  `WSI`, sorts desc (stable), assigns `Rank` and `Award`. No DB.
+- `ScaleScore(raw, median, mad float64) int`
+- `Median(xs []float64) float64` - shared by both the totals median and the MAD
+  inner/outer median (sorts a copy; even N → mean of two middles).
+- `MAD(totals []float64, median float64) float64` - `Median(|x - median|)`.
+- `Rank(entries []Entry) []Entry` - pure: computes median + MAD from `TotalRaw`,
+  fills `WSI` via `ScaleScore`, sorts desc (stable), assigns `Rank` and `Award`.
+  No DB.
 
 ### `internal/scoring/cache.go`
 - `atomic.Pointer[[]byte]` holding pre-rendered leaderboard JSON.
@@ -193,11 +219,14 @@ only, gated on `Accept-Encoding: gzip`. Not global (small responses pay nothing)
 ## Testing
 
 `internal/scoring/formula_test.go`:
-- `ScaleScore`: median case, clamp low (0), clamp high (1000), rounding.
+- `ScaleScore`: median case (→700), clamp low (0), clamp high (1000), rounding,
+  degenerate MAD=0 (→700).
 - `Median`: odd N, even N (mean of two middles), single element.
-- `Rank`: the 32-row fixture above - asserts median 8.0, ranks/wsi/awards at
-  rows 1-4, 16, 17, 32; Medallion boundary at wsi 700; stable tie order for the
-  two 6.00 and three 0.50 rows.
+- `MAD`: known median/MAD pair from the fixture (median 8.0, MAD 7.0).
+- `Rank`: the 32-row fixture above - asserts median 8.0, MAD 7.0, all 32
+  ranks/wsi/awards exact (854/834/791/786/779 ... 677); Medallion boundary at
+  wsi 700 (13 Medallions, last at rank 16); stable tie order for the two 6.00
+  and three 0.50 rows.
 
 `internal/store` tests:
 - `ListParticipantTotals`: SUM correct; participant with no scores → total 0 and
@@ -220,12 +249,14 @@ only, gated on `Accept-Encoding: gzip`. Not global (small responses pay nothing)
 ## Doc updates (required by CLAUDE.md post-phase review)
 
 - `docs/rebuild-spec.md`: schema §3 drop `scores.wsi_score`, `scores.score` → REAL;
-  §7 WSI section rewritten (median = per-participant totals, WSI computed on demand,
-  not persisted); §Leaderboard Result Cache (no wsi_score in DB); route map drop
+  §7 WSI section rewritten (robust median+MAD z-score, NOT the old `*2.8` slope;
+  median = per-participant totals, WSI computed on demand, not persisted);
+  §Leaderboard Result Cache (no wsi_score in DB); route map drop
   `/jury/leaderboard`; §16 Phase 11 steps aligned (no formula.go persist, no
   cache.go writing wsi_score).
 - `CLAUDE.md`: "Scoring Formula" and "Leaderboard cache" sections updated to the
-  compute-on-demand model; note `scores.score` is REAL and `wsi_score` removed.
+  robust median+MAD formula and compute-on-demand model; note `scores.score` is
+  REAL and `wsi_score` removed.
 - `docs/CHANGELOG.md`: new Phase 11 section (date, files, routes, deviations,
   verification); replace the "Next" section with Phase 12.
 - `README.md`: flip Phase 11 row to done; add `/leaderboard`, `/jury/scoring*`

@@ -48,7 +48,7 @@ go test ./internal/store/...   # single package
 
 **Chunked upload:** zero DB writes per chunk. Chunk presence = filesystem file `data/uploads_tmp/{upload_id}/chunk-{n}`. Final assembly via sequential `io.Copy` → `os.Rename` → single DB INSERT.
 
-**Leaderboard cache (Phase 11, not yet built):** planned `atomic.Pointer[[]byte]` pre-rendered JSON in `internal/scoring/cache.go`, refreshed after every score write. The `scoring` package does not exist yet.
+**Leaderboard cache:** `atomic.Pointer[[]byte]` pre-rendered JSON in `internal/scoring/cache.go`, primed at startup in `main.go` and refreshed after every score write, then broadcast via WS `ScoreUpdated`.
 
 ## Package Dependency Graph
 
@@ -56,6 +56,7 @@ go test ./internal/store/...   # single package
 model    ← nothing internal
 store    ← model
 upload   ← model, store
+scoring  ← model, store
 realtime ← model only (time.Time passed as param; no store dep)
 excel    ← store only
 backup   ← *sql.DB only
@@ -63,22 +64,25 @@ web      ← model, store, realtime, excel, upload
 cmd/server/main.go ← model, store, realtime, upload, backup, web (assembler leaf)
 ```
 
-Phase 11 adds `scoring ← model, store`. Cycles are impossible by design. `realtime` must never import `store`.
+Phase 11 added `scoring ← model, store`. Cycles are impossible by design. `realtime` must never import `store`.
 
 ## Auth
 
 - **Jury:** stateless IP-allowlist check on every `/jury/*` request. No session, no DB lookup. IPs from `competitions.allowed_ips` JSON column, read via competition state cache.
 - **Participant:** `pc_number` + `password` login → session cookie `participant_session`. Passwords are bcrypt(cost=8). Import generates 6-digit random numeric passwords.
 
-## Scoring Formula (Phase 11, not yet implemented)
+## Scoring Formula
+
+Robust standardised z-score, centre 700, spread from the median absolute deviation (MAD):
 
 ```go
-// scaled = 700 + (raw - median) * 2.8, clamped [0, 1000]
+// scaled = 700 + 30*(raw-median)/(1.4826*mad), clamped [0, 1000], math.Round
+// mad==0 (no spread) → 700
 ```
 
-Planned: `wsi_score` written to DB on every score upsert (pre-computed, not derived at query time). Today `submissions` carries no score and `scores.wsi_score` stays NULL; no code reads or writes it.
+Population = per-participant TOTAL raw points (`COALESCE(SUM(score),0)` over all modules, LEFT JOIN so blank participants count as total 0). Median and MAD are computed on demand from the live population on every leaderboard refresh. WSI is NEVER persisted: `scores.score` is `REAL` (raw points) and there is no `wsi_score` column. Lives in `internal/scoring/formula.go` (stdlib only, no internal imports).
 
-Planned awards: rank 1/2/3 → Gold/Silver/Bronze; rank >3 AND wsi_score ≥ 700 → Medallion for Excellence.
+Awards by WSI-descending rank: rank 1/2/3 → Gold/Silver/Bronze; rank >3 AND WSI >= 700 → Medallion for Excellence; otherwise none. (`AwardGold`/`AwardSilver`/`AwardBronze`/`AwardMedallion` consts.)
 
 ## SQLite Pragmas (applied every connection open)
 
@@ -88,9 +92,9 @@ WAL, busy_timeout=5000, foreign_keys=ON, synchronous=NORMAL, cache_size=-32000, 
 
 Cost=8 (not default 10). ~8× faster for bulk import. Acceptable for internal LAN competition.
 
-## Gzip Scope (Phase 11, not yet implemented)
+## Gzip Scope
 
-Planned: gzip only `/leaderboard` and `/jury/scoring`, the large repeated payloads. Not global middleware. No gzip is wired today.
+Scoped middleware `web.Gzip`, applied to `GET /jury/scoring` and both `/leaderboard` routes (the large repeated payloads). Not global, not on export-pdf.
 
 ## Branching Strategy
 

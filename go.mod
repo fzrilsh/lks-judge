@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/a-h/templ v0.3.1020
+	github.com/go-pdf/fpdf v0.9.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/xuri/excelize/v2 v2.11.0
 	golang.org/x/crypto v0.54.0

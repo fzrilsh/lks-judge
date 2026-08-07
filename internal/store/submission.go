@@ -127,3 +127,46 @@ func (s *Store) UpsertScore(participantID, moduleID int64, score *float64) error
 	}
 	return nil
 }
+
+// ParticipantTotal is one participant's summed raw score across all modules.
+// Powers the WSI leaderboard; TotalRaw is 0 for a participant with no scores.
+type ParticipantTotal struct {
+	ParticipantID int64
+	Name          string
+	School        string
+	PCNumber      *int
+	TotalRaw      float64
+}
+
+// ListParticipantTotals returns every participant in the competition with the
+// sum of their raw module scores. LEFT JOIN so a participant with no scores
+// still appears with TotalRaw 0. Ordered by pc_number (NULLS LAST) then name so
+// stable-sort tie order matches the jury/import ordering.
+func (s *Store) ListParticipantTotals(competitionID int64) ([]ParticipantTotal, error) {
+	rows, err := s.Reader.Query(`
+		SELECT p.id, p.name, p.school, p.pc_number, COALESCE(SUM(sc.score), 0)
+		FROM participants p
+		LEFT JOIN scores sc ON sc.participant_id = p.id
+		WHERE p.competition_id = ?
+		GROUP BY p.id
+		ORDER BY p.pc_number ASC NULLS LAST, p.name ASC`, competitionID)
+	if err != nil {
+		return nil, fmt.Errorf("list participant totals: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []ParticipantTotal
+	for rows.Next() {
+		var pt ParticipantTotal
+		var pc sql.NullInt64
+		if err := rows.Scan(&pt.ParticipantID, &pt.Name, &pt.School, &pc, &pt.TotalRaw); err != nil {
+			return nil, fmt.Errorf("scan participant total: %w", err)
+		}
+		if pc.Valid {
+			n := int(pc.Int64)
+			pt.PCNumber = &n
+		}
+		out = append(out, pt)
+	}
+	return out, rows.Err()
+}

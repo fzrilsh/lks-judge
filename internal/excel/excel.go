@@ -89,7 +89,7 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 		school    string
 		pcNumber  *int
 		ipAddress *string
-		scores    map[string]*int // module name → raw score
+		scores    map[string]*float64 // module name -> raw score
 	}
 
 	dataRows := rows[1:]
@@ -108,7 +108,7 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 		rd := rowData{
 			name:   name,
 			school: cell(fixed["member"]),
-			scores: map[string]*int{},
+			scores: map[string]*float64{},
 		}
 		if ip := cell(fixed["ip_address"]); ip != "" {
 			rd.ipAddress = &ip
@@ -120,7 +120,7 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 		}
 		for _, mc := range moduleCols {
 			if v := cell(mc.idx); v != "" {
-				if n, err := strconv.Atoi(v); err == nil {
+				if n, err := strconv.ParseFloat(v, 64); err == nil {
 					rd.scores[mc.name] = &n
 				}
 			}

@@ -113,13 +113,19 @@ func TestImportParticipantsSecondRunReturnsEmptyPassword(t *testing.T) {
 
 func TestExportParticipantsHeaderAndRow(t *testing.T) {
 	s, compID := newTestStore(t)
-	if _, err := s.UpsertModuleByName(compID, "MA"); err != nil {
+	modID, err := s.UpsertModuleByName(compID, "MA")
+	if err != nil {
 		t.Fatalf("module: %v", err)
 	}
 	pc := 1
 	ip := "10.0.0.1"
-	if _, _, err := s.UpsertParticipantByName(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1"); err != nil {
+	pid, _, err := s.UpsertParticipantByName(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1")
+	if err != nil {
 		t.Fatalf("upsert: %v", err)
+	}
+	score := 88.5
+	if err := s.UpsertScore(pid, modID, &score); err != nil {
+		t.Fatalf("upsert score: %v", err)
 	}
 
 	data, err := ExportParticipants(s)
@@ -148,9 +154,9 @@ func TestExportParticipantsHeaderAndRow(t *testing.T) {
 	if row[0] != "01" || row[1] != "10.0.0.1" || row[2] != "SMK 1" || row[3] != "Ana" || row[4] != "plainpw1" {
 		t.Fatalf("row = %+v", row)
 	}
-	// module score cell empty (ponytail marker: score join lands in Phase 11)
-	if len(row) > 5 && row[5] != "" {
-		t.Fatalf("module score cell should be empty, got %q", row[5])
+	// module score cell filled with the decimal raw score
+	if len(row) < 6 || row[5] != "88.5" {
+		t.Fatalf("module score cell = %q, want %q", row[5], "88.5")
 	}
 }
 

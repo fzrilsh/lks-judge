@@ -68,3 +68,53 @@ func TestUpsertSubmissionReplaces(t *testing.T) {
 		t.Fatalf("want ErrSubmissionNotFound, got %v", err)
 	}
 }
+
+func TestScoresByParticipantModule(t *testing.T) {
+	s, compID := newTestStore(t)
+
+	f := func(v float64) *float64 { return &v }
+	pA, err := s.CreateParticipant(compID, "Alice", "SMK", nil, "x", "")
+	if err != nil {
+		t.Fatalf("participant A: %v", err)
+	}
+	pB, err := s.CreateParticipant(compID, "Bob", "SMK", nil, "x", "")
+	if err != nil {
+		t.Fatalf("participant B: %v", err)
+	}
+	mA, err := s.UpsertModuleByName(compID, "MA")
+	if err != nil {
+		t.Fatalf("module MA: %v", err)
+	}
+	mB, err := s.UpsertModuleByName(compID, "MB")
+	if err != nil {
+		t.Fatalf("module MB: %v", err)
+	}
+
+	if err := s.UpsertScore(pA, mA, f(88.5)); err != nil {
+		t.Fatalf("score A/MA: %v", err)
+	}
+	if err := s.UpsertScore(pB, mA, f(70.0)); err != nil {
+		t.Fatalf("score B/MA: %v", err)
+	}
+	if err := s.UpsertScore(pB, mB, nil); err != nil { // null score must be omitted
+		t.Fatalf("score B/MB nil: %v", err)
+	}
+
+	got, err := s.ScoresByParticipantModule(compID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[pA][mA] != 88.5 {
+		t.Fatalf("A/MA = %v, want 88.5", got[pA][mA])
+	}
+	if got[pB][mA] != 70.0 {
+		t.Fatalf("B/MA = %v, want 70.0", got[pB][mA])
+	}
+	// null score is not present, and A has no MB entry
+	if _, ok := got[pB][mB]; ok {
+		t.Fatalf("null score should be absent, got %v", got[pB][mB])
+	}
+	if _, ok := got[pA][mB]; ok {
+		t.Fatalf("missing score should be absent, got %v", got[pA][mB])
+	}
+}

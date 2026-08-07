@@ -170,3 +170,31 @@ func (s *Store) ListParticipantTotals(competitionID int64) ([]ParticipantTotal, 
 	}
 	return out, rows.Err()
 }
+
+// ScoresByParticipantModule returns score[participantID][moduleID] = raw score
+// for every non-null score in the competition. Powers the Excel export cells.
+func (s *Store) ScoresByParticipantModule(competitionID int64) (map[int64]map[int64]float64, error) {
+	rows, err := s.Reader.Query(`
+		SELECT sc.participant_id, sc.module_id, sc.score
+		FROM scores sc
+		JOIN participants p ON p.id = sc.participant_id
+		WHERE p.competition_id = ? AND sc.score IS NOT NULL`, competitionID)
+	if err != nil {
+		return nil, fmt.Errorf("scores by participant/module: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make(map[int64]map[int64]float64)
+	for rows.Next() {
+		var pid, mid int64
+		var score float64
+		if err := rows.Scan(&pid, &mid, &score); err != nil {
+			return nil, fmt.Errorf("scan score: %w", err)
+		}
+		if out[pid] == nil {
+			out[pid] = make(map[int64]float64)
+		}
+		out[pid][mid] = score
+	}
+	return out, rows.Err()
+}

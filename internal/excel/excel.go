@@ -193,6 +193,10 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	scores, err := st.ScoresByParticipantModule(comp.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	f := excelize.NewFile()
 	defer func() { _ = f.Close() }()
@@ -226,9 +230,15 @@ func ExportParticipants(st *store.Store) ([]byte, error) {
 		}
 		vals := []string{pcStr, ipStr, p.School, p.Name, pwStr}
 
-		// Module score cells stay blank: no scoring data exists until Phase 11.
-		// ponytail: fill from a score join once store has ListScoresByCompetition.
-		vals = append(vals, make([]string, len(modules))...)
+		for _, m := range modules {
+			cellVal := ""
+			if ms, ok := scores[p.ID]; ok {
+				if v, ok := ms[m.ID]; ok {
+					cellVal = strconv.FormatFloat(v, 'f', -1, 64)
+				}
+			}
+			vals = append(vals, cellVal)
+		}
 		for col, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(col+1, rowNum)
 			if err := f.SetCellValue(sheet, cell, v); err != nil {
@@ -257,5 +267,3 @@ func RandomPassword() (string, error) {
 	}
 	return string(b), nil
 }
-
-// ponytail: ExportParticipants score cells are empty — add score JOIN in Phase 11 when store/submission.go has ListScoresByCompetition.

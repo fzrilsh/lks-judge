@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -53,6 +54,7 @@ func HandleScoringGET(st *store.Store) http.HandlerFunc {
 		}
 		saved := r.URL.Query().Get("saved") == "1"
 		errMsg := r.URL.Query().Get("error")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := templates.Scoring(comp, participants, modules, cell, saved, errMsg).Render(r.Context(), w); err != nil {
 			log.Printf("render scoring: %v", err)
 		}
@@ -72,6 +74,13 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 			http.Error(w, "bad form", http.StatusBadRequest)
 			return
 		}
+		// First pass: parse and validate the whole grid before any DB write, so an
+		// invalid cell cannot leave a partial commit with a stale cache/broadcast.
+		type cellUpdate struct {
+			pid, mid int64
+			val      *float64
+		}
+		var updates []cellUpdate
 		for key, vals := range r.Form {
 			if !strings.HasPrefix(key, "score_") || len(vals) == 0 {
 				continue
@@ -82,17 +91,26 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 			}
 			raw := strings.TrimSpace(vals[0])
 			if raw == "" {
-				if err := st.UpsertScore(pid, mid, nil); err != nil {
+				updates = append(updates, cellUpdate{pid: pid, mid: mid, val: nil})
+				continue
+			}
+			v, err := strconv.ParseFloat(raw, 64)
+			if err != nil || math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v > 100 {
+				http.Redirect(w, r, "/jury/scoring?error="+url.QueryEscape("nilai harus 0..100"), http.StatusSeeOther)
+				return
+			}
+			vv := v
+			updates = append(updates, cellUpdate{pid: pid, mid: mid, val: &vv})
+		}
+		// Second pass: all values are valid, commit them.
+		for _, u := range updates {
+			if u.val == nil {
+				if err := st.UpsertScore(u.pid, u.mid, nil); err != nil {
 					log.Printf("clear score: %v", err)
 				}
 				continue
 			}
-			v, err := strconv.ParseFloat(raw, 64)
-			if err != nil || v < 0 || v > 100 {
-				http.Redirect(w, r, "/jury/scoring?error="+url.QueryEscape("nilai harus 0..100"), http.StatusSeeOther)
-				return
-			}
-			if err := st.UpsertScore(pid, mid, &v); err != nil {
+			if err := st.UpsertScore(u.pid, u.mid, u.val); err != nil {
 				log.Printf("upsert score: %v", err)
 				http.Error(w, "internal error", http.StatusInternalServerError)
 				return
@@ -155,6 +173,7 @@ func HandleLeaderboardGET(st *store.Store, cache *scoring.Cache) http.HandlerFun
 		if comp == nil {
 			comp = &model.Competition{Name: "LKS"}
 		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := templates.Leaderboard(comp).Render(r.Context(), w); err != nil {
 			log.Printf("render leaderboard: %v", err)
 		}

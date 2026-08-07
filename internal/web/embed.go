@@ -17,3 +17,11 @@ func StaticHandler() http.Handler {
 	}
 	return http.FileServer(http.FS(sub))
 }
+
+// PDFLogos returns the two header logos as bytes for the scoring PDF. Missing
+// files return nil, so the PDF just omits that logo.
+func PDFLogos() (left, right []byte) {
+	left, _ = staticFS.ReadFile("static/imgs/logo.png")
+	right, _ = staticFS.ReadFile("static/imgs/logo-worldskills.jpg")
+	return left, right
+}

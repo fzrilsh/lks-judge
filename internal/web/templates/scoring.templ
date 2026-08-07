@@ -1,0 +1,84 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
+
+// Scoring renders the jury raw-score matrix: rows participants, columns modules,
+// each cell a decimal number input. score[participantID][moduleID] is the saved
+// raw score (nil = blank). Posts the whole grid to /jury/scoring.
+templ Scoring(comp *model.Competition, participants []*model.Participant, modules []*model.Module, score map[int64]map[int64]*float64, saved bool, errMsg string) {
+	@AppLayout("Scoring", "scoring") {
+		<div class="max-w-6xl mx-auto space-y-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-headline-large text-on-surface font-manrope">Scoring</h1>
+				<div class="flex gap-2">
+					<a href="/leaderboard" target="_blank" class="text-label-large px-4 py-2 bg-secondary-container text-on-secondary-container rounded-xl hover:shadow transition-shadow">Leaderboard</a>
+					<a href="/jury/scoring/export-pdf" class="text-label-large px-4 py-2 bg-primary text-on-primary rounded-xl hover:shadow transition-shadow">Export PDF</a>
+				</div>
+			</div>
+			if saved {
+				<div class="bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 text-body-medium">Tersimpan.</div>
+			}
+			if errMsg != "" {
+				<div class="bg-error-container text-on-error-container rounded-xl px-4 py-2 text-body-medium">{ errMsg }</div>
+			}
+			<form method="post" action="/jury/scoring">
+				<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-x-auto">
+					<table class="w-full text-body-medium">
+						<thead class="bg-surface-container text-on-surface-variant">
+							<tr>
+								<th class="text-left px-4 py-3">Peserta</th>
+								for _, m := range modules {
+									<th class="px-4 py-3 text-center">{ m.Name }</th>
+								}
+							</tr>
+						</thead>
+						<tbody>
+							if len(participants) == 0 {
+								<tr><td colspan={ fmt.Sprintf("%d", len(modules)+1) } class="text-center px-4 py-8 text-on-surface-variant">Belum ada peserta.</td></tr>
+							}
+							for _, p := range participants {
+								<tr class="border-t border-outline-variant">
+									<td class="px-4 py-3">
+										<div class="text-on-surface">
+											if p.PCNumber != nil {
+												<span class="font-manrope">{ fmt.Sprintf("%02d", *p.PCNumber) } </span>
+											}
+											{ p.Name }
+										</div>
+										<div class="text-label-small text-on-surface-variant">{ p.School }</div>
+									</td>
+									for _, m := range modules {
+										<td class="px-3 py-2 text-center">
+											<input
+												type="number" step="0.01" min="0" max="100"
+												name={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
+												value={ scoreValue(score, p.ID, m.ID) }
+												class="w-20 px-2 py-1 rounded-lg bg-surface-container text-on-surface text-center"
+											/>
+										</td>
+									}
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+				<div class="mt-4">
+					<button type="submit" class="text-label-large px-6 py-2 bg-primary text-on-primary rounded-xl hover:shadow transition-shadow">Simpan</button>
+				</div>
+			</form>
+		</div>
+	}
+}
+
+// scoreValue renders the saved raw score for a cell, or "" when unset.
+func scoreValue(score map[int64]map[int64]*float64, pid, mid int64) string {
+	if ms, ok := score[pid]; ok {
+		if v, ok := ms[mid]; ok && v != nil {
+			return fmt.Sprintf("%g", *v)
+		}
+	}
+	return ""
+}

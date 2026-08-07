@@ -112,13 +112,12 @@ func scanSubmission(row interface{ Scan(...any) error }) (*model.Submission, err
 	return &sub, nil
 }
 
-// UpsertScore inserts or replaces a raw score for participant+module.
-// wsi_score is set to NULL here — Phase 11 will compute it after all scores are known.
-func (s *Store) UpsertScore(participantID, moduleID int64, score *int) error {
+// UpsertScore inserts or replaces a raw decimal score for participant+module.
+func (s *Store) UpsertScore(participantID, moduleID int64, score *float64) error {
 	now := time.Now().UTC()
 	_, err := s.Writer.Exec(`
-		INSERT INTO scores(participant_id, module_id, score, wsi_score, created_at, updated_at)
-		VALUES (?, ?, ?, NULL, ?, ?)
+		INSERT INTO scores(participant_id, module_id, score, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(participant_id, module_id) DO UPDATE SET
 		    score=excluded.score, updated_at=excluded.updated_at`,
 		participantID, moduleID, score, now, now,
@@ -127,4 +126,75 @@ func (s *Store) UpsertScore(participantID, moduleID int64, score *int) error {
 		return fmt.Errorf("upsert score: %w", err)
 	}
 	return nil
+}
+
+// ParticipantTotal is one participant's summed raw score across all modules.
+// Powers the WSI leaderboard; TotalRaw is 0 for a participant with no scores.
+type ParticipantTotal struct {
+	ParticipantID int64
+	Name          string
+	School        string
+	PCNumber      *int
+	TotalRaw      float64
+}
+
+// ListParticipantTotals returns every participant in the competition with the
+// sum of their raw module scores. LEFT JOIN so a participant with no scores
+// still appears with TotalRaw 0. Ordered by pc_number (NULLS LAST) then name so
+// stable-sort tie order matches the jury/import ordering.
+func (s *Store) ListParticipantTotals(competitionID int64) ([]ParticipantTotal, error) {
+	rows, err := s.Reader.Query(`
+		SELECT p.id, p.name, p.school, p.pc_number, COALESCE(SUM(sc.score), 0)
+		FROM participants p
+		LEFT JOIN scores sc ON sc.participant_id = p.id
+		WHERE p.competition_id = ?
+		GROUP BY p.id
+		ORDER BY p.pc_number ASC NULLS LAST, p.name ASC`, competitionID)
+	if err != nil {
+		return nil, fmt.Errorf("list participant totals: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []ParticipantTotal
+	for rows.Next() {
+		var pt ParticipantTotal
+		var pc sql.NullInt64
+		if err := rows.Scan(&pt.ParticipantID, &pt.Name, &pt.School, &pc, &pt.TotalRaw); err != nil {
+			return nil, fmt.Errorf("scan participant total: %w", err)
+		}
+		if pc.Valid {
+			n := int(pc.Int64)
+			pt.PCNumber = &n
+		}
+		out = append(out, pt)
+	}
+	return out, rows.Err()
+}
+
+// ScoresByParticipantModule returns score[participantID][moduleID] = raw score
+// for every non-null score in the competition. Powers the Excel export cells.
+func (s *Store) ScoresByParticipantModule(competitionID int64) (map[int64]map[int64]float64, error) {
+	rows, err := s.Reader.Query(`
+		SELECT sc.participant_id, sc.module_id, sc.score
+		FROM scores sc
+		JOIN participants p ON p.id = sc.participant_id
+		WHERE p.competition_id = ? AND sc.score IS NOT NULL`, competitionID)
+	if err != nil {
+		return nil, fmt.Errorf("scores by participant/module: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make(map[int64]map[int64]float64)
+	for rows.Next() {
+		var pid, mid int64
+		var score float64
+		if err := rows.Scan(&pid, &mid, &score); err != nil {
+			return nil, fmt.Errorf("scan score: %w", err)
+		}
+		if out[pid] == nil {
+			out[pid] = make(map[int64]float64)
+		}
+		out[pid][mid] = score
+	}
+	return out, rows.Err()
 }

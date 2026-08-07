@@ -112,13 +112,12 @@ func scanSubmission(row interface{ Scan(...any) error }) (*model.Submission, err
 	return &sub, nil
 }
 
-// UpsertScore inserts or replaces a raw score for participant+module.
-// wsi_score is set to NULL here — Phase 11 will compute it after all scores are known.
-func (s *Store) UpsertScore(participantID, moduleID int64, score *int) error {
+// UpsertScore inserts or replaces a raw decimal score for participant+module.
+func (s *Store) UpsertScore(participantID, moduleID int64, score *float64) error {
 	now := time.Now().UTC()
 	_, err := s.Writer.Exec(`
-		INSERT INTO scores(participant_id, module_id, score, wsi_score, created_at, updated_at)
-		VALUES (?, ?, ?, NULL, ?, ?)
+		INSERT INTO scores(participant_id, module_id, score, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(participant_id, module_id) DO UPDATE SET
 		    score=excluded.score, updated_at=excluded.updated_at`,
 		participantID, moduleID, score, now, now,

@@ -69,16 +69,15 @@ type Submission struct {
 	UpdatedAt     time.Time
 }
 
-// Score maps to the scores table (Phase 11 scoring; the type and table exist
-// as scaffolding, no scoring code reads or writes it yet).
-// wsi_score is pre-computed on every upsert, never derived at query time.
+// Score maps to the scores table (Phase 11 scoring).
+// score is the raw decimal mark (0..100). The WSI scaled score is computed on
+// demand from the population, never stored.
 // UNIQUE(participant_id, module_id)
 type Score struct {
 	ID            int64
 	ParticipantID int64
 	ModuleID      int64
-	Score         *int
-	WSIScore      *int // 700 + (raw-median)*2.8, clamped [0,1000]
+	Score         *float64
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

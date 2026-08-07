@@ -1,5 +1,85 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Phase 11 - Scoring, Leaderboard, PDF (2026-08-07) ✅
+
+**Status:** Complete & spec-compliant (with intentional deviations noted below). Decimal raw scores, robust WSI scaling computed on demand, a cached public leaderboard refreshed over WS, and a CIS PDF export.
+
+### Implemented
+- Decimal scores: `scores.score` is now `REAL` (was INTEGER) and `model.Score.Score` is `*float64`. The `scores.wsi_score` column and the `model.Score.WSIScore` field were removed entirely: WSI is never persisted.
+- `internal/scoring/formula.go` (NEW): `Median`, `MAD`, `ScaleScore`, `Rank`, `Entry`, and the award consts `AwardGold`/`AwardSilver`/`AwardBronze`/`AwardMedallion`. Robust standardised z-score `700 + 30*(raw-median)/(1.4826*mad)`, clamped [0, 1000], `math.Round`; `mad==0` returns 700. Stdlib only, zero internal imports. Awards by WSI-descending rank: 1/2/3 → Gold/Silver/Bronze, rank >3 with WSI >= 700 → Medallion for Excellence, else none.
+- Median population is per-participant TOTAL raw points: `COALESCE(SUM(score),0)` over all modules, LEFT JOIN so participants with no scores count as a total of 0. Computed on demand from the live population, never stored.
+- `internal/scoring/cache.go` (NEW): `Cache` wrapping `atomic.Pointer[[]byte]` pre-rendered leaderboard JSON. `NewCache`/`Refresh`/`Snapshot`. Imports `store`. Primed at startup in `main.go`, refreshed after every score write.
+- `internal/scoring/pdf.go` (NEW): `PDF(comp, entries, leftLogo, rightLogo)` via `github.com/go-pdf/fpdf` (pure Go). CIS header logos + Name/Member/Result/Award table.
+- `internal/web/handlers_scoring.go` (NEW): `HandleScoringGET` (jury raw-score matrix), `HandleScoringPOST` (bulk decimal upsert → cache `Refresh` → `ScoreUpdated` WS broadcast), `HandleScoringExportPDF`, `HandleLeaderboardGET` (serves the cached snapshot for both the HTML shell and the JSON).
+- `internal/web/gzip.go` (NEW): scoped `Gzip` middleware. Applied to `GET /jury/scoring` and both `/leaderboard` routes only; not global, not on export-pdf.
+- `internal/web/templates/scoring.templ`, `internal/web/templates/leaderboard.templ`, `internal/web/static/js/leaderboard.js` (NEW): jury scoring page, public leaderboard that refreshes on the `ScoreUpdated` WS event (no polling).
+- `internal/web/embed.go`: `PDFLogos()` added to serve the header logos to the PDF builder.
+- Excel: import parses module score cells as float (`ParseFloat`); export writes decimal score cells. `store.ScoresByParticipantModule` added.
+
+### Routes Added
+```
+GET     /jury/scoring              jury raw-score matrix (gzip-scoped)
+POST    /jury/scoring              bulk upsert scores → cache refresh + ScoreUpdated
+GET     /jury/scoring/export-pdf   CIS PDF (scaled scores + awards)
+GET     /leaderboard               public leaderboard HTML shell (gzip-scoped)
+GET     /leaderboard.json          public leaderboard JSON snapshot (gzip-scoped)
+```
+All `/jury/*` routes sit behind the jury IP allowlist; `/leaderboard` and `/leaderboard.json` are public and unauthenticated by design.
+
+### Files Created/Modified
+```
+NEW       internal/scoring/formula.go
+NEW       internal/scoring/formula_test.go
+NEW       internal/scoring/cache.go
+NEW       internal/scoring/cache_test.go
+NEW       internal/scoring/pdf.go
+NEW       internal/scoring/pdf_test.go
+NEW       internal/web/handlers_scoring.go
+NEW       internal/web/gzip.go
+NEW       internal/web/templates/scoring.templ
+NEW       internal/web/templates/leaderboard.templ
+NEW       internal/web/static/js/leaderboard.js
+MODIFIED  internal/store/migrations/001_initial.sql   (scores.score REAL, wsi_score dropped)
+MODIFIED  internal/model/types.go                      (Score.Score *float64, WSIScore removed)
+MODIFIED  internal/store/submission.go                 (UpsertScore *float64, ScoresByParticipantModule)
+MODIFIED  internal/excel/excel.go                      (import ParseFloat, export decimal cells)
+MODIFIED  internal/web/embed.go                        (PDFLogos)
+MODIFIED  cmd/server/main.go                           (scoring routes, cache prime, gzip)
+MODIFIED  go.mod / go.sum                              (github.com/go-pdf/fpdf v0.9.0)
+```
+
+### Spec Compliance
+- ✅ Robust median+MAD WSI, computed on demand from per-participant totals, never persisted (spec §7)
+- ✅ Awards by WSI rank per spec §7
+- ✅ Leaderboard `atomic.Pointer[[]byte]` cache, refreshed on write, 0 DB reads on public polls (spec §11a)
+- ✅ Gzip scoped to `/leaderboard` and `/jury/scoring` only (spec §11a)
+- ✅ CIS PDF via `go-pdf/fpdf` (spec §7, §15)
+- ✅ `scoring` imports `model, store` only; graph stays acyclic (spec §11)
+
+### Deviations
+- **WSI formula changed** from the spec's original `700 + (raw-median)*2.8` slope to the robust standardised z-score `700 + 30*(raw-median)/(1.4826*mad)` (design corrected in the Phase 11 scoring spec, commits 691d57e / 29f4794). `math.Round`, clamped [0, 1000], `mad==0` → 700.
+- **WSI not persisted.** The spec's `scores.wsi_score` pre-computed column was dropped; WSI is derived on demand from the live population each refresh. `scores.score` is `REAL`, the only stored score.
+- **`/jury/leaderboard` dropped.** The spec listed a jury-view leaderboard; the public `GET /leaderboard` (plus `/leaderboard.json`) is the single leaderboard surface.
+- **`POST /jury/scoring`** instead of the spec's `PUT` (HTML forms speak GET/POST; same precedent as Phases 5/6/9/10).
+- Added `GET /leaderboard.json` alongside the HTML shell so the page and its WS refresh share one cached payload.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./... -race`: clean
+
+---
+
+## Next: Phase 12 - Polish & Build
+
+**Scope (spec §16 steps 50+):**
+- Nuclear competition reset (`POST /jury/reset`): DB wipe transaction + `os.RemoveAll` disk cleanup
+- Background session expiry sweep (30min ticker; see the session-cache note in CLAUDE.md)
+- End-to-end WS event verification, Windows cross-compile, `server.bat`, smoke test
+
+**DoD:**
+- Reset clears all data and files; expired sessions are swept from both the `sync.Map` cache and the DB; Windows binary runs a 2-tab smoke test clean
+
+---
+
 ## Logging Pass (2026-08-06) ✅
 
 **Status:** Complete. Richer operational logging plus a per-day log file. No behavior change to request handling.
@@ -16,17 +96,6 @@
 
 ### Verification
 - ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
-
----
-
-## Next: Phase 11 - Scoring
-
-**Scope (spec §16 steps 43+):**
-- `internal/scoring`: raw → scaled formula `700 + (raw - median) * 2.8` clamped [0, 1000], award tiers, leaderboard cache (`atomic.Pointer[[]byte]`)
-- Jury scoring UI + `ScoreUpdated` WS broadcast; public leaderboard with gzip
-
-**DoD:**
-- Enter a score → `wsi_score` persisted, leaderboard reflects it, `ScoreUpdated` fans out
 
 ---
 

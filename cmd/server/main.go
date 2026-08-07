@@ -17,6 +17,7 @@ import (
 	"github.com/fzrilsh/lks-judge/internal/logfile"
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/realtime"
+	"github.com/fzrilsh/lks-judge/internal/scoring"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/upload"
 	"github.com/fzrilsh/lks-judge/internal/web"
@@ -68,6 +69,14 @@ func main() {
 	// prime competition state cache
 	if err := st.LoadCompetitionCache(); err != nil {
 		log.Fatalf("load competition cache: %v", err)
+	}
+
+	// leaderboard cache: pre-render once at startup so the first public load has data
+	scoreCache := scoring.NewCache()
+	if c := st.CompetitionCache.Load(); c != nil {
+		if err := scoreCache.Refresh(st, c.ID); err != nil {
+			log.Printf("prime leaderboard cache: %v", err)
+		}
 	}
 
 	// graceful shutdown context (needed before goroutines reference ctx.Done)
@@ -193,6 +202,15 @@ func main() {
 	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))
 	mux.Handle("GET /jury/submissions/export.zip", juryMw(web.HandleSubmissionsExportZipGET(st)))
 	mux.Handle("GET /jury/submissions/{id}/download", juryMw(web.HandleSubmissionDownloadGET(st)))
+
+	// jury scoring: raw-score matrix + PDF export
+	mux.Handle("GET /jury/scoring", juryMw(web.Gzip(web.HandleScoringGET(st))))
+	mux.Handle("POST /jury/scoring", juryMw(web.HandleScoringPOST(st, scoreCache, hub)))
+	mux.Handle("GET /jury/scoring/export-pdf", juryMw(web.HandleScoringExportPDF(st)))
+
+	// public leaderboard (HTML shell + JSON snapshot), unauthenticated by design, gzip-scoped
+	mux.Handle("GET /leaderboard", web.Gzip(web.HandleLeaderboardGET(st, scoreCache)))
+	mux.Handle("GET /leaderboard.json", web.Gzip(web.HandleLeaderboardGET(st, scoreCache)))
 
 	// healthz
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

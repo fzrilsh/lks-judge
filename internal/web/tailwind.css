@@ -5,31 +5,38 @@
 @source "./static/js/*.js";
 
 @theme {
-  --color-primary: #004ac6;
-  --color-primary-container: #2563eb;
-  --color-secondary: #006e2d;
-  --color-secondary-container: #7cf994;
-  --color-error: #ba1a1a;
-  --color-surface: #f7f9fb;
-  --color-surface-container-low: #f2f4f6;
+  /* Soft LKS-blue palette. Token NAMES are fixed contracts (14 templ files and
+     the JS reference them); only the hex values changed from the old MD3 set. */
+  --color-primary: #2f5fd0;
+  --color-primary-container: #e4ecfb;   /* tonal, not a second bold blue */
+  --color-secondary: #2c7a52;
+  --color-secondary-container: #dcf1e5;
+  --color-error: #c0433f;
+  --color-surface: #f6f8fb;
+  --color-surface-container-low: #f0f3f8;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-high: #e6e8ea;
-  --color-surface-container-highest: #e0e3e5;
-  --color-on-surface: #191c1e;
-  --color-on-surface-variant: #434655;
+  --color-surface-container-high: #e1e7f0;
+  --color-surface-container-highest: #d8e0ec;
+  --color-on-surface: #1b2028;
+  --color-on-surface-variant: #5a6373;
   --color-on-primary: #ffffff;
   --color-on-secondary: #ffffff;
-  --color-outline: #737686;
-  --color-outline-variant: #c3c6d7;
+  --color-outline: #8b95a5;
+  --color-outline-variant: #dde3ec;      /* thinner table rules */
 
-  /* ADDED: tokens the templ pages reference but old CSS never defined. */
-  --color-surface-container: #eceef0;   /* between -low and -high */
-  --color-background: #f7f9fb;           /* alias of surface; fixes bg-background */
+  /* tokens the templ pages reference but the old MD3 set never defined. */
+  --color-surface-container: #e9edf4;    /* between -low and -high */
+  --color-background: #f6f8fb;           /* alias of surface; fixes bg-background */
   --color-on-error: #ffffff;
-  --color-error-container: #ffdad6;      /* MD3 error-container for the tonal error role */
+  --color-error-container: #fbe7e5;
   --color-on-error-container: #410002;
-  --color-on-primary-container: #ffffff;
-  --color-on-secondary-container: #002109;
+  --color-on-primary-container: #123163;
+  --color-on-secondary-container: #124c30;
+
+  /* warning role: real amber, replacing the ad-hoc colors state used to borrow. */
+  --color-warning: #b7791f;
+  --color-warning-container: #fdf3e2;
+  --color-on-warning-container: #6b4708;
 
   --font-manrope: "Manrope", sans-serif;
 }
@@ -74,7 +81,49 @@ body { font-family: "Inter", sans-serif; }
 h1, h2, h3 { font-family: "Manrope", sans-serif; }
 
 .sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition;
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
 }
-.ambient-shadow { box-shadow: 0 20px 40px -10px rgba(25, 28, 30, 0.06); }
-.signature-gradient { background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%); }
+.sidebar-link[aria-current="page"] { @apply bg-primary/10 text-primary; }
+@utility ambient-shadow { box-shadow: 0 1px 2px rgba(27, 32, 40, 0.04), 0 8px 20px -12px rgba(27, 32, 40, 0.10); }
+.signature-gradient { background: linear-gradient(135deg, #2f5fd0 0%, #4d7ce0 100%); }
+
+/* Component classes: one definition, reused across every page, so the templ
+   diffs stay small. Force-emit any variant Tailwind would otherwise tree-shake. */
+@source inline("card card-flush btn btn-primary btn-tonal btn-ghost btn-danger field input input-error chip chip-ok chip-warn chip-danger chip-neutral table-wrap data-table");
+
+.card { @apply bg-surface-container-lowest rounded-2xl border border-outline-variant ambient-shadow p-5 md:p-6; }
+.card-flush { @apply bg-surface-container-lowest rounded-2xl border border-outline-variant ambient-shadow overflow-hidden; }
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-label-large transition
+         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
+         disabled:opacity-50 disabled:pointer-events-none;
+}
+.btn-primary { @apply btn bg-primary text-on-primary hover:brightness-110; }
+.btn-tonal   { @apply btn bg-primary-container text-on-primary-container hover:brightness-95; }
+.btn-ghost   { @apply btn bg-transparent text-on-surface-variant hover:bg-surface-container-high; }
+.btn-danger  { @apply btn bg-error text-on-error hover:brightness-110; }
+
+.field { @apply flex flex-col gap-1.5; }
+.field > label { @apply text-label-large text-on-surface-variant; }
+.input {
+  @apply w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3.5 py-2.5 text-body-medium text-on-surface
+         focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary;
+}
+.input-error { @apply border-error focus-visible:outline-error; }
+
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-label-small font-medium;
+}
+.chip-ok      { @apply chip bg-secondary-container text-on-secondary-container; }
+.chip-warn    { @apply chip bg-warning-container text-on-warning-container; }
+.chip-danger  { @apply chip bg-error-container text-on-error-container; }
+.chip-neutral { @apply chip bg-surface-container-high text-on-surface-variant; }
+
+.table-wrap { @apply overflow-x-auto rounded-2xl border border-outline-variant; }
+.data-table { @apply w-full border-collapse text-body-medium; }
+.data-table th {
+  @apply sticky top-0 bg-surface-container-low px-4 py-3 text-left text-label-medium font-semibold text-on-surface-variant;
+}
+.data-table td { @apply px-4 py-3 border-t border-outline-variant text-on-surface; }
+.data-table tbody tr:hover { @apply bg-surface-container-low; }

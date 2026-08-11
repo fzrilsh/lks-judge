@@ -27,6 +27,8 @@ func TestCSSCoverage(t *testing.T) {
 		"font-manrope", "signature-gradient", "ambient-shadow",
 		"material-symbols-outlined", "on-secondary-container",
 		"error-container", "on-error", "outline-variant",
+		"card", "btn-primary", "chip", "data-table", "table-wrap", "field",
+		"warning-container",
 	}
 	for _, s := range stems {
 		if !strings.Contains(cssStr, s) {

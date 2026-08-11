@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Scan compiled templ output + JS so Tailwind keeps only used classes. */
+@source "./templates/*_templ.go";
+@source "./static/js/*.js";
+
+@theme {
+  --color-primary: #004ac6;
+  --color-primary-container: #2563eb;
+  --color-secondary: #006e2d;
+  --color-secondary-container: #7cf994;
+  --color-error: #ba1a1a;
+  --color-surface: #f7f9fb;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #434655;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-outline: #737686;
+  --color-outline-variant: #c3c6d7;
+
+  /* ADDED: tokens the templ pages reference but old CSS never defined. */
+  --color-surface-container: #eceef0;   /* between -low and -high */
+  --color-background: #f7f9fb;           /* alias of surface; fixes bg-background */
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;      /* MD3 error-container for the tonal error role */
+  --color-on-error-container: #410002;
+  --color-on-primary-container: #ffffff;
+  --color-on-secondary-container: #002109;
+
+  --font-manrope: "Manrope", sans-serif;
+}
+
+/* ADDED: Material type scale (size/line-height/weight) as utilities. */
+@utility text-headline-large  { font-size: 2rem;     line-height: 2.5rem;   font-weight: 700; }
+@utility text-headline-medium { font-size: 1.75rem;  line-height: 2.25rem;  font-weight: 700; }
+@utility text-title-large     { font-size: 1.375rem; line-height: 1.75rem;  font-weight: 600; }
+@utility text-title-medium    { font-size: 1rem;     line-height: 1.5rem;   font-weight: 600; }
+@utility text-label-large     { font-size: 0.875rem; line-height: 1.25rem;  font-weight: 500; }
+@utility text-label-medium    { font-size: 0.75rem;  line-height: 1rem;     font-weight: 500; }
+@utility text-label-small     { font-size: 0.6875rem;line-height: 1rem;     font-weight: 500; }
+@utility text-body-large      { font-size: 1rem;     line-height: 1.5rem; }
+@utility text-body-medium     { font-size: 0.875rem; line-height: 1.25rem; }
+@utility text-body-small      { font-size: 0.75rem;  line-height: 1rem; }
+
+@font-face { font-family:"Material Symbols Outlined"; src:url("../fonts/material-symbols.woff2") format("woff2"); }
+@font-face { font-family:"Inter"; font-display:swap; src:url("../fonts/inter.woff2") format("woff2"); }
+@font-face { font-family:"Manrope"; font-display:swap; src:url("../fonts/manrope.woff2") format("woff2"); }
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variation-settings: "FILL" 0, "wght" 400;
+}
+
+body { font-family: "Inter", sans-serif; }
+h1, h2, h3 { font-family: "Manrope", sans-serif; }
+
+.sidebar-link {
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition;
+}
+.ambient-shadow { box-shadow: 0 20px 40px -10px rgba(25, 28, 30, 0.06); }
+.signature-gradient { background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%); }

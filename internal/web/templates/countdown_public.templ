@@ -6,7 +6,7 @@ import (
 )
 
 templ CountdownPublicPage(comp *model.Competition) {
-	@GuestLayout("Countdown") {
+	@GuestLayout("Countdown", "", "") {
 		<div class="w-full text-center space-y-8">
 			if comp != nil {
 				<h1 class="text-headline-large text-on-surface-variant font-manrope">{ comp.Name }</h1>

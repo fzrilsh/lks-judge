@@ -1,5 +1,43 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Post-Phase 12 Fixes (2026-08-11) ✅
+
+**Status:** Complete. Bug-fix pass after the Phase 12 UI port. Nine defects from a manual walkthrough of the ported UI, all on `fix/post-phase12-bugfixes` (PR #10 into `develop`). No new features, no schema change.
+
+### Fixed
+- **Second-shuffle `UNIQUE constraint failed: participants.competition_id, pc_number` (2067).** `UpdateParticipantSeats` did a per-row `UPDATE pc_number` inside one transaction; a re-shuffle reassigns numbers other rows still hold, so the update collided mid-transaction on the unique index. Now NULLs every seat first (multiple NULLs are allowed under the index), then assigns the fresh collision-free set. `participant.go`; regression test added to `participant_test.go`.
+- **PDF export logo error.** `go-pdf/fpdf` `RegisterImageOptionsReader` needs an explicit `ImageType` (a custom reader cannot sniff the format). `regImage` in `pdf.go` now sniffs magic bytes (`0x89` PNG, `0xFF 0xD8` JPEG) and passes the type.
+- **PDF export redesigned to match the old DomPDF layout.** 4 columns (Name, Member, Result, Award), dark-blue header, zebra striping, title block (Web Technologies / WorldSkills Scale Results / competition name), height-sized logos. `awardCode` helper removed.
+- **Jury file upload 403.** Upload auth checked the participant cookie before the jury IP allowlist, so a jury upload with no cookie was rejected. Reordered in the uploader middleware.
+- **`allowed_ips` textarea showed raw JSON.** `parseAllowedIPs` now accepts comma-separated IPs/CIDRs (`strings.SplitSeq`, trim, validate each, marshal back to stored JSON); `displayAllowedIPs` renders the stored JSON array back as a comma-joined list. Placeholder and helper text updated.
+- **All UI copy switched to English** (domain proper nouns like "Lomba Kompetensi Siswa" / LKS kept). Removed the module "Current" badge and the participant-dashboard "2MB" chunk hint.
+- **Public countdown: no navbar + responsive.** New chromeless `TVLayout` shell (no top nav, centered); logo/heading/clock sizes scale with viewport (clock `clamp(3rem,18vw,16rem)`).
+- **Interactive countdown control buttons** restored to the old design: all four controls (resume/save/pause/stop) carry `data-cd-show`, and `countdown.js` toggles visibility from the polled status instead of a fixed server render.
+- **Participant login box centered** (was pinned far left): wrapped the card in a `min-h flex items-center justify-center` container.
+- **Participant clock kept ticking after pause.** `CountdownTick` payload now carries `status`; `dashboard.js` clears its local ticker and only restarts it while `status === "running"`.
+
+### Files Modified
+```
+internal/store/participant.go                     (NULL-then-reassign seat update)
+internal/store/participant_test.go                (re-shuffle regression)
+internal/scoring/pdf.go                            (ImageType sniff, old-design layout)
+internal/web/handlers_jury.go                      (parseAllowedIPs)
+internal/web/templates/competition.templ           (displayAllowedIPs, textarea UX)
+internal/web/templates/countdown_jury.templ        (data-cd-show controls)
+internal/web/templates/countdown_public.templ      (TVLayout, responsive)
+internal/web/templates/layout_guest.templ          (TVLayout shell)
+internal/web/templates/login.templ                 (centered card)
+internal/web/static/js/countdown.js                (syncControls)
+internal/web/static/js/dashboard.js                (status-aware local ticker)
+cmd/server/main.go                                 (CountdownTick status in payload)
+internal/web/templates/{files,leaderboard,modules,participant_dashboard}.templ + leaderboard.js  (English copy, badge/hint removal)
+```
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean (via lefthook hooks)
+
+---
+
 ## Phase 11 - Scoring, Leaderboard, PDF (2026-08-07) ✅
 
 **Status:** Complete & spec-compliant (with intentional deviations noted below). Decimal raw scores, robust WSI scaling computed on demand, a cached public leaderboard refreshed over WS, and a CIS PDF export.

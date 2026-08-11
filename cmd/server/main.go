@@ -160,9 +160,8 @@ func main() {
 	juryMw := web.RequireJury(st)
 	mux.Handle("GET /jury/", juryMw(web.HandleJuryGET(st)))
 	mux.Handle("POST /jury/", juryMw(web.HandleJuryPOST(st)))
-	mux.Handle("POST /jury/reset", juryMw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "501 Not Implemented", http.StatusNotImplemented)
-	})))
+	mux.Handle("POST /jury/reset", juryMw(web.HandleResetPOST(st, scoreCache, hub, *dataDir,
+		func() error { return backup.RunOnce(*dataDir, st.Writer) })))
 
 	// jury participant routes
 	mux.Handle("GET /jury/participants", juryMw(web.HandleParticipantsGET(st)))

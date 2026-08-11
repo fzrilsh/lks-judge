@@ -17,11 +17,12 @@ templ AppLayout(title string, activePage string) {
 		<title>{ title } - LKS Judge Platform</title>
 		<link rel="icon" type="image/png" href="/static/imgs/logo.png"/>
 		<link rel="stylesheet" href="/static/css/app.css"/>
+		<script src="/static/js/reset.js" defer></script>
 	</head>
 	<body class="bg-surface text-on-surface min-h-screen font-manrope">
 		<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm">
 			<span class="text-xl font-bold font-manrope">{ competitionName() }</span>
-			<form method="post" action="/jury/reset">
+			<form method="post" action="/jury/reset" onsubmit="return confirmReset()">
 				<button type="submit" class="bg-error text-white px-4 py-2 rounded-xl text-sm font-bold">Reset</button>
 			</form>
 		</header>

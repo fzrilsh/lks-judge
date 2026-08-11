@@ -98,6 +98,9 @@ func main() {
 	// sweep expired upload sessions and their tmp chunk dirs
 	go upload.StartCleanup(st, *dataDir, ctx.Done())
 
+	// sweep expired participant sessions (bounds memory across a multi-day run)
+	go store.StartSessionSweep(st, ctx.Done())
+
 	// WS hub: one goroutine owns the client set for the life of the process
 	hub := realtime.NewHub()
 	go hub.Run(ctx)

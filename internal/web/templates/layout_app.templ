@@ -1,5 +1,13 @@
 package templates
 
+// competitionName returns the header title. Wired once at startup in
+// cmd/server/main.go to read the competition state cache. Falls back to a
+// constant so tests and cold starts still render.
+var competitionName = func() string { return "LKS Judge Platform" }
+
+// SetCompetitionName wires the header-title accessor. Call once at startup.
+func SetCompetitionName(fn func() string) { competitionName = fn }
+
 templ AppLayout(title string, activePage string) {
 	<!DOCTYPE html>
 	<html lang="id">
@@ -9,33 +17,37 @@ templ AppLayout(title string, activePage string) {
 		<title>{ title } - LKS Judge Platform</title>
 		<link rel="stylesheet" href="/static/css/app.css"/>
 	</head>
-	<body class="bg-background text-on-surface min-h-screen font-manrope flex">
-		<aside class="w-64 bg-surface-container-low shrink-0 flex flex-col p-4 gap-1">
-			<p class="text-label-small text-on-surface-variant px-3 py-2 uppercase tracking-wider">Jury Panel</p>
-			@navItem("/jury/", "Competition", activePage == "competition")
-			@navItem("/jury/participants", "Participants", activePage == "participants")
-			@navItem("/jury/modules", "Modules", activePage == "modules")
-			@navItem("/jury/countdown", "Countdown", activePage == "countdown")
-			@navItem("/jury/submissions", "Submissions", activePage == "submissions")
-			@navItem("/jury/scoring", "Scoring", activePage == "scoring")
-			@navItem("/jury/files", "Files", activePage == "files")
+	<body class="bg-surface text-on-surface min-h-screen font-manrope">
+		<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm">
+			<span class="text-xl font-bold font-manrope">{ competitionName() }</span>
+			<form method="post" action="/jury/reset">
+				<button type="submit" class="bg-error text-white px-4 py-2 rounded-xl text-sm font-bold">Reset</button>
+			</form>
+		</header>
+		<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] flex flex-col p-4 bg-surface-container-low w-64">
+			<nav class="flex-1 space-y-1">
+				@navItem("/jury/", "dashboard", "Competition", activePage == "competition")
+				@navItem("/jury/countdown", "alarm", "Countdown", activePage == "countdown")
+				@navItem("/jury/participants", "groups", "Participants", activePage == "participants")
+				@navItem("/jury/submissions", "upload_file", "Submissions", activePage == "submissions")
+				@navItem("/jury/modules", "inventory_2", "Modules", activePage == "modules")
+				@navItem("/jury/scoring", "edit_document", "Scoring", activePage == "scoring")
+				@navItem("/jury/files", "folder_open", "Files", activePage == "files")
+			</nav>
 		</aside>
-		<main class="flex-1 p-8">
+		<main class="ml-64 mt-16 p-10 min-h-screen">
 			{ children... }
 		</main>
 	</body>
 	</html>
 }
 
-templ navItem(href string, label string, active bool) {
+templ navItem(href string, icon string, label string, active bool) {
 	<a
 		href={ templ.URL(href) }
-		class={
-			"flex items-center px-3 py-2 rounded-xl text-label-large transition-colors",
-			templ.KV("bg-secondary-container text-on-secondary-container", active),
-			templ.KV("text-on-surface-variant hover:bg-surface-container", !active),
-		}
+		class={ "sidebar-link", templ.KV("bg-primary/10 text-primary", active) }
 	>
-		{ label }
+		<span class="material-symbols-outlined">{ icon }</span>
+		<span>{ label }</span>
 	</a>
 }

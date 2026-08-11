@@ -7,7 +7,7 @@ import (
 
 func TestCacheSnapshotStartsEmpty(t *testing.T) {
 	c := NewCache()
-	if got := c.Snapshot(); string(got) != `{"entries":[]}` {
+	if got := c.Snapshot(); string(got) != `{"modules":null,"entries":[]}` {
 		t.Errorf("empty snapshot = %s, want empty entries", got)
 	}
 }
@@ -15,7 +15,7 @@ func TestCacheSnapshotStartsEmpty(t *testing.T) {
 func TestCacheStoreRoundTrip(t *testing.T) {
 	c := NewCache()
 	pc := 1
-	c.store([]Entry{{Rank: 1, Name: "A", PCNumber: &pc, WSI: 854, Award: AwardGold}})
+	c.store([]Entry{{Rank: 1, Name: "A", PCNumber: &pc, WSI: 854, Award: AwardGold}}, nil)
 	var out struct {
 		Entries []struct {
 			Rank     int    `json:"rank"`

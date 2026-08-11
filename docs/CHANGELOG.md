@@ -69,16 +69,58 @@ MODIFIED  go.mod / go.sum                              (github.com/go-pdf/fpdf v
 
 ---
 
-## Next: Phase 12 - UI Modification
+## Phase 12 - UI Modification (2026-08-11) ✅
 
-**Scope (spec §16 steps 50-54):**
-- Add the standalone `tailwindcss` CLI (single binary, no node_modules) + a source `input.css` with design tokens ported from the old Laravel project; wire the CSS build into `go generate` so `internal/web/static/css/app.css` is regenerated, not hand-edited
-- Port the app + guest layout shells and every jury + public/participant page to match the old Laravel design (reference: `/Volumes/StorageTeamGroup/Projects/LKS Judge Platform/resources`)
+**Status:** Complete. The templ UI now matches the old Laravel design. A standalone Tailwind v4 CLI build feeds a committed, embedded `app.css`; both layout shells and all pages were ported to the old look; the JS-injected leaderboard rows and dashboard file cards were restyled to match; a coverage test guards against undefined tokens.
+
+### Implemented
+- **Tailwind v4 CLI pipeline:** `internal/web/tailwind.css` (NEW) is the source (MD3 `@theme` tokens, `@utility` type scale, `@font-face`, component classes, ported from the old `resources/css/app.css` plus the reconciliation additions the current templates need). `internal/web/static/css/generate.go` (NEW) carries the `//go:generate` directive that runs the vendored `tools/tailwindcss` (git-ignored, see `tools/README.md`) to regenerate `internal/web/static/css/app.css`. `app.css` stays committed and embedded, so `go build` alone works without the CLI installed. `tailwind.css` lives outside `static/`, so it is never embedded or served.
+- **Self-hosted fonts:** Inter + Manrope + Material Symbols shipped as local `.woff2` under `internal/web/static/fonts/` (no CDN); headings use `font-manrope`.
+- **Shells rebuilt:** `AppLayout(title, activePage)` (jury shell: fixed header via the import-cycle-safe `SetCompetitionName` accessor, icon sidebar) and `GuestLayout(title, navLeft, navRight)` (public/auth top-nav shell) ported to the old design; `navItem` gained an `icon` param.
+- **All 12 pages ported** to their old blade counterparts, keeping every Go component signature, form field `name=` attribute, route, and JS-contract element id: `competition`, `countdown_jury`, `participants`, `modules`, `submissions`, `scoring`, `files`, `login`, `participant_dashboard`, `countdown_public`, `leaderboard`, `shuffle`. The shuffle wheel animation was intentionally skipped (it needs a JSON endpoint + substantial new JS beyond scope); the real server-side POST-form re-render flow was kept with the old seat-grid styling.
+- **Per-module leaderboard columns:** the public leaderboard retains read-only per-module point columns. The cached `/leaderboard.json` payload was extended with a `modules` list (`[{id,name}]`) and a per-row `scores` object (`{moduleID: raw}`); `scoring.Entry` gained an additive `Scores map[int64]float64`, `Refresh` populates it via the existing `ListModules` + `ScoresByParticipantModule` queries (no new store query, WSI logic untouched).
+- **JS restyle:** `leaderboard.js` now reads `modules` + `scores`, injects the module `<th>` columns, and renders rows with position tints, gradient medal circles, emoji/Medallion badges, per-module chips, and the WSI total in the old design. `dashboard.js`'s `FileListUpdated` builder was aligned to the ported static file-card markup. All user text stays escaped.
+- **Token-coverage test:** `internal/web/css_coverage_test.go` (NEW) asserts every MD3 design-token stem used by the templates/JS resolves in the generated `app.css`, guarding against a template referencing a token the CSS never emitted.
+
+### tertiary role removed
+The old design has no `tertiary` role. Every templ `tertiary` usage was remapped: saved/success banners to `bg-secondary-container`, the shuffle action to `signature-gradient`, set-current-module to `bg-primary`.
+
+### Files Created/Modified
+```
+NEW       internal/web/tailwind.css
+NEW       internal/web/static/css/generate.go
+NEW       internal/web/static/fonts/*.woff2
+NEW       internal/web/css_coverage_test.go
+NEW       tools/README.md
+MODIFIED  internal/web/static/css/app.css               (regenerated, committed)
+MODIFIED  internal/web/templates/layout_app.templ      (AppLayout shell, navItem icon)
+MODIFIED  internal/web/templates/layout_guest.templ    (GuestLayout shell)
+MODIFIED  internal/web/templates/*.templ                (all 12 pages ported)
+MODIFIED  internal/web/static/js/leaderboard.js         (per-module cols, tints, medals, chips)
+MODIFIED  internal/web/static/js/dashboard.js           (file-card markup aligned)
+MODIFIED  internal/scoring/formula.go                    (Entry.Scores per-module field)
+MODIFIED  internal/scoring/cache.go                      (row.Scores, moduleInfo, modules in payload)
+MODIFIED  internal/scoring/cache_test.go                 (snapshot shape updated)
+MODIFIED  .gitignore                                     (tools/tailwindcss)
+```
+
+### Spec Compliance
+- ✅ Tailwind CLI regenerates `app.css` from templ + JS class usage; not hand-edited (spec §16)
+- ✅ Every page renders with the old look (header, sidebar, fonts, colour tokens, Material Symbols icons)
+- ✅ No handler/route/component signature changes beyond rendering needs (the leaderboard JSON extension is additive and backward compatible)
+- ✅ Gzip + Content-Type behaviour unchanged; `scoring` graph stays acyclic
+
+### Deviations
+- Shuffle wheel spin animation skipped (plan-mandated: it would require a new JSON endpoint and ~120 lines of new JS); the old seat-grid look is reproduced over the real POST-form flow.
+- `leaderboard/pdf` output was left untouched (spec item, no visual port needed).
+
+## Next: Phase 13 - Polish & Build
+
+**Scope (spec §16 steps 55-60):**
+- Nuclear reset endpoint, participant session expiry sweep, Windows cross-compile, `server.bat`, smoke test.
 
 **DoD:**
-- `go generate` rebuilds `app.css` from templ class usage; every page renders with the old look (header, sidebar, fonts, colour tokens, Material Symbols icons); gzip + Content-Type still correct
-
-Phase 13 (Polish & Build) follows: nuclear reset, session expiry sweep, Windows cross-compile, `server.bat`, smoke test (spec §16 steps 55-60).
+- Session cache expiry sweep runs; `CGO_ENABLED=0 GOOS=windows` binary builds and passes a LAN smoke test; `server.bat` launches it.
 
 ---
 

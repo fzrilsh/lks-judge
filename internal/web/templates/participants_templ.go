@@ -34,6 +34,16 @@ func pwStr(p *model.Participant) string {
 	return *p.PlainPassword
 }
 
+func queueCount(participants []*model.Participant) int {
+	n := 0
+	for _, p := range participants {
+		if p.PCNumber == nil {
+			n++
+		}
+	}
+	return n
+}
+
 func ParticipantsPage(participants []*model.Participant, saved bool, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -67,12 +77,12 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-5xl mx-auto space-y-6\"><div class=\"flex items-center justify-between\"><h1 class=\"text-headline-large text-on-surface font-manrope\">Participants</h1><div class=\"flex gap-2\"><a href=\"/jury/participants/shuffle\" class=\"px-4 py-2 bg-tertiary text-on-tertiary rounded-xl text-label-large hover:shadow-lg transition-shadow\">Shuffle</a> <a href=\"/jury/participants/export\" class=\"px-4 py-2 bg-secondary text-on-secondary rounded-xl text-label-large hover:shadow-lg transition-shadow\">Export Excel</a></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-6xl mx-auto space-y-10\"><section class=\"flex justify-between items-end\"><div><h1 class=\"text-4xl font-bold\">Manage Participants</h1><p class=\"text-on-surface-variant opacity-70\">Register competitors and initialize secure shuffling.</p></div><div class=\"flex gap-2\"><a href=\"/jury/participants/export\" class=\"bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 ambient-shadow\">Export Participants</a> <a href=\"/jury/participants/shuffle\" class=\"signature-gradient text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 ambient-shadow\">Shuffle</a></div></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-tertiary-container text-on-tertiary-container rounded-xl p-4\"><p class=\"text-body-medium\">Saved successfully.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-secondary-container text-on-secondary-container rounded-xl p-4\"><p class=\"text-body-medium\">Saved successfully.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -85,7 +95,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 52, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 67, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -96,101 +106,173 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Add single participant --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">Add Participant</h2><form method=\"POST\" action=\"/jury/participants\" class=\"grid grid-cols-4 gap-3 items-end\"><div><label class=\"block text-label-large text-on-surface mb-1\">Name</label> <input type=\"text\" name=\"name\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">School / Member</label> <input type=\"text\" name=\"school\" required class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">PC No (optional)</label> <input type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" class=\"w-full px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Add</button></form></div><!-- Import Excel --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-2\">Import Excel</h2><p class=\"text-body-small text-on-surface-variant mb-4\">Header: no_pc, ip_address, member, name, [module columns...]</p><form method=\"POST\" action=\"/jury/participants/import\" enctype=\"multipart/form-data\" class=\"flex gap-3 items-center\"><input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required class=\"flex-1 text-body-medium text-on-surface file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-primary file:text-on-primary\"> <button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Import</button></form></div><!-- Participant table --><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"text-left px-4 py-3\">NO PC</th><th class=\"text-left px-4 py-3\">Nama</th><th class=\"text-left px-4 py-3\">Sekolah</th><th class=\"text-left px-4 py-3\">Password</th><th class=\"text-left px-4 py-3\">IP</th><th class=\"px-4 py-3\"></th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"grid grid-cols-12 gap-8\"><div class=\"col-span-12 lg:col-span-4 space-y-6\"><div class=\"bg-surface-container-lowest p-6 rounded-xl ambient-shadow\"><h3 class=\"font-bold mb-4\">Registration</h3><form method=\"POST\" action=\"/jury/participants\" class=\"space-y-4\"><input name=\"name\" placeholder=\"Participant Name\" required class=\"w-full bg-surface-container-high rounded-xl p-3\"> <input name=\"school\" placeholder=\"Educational Institution\" required class=\"w-full bg-surface-container-high rounded-xl p-3\"> <input type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" placeholder=\"PC No (optional)\" class=\"w-full bg-surface-container-high rounded-xl p-3\"> <button class=\"w-full bg-primary text-white font-bold py-3 rounded-xl transition\">+ Add Participant</button></form></div><div class=\"bg-surface-container-lowest p-6 rounded-2xl ambient-shadow border border-outline-variant/20\"><div class=\"mb-5\"><h3 class=\"text-lg font-bold text-on-surface flex items-center gap-2\"><span class=\"material-symbols-outlined text-primary\">upload_file</span> Import Participants</h3><p class=\"text-sm text-outline mt-1\">Upload Excel file to replace current participants and modules data. Header: no_pc, ip_address, member, name, [module columns...]</p></div><form action=\"/jury/participants/import\" method=\"POST\" enctype=\"multipart/form-data\" class=\"space-y-4\"><div class=\"relative group\"><input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required onchange=\"document.getElementById('file-name').innerText = this.files[0]?.name || 'No file selected'\" class=\"absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10\"><div class=\"flex items-center justify-between px-5 py-4 rounded-xl border-2 border-dashed border-outline-variant/40 bg-surface-container-high group-hover:border-primary group-hover:bg-surface-container transition-all duration-200\"><div class=\"flex items-center gap-3\"><span class=\"material-symbols-outlined text-primary text-2xl\">description</span><div><p class=\"font-semibold text-on-surface text-sm\">Choose File</p><p id=\"file-name\" class=\"text-xs text-outline\">No file selected</p></div></div><span class=\"text-xs font-bold text-primary uppercase tracking-wider\">Browse</span></div></div><div class=\"flex items-start gap-3 bg-error-container/40 border border-error/20 p-4 rounded-xl\"><span class=\"material-symbols-outlined text-error\">warning</span><p class=\"text-xs text-on-error-container leading-relaxed\">This action will <span class=\"font-bold\">overwrite all participants and modules data</span>. Make sure your Excel file is correct before proceeding.</p></div><div class=\"flex justify-end\"><button type=\"submit\" onclick=\"return confirm('Semua data akan di-replace. Yakin lanjut?')\" class=\"w-full signature-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all duration-150\"><span>Upload &amp; Sync</span> <span class=\"material-symbols-outlined text-sm\">sync</span></button></div></form></div></div><div class=\"col-span-12 lg:col-span-8 space-y-8\"><div class=\"bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden\"><div class=\"px-6 py-4 bg-surface-container-low flex justify-between\"><h3 class=\"font-bold\">Queue (")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(participants) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<tr><td colspan=\"6\" class=\"text-center px-4 py-8 text-on-surface-variant\">Belum ada peserta.</td></tr>")
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", queueCount(participants)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 133, Col: 60}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " Participants)</h3></div><div class=\"divide-y\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if queueCount(participants) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"p-4 text-center text-on-surface-variant\">No participants yet</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			for _, p := range participants {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<tr class=\"border-t border-outline-variant hover:bg-surface-container-lowest transition-colors\"><td class=\"px-4 py-3 font-mono\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+				if p.PCNumber == nil {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"flex justify-between items-center p-4 hover:bg-surface-container-low\"><div><div class=\"font-bold\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var5 string
+					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 144, Col: 42}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div class=\"text-sm text-on-surface-variant\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var6 string
+					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.School)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 145, Col: 66}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div><form method=\"POST\" action=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var7 templ.SafeURL
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 147, Col: 99}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><button type=\"submit\" class=\"text-error font-bold\" onclick=\"return confirm('Hapus peserta ini?')\">✕</button></form></div>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
-				var templ_7745c5c3_Var4 string
-				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(pcStr(p))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 114, Col: 50}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td><td class=\"px-4 py-3\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 115, Col: 38}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</td><td class=\"px-4 py-3\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var6 string
-				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.School)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 116, Col: 40}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</td><td class=\"px-4 py-3 font-mono\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var7 string
-				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(pwStr(p))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 117, Col: 50}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td><td class=\"px-4 py-3 font-mono text-on-surface-variant\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var8 string
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ipStr(p))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 118, Col: 74}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td><td class=\"px-4 py-3\"><div class=\"flex gap-2 justify-end\"><form method=\"POST\" action=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var9 templ.SafeURL
-				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 121, Col: 99}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><button type=\"submit\" class=\"text-label-small px-3 py-1 bg-error-container text-on-error-container rounded-lg hover:shadow transition-shadow\" onclick=\"return confirm('Hapus peserta ini?')\">Delete</button></form></div></td></tr>")
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><div class=\"bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden\"><div class=\"px-6 py-4 bg-surface-container-low\"><h3 class=\"font-bold\">Final Seat Assignments</h3></div><div class=\"overflow-x-auto\"><table class=\"w-full text-sm\"><thead class=\"bg-surface-container\"><tr><th class=\"p-3 text-left\">Seat</th><th class=\"p-3 text-left\">IP</th><th class=\"text-left\">Name</th><th class=\"text-left\">Member</th><th class=\"text-left\">Password</th><th class=\"text-left\">Action</th></tr></thead> <tbody class=\"divide-y\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(participants)-queueCount(participants) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr><td colspan=\"6\" class=\"text-center p-4 text-on-surface-variant\">Not shuffled yet</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</tbody></table></div></div>")
+			for _, p := range participants {
+				if p.PCNumber != nil {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<tr><td class=\"p-3 font-bold\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var8 string
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(pcStr(p))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 180, Col: 48}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var9 string
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(ipStr(p))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 181, Col: 26}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var10 string
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 182, Col: 24}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var11 string
+					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.School)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 183, Col: 26}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"font-mono\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var12 string
+					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(pwStr(p))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 184, Col: 44}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td class=\"py-3\"><form method=\"POST\" action=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var13 templ.SafeURL
+					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 186, Col: 102}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><button class=\"text-error font-bold cursor-pointer\" onclick=\"return confirm('Hapus peserta ini?')\">DELETE</button></form></td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</tbody></table></div></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

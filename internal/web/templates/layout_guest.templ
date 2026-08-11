@@ -1,6 +1,13 @@
 package templates
 
-templ GuestLayout(title string) {
+func navLeftOr(s string) string {
+	if s == "" {
+		return "Lomba Kompetensi Siswa"
+	}
+	return s
+}
+
+templ GuestLayout(title string, navLeft string, navRight string) {
 	<!DOCTYPE html>
 	<html lang="id">
 	<head>
@@ -9,8 +16,14 @@ templ GuestLayout(title string) {
 		<title>{ title } - LKS Judge Platform</title>
 		<link rel="stylesheet" href="/static/css/app.css"/>
 	</head>
-	<body class="bg-surface min-h-screen flex items-center justify-center p-4">
-		{ children... }
+	<body class="bg-gray-50 min-h-screen">
+		<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm">
+			<span class="text-xl font-bold text-gray-900">{ navLeftOr(navLeft) }</span>
+			<span>{ navRight }</span>
+		</nav>
+		<main class="pt-20 min-h-screen">
+			{ children... }
+		</main>
 	</body>
 	</html>
 }

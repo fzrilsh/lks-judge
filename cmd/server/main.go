@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,6 +29,8 @@ func main() {
 	dataDir := flag.String("data", "./data", "data directory for SQLite + uploads")
 	listen := flag.String("listen", "0.0.0.0:8080", "HTTP listen address")
 	dev := flag.Bool("dev", false, "enable dev mode (seed default data)")
+	var juryIPs multiFlag
+	flag.Var(&juryIPs, "jury-ip", "extra jury IP or CIDR granted /jury/* access, in memory only (repeatable or comma-separated)")
 	flag.Parse()
 
 	// Tee logs to a per-day file under {data}/logs so a run leaves a record,
@@ -57,6 +60,14 @@ func main() {
 		log.Fatalf("store.Open: %v", err)
 	}
 	defer func() { _ = st.Close() }()
+
+	// --jury-ip: in-memory allowlist, never persisted, survives Reset.
+	if bad := st.SetExtraNets(juryIPs); len(bad) > 0 {
+		log.Fatalf("--jury-ip: not an IP or CIDR: %v", bad)
+	}
+	if len(juryIPs) > 0 {
+		log.Printf("extra jury allowlist (flag, not persisted): %v", []string(juryIPs))
+	}
 
 	// header title accessor: templ shell reads the live competition name
 	templates.SetCompetitionName(func() string {
@@ -264,4 +275,19 @@ func main() {
 	}
 
 	log.Println("server stopped")
+}
+
+// multiFlag collects a repeatable string flag. A single occurrence may also be
+// comma-separated, so --jury-ip="a,b" and --jury-ip a --jury-ip b both work.
+type multiFlag []string
+
+func (m *multiFlag) String() string { return strings.Join(*m, ",") }
+
+func (m *multiFlag) Set(v string) error {
+	for _, p := range strings.Split(v, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			*m = append(*m, p)
+		}
+	}
+	return nil
 }

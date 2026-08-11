@@ -30,6 +30,10 @@ type Store struct {
 	// CompetitionCache. Every /jury/* and /upload/* request reads it, so
 	// parsing the JSON + IPs once per write beats doing it per request.
 	allowedNets atomic.Pointer[[]net.IPNet]
+	// extraNets is a non-persisted jury allowlist from the --jury-ip flag. It is
+	// checked alongside allowedNets and is untouched by competition writes or
+	// Reset, so a fixed operator machine keeps access across a wipe.
+	extraNets atomic.Pointer[[]net.IPNet]
 }
 
 // pragmaDSN returns DSN params for SQLite pragmas.

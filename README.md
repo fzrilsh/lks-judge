@@ -88,6 +88,14 @@ and pauses on exit so a crash message stays readable.
 | `--data` | `./data` | Data directory; the database lives at `{data}/lks.sqlite` |
 | `--listen` | `0.0.0.0:8080` | HTTP listen address |
 | `--dev` | `false` | Seed a default competition and one participant |
+| `--jury-ip` | (none) | Extra jury IP or CIDR granted `/jury/*` access, in memory only. Repeatable or comma-separated. |
+
+`--jury-ip` is a runtime-only allowlist: it is never written to the database,
+so it is not shown in the competition setup form and it survives a Reset. Use it
+to keep a fixed operator machine reachable before any competition exists or after
+a wipe, e.g. `--jury-ip 192.168.1.10 --jury-ip 10.0.0.0/24`. It is additive to the
+persisted `allowed_ips`; when both are empty the allowlist still falls back to
+loopback only.
 
 `--dev` seeds a participant whose password is `123456`. **Never run a real
 competition with `--dev`.**

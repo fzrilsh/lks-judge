@@ -93,11 +93,17 @@ func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
 	}
 
 	nets := st.AllowedNets()
-	if len(nets) == 0 {
+	extra := st.ExtraNets()
+	if len(nets) == 0 && len(extra) == 0 {
 		return host, remote.IsLoopback() // no competition / empty list: loopback only
 	}
 	for i := range nets {
 		if nets[i].Contains(remote) {
+			return host, true
+		}
+	}
+	for i := range extra {
+		if extra[i].Contains(remote) {
 			return host, true
 		}
 	}

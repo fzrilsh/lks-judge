@@ -31,94 +31,60 @@ func moduleCount(participants []*model.Participant, cell map[int64]map[int64]*mo
 // cell[participantID][moduleID] holds the submission for that pair, or nil.
 templ Submissions(comp *model.Competition, participants []*model.Participant, modules []*model.Module, cell map[int64]map[int64]*model.Submission) {
 	@AppLayout("Submissions", "submissions") {
-		<div class="max-w-7xl mx-auto px-8 md:px-12">
-			<div class="mb-10 flex items-start justify-between gap-6">
-				<div>
-					<h1 class="text-4xl font-manrope font-extrabold text-on-surface">Participant Submissions</h1>
-					<p class="mt-4 text-on-surface-variant">Monitor participant work submission status for each competition module.</p>
-				</div>
-				<a href="/jury/submissions/export.zip"
-					class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap">
-					<span class="material-symbols-outlined text-[16px]">archive</span>
-					Download All (.zip)
-				</a>
-			</div>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-				<div class="bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5">
-					<div class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-						<span class="material-symbols-outlined text-3xl">groups</span>
-					</div>
-					<div>
-						<p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Participants</p>
-						<h2 class="text-3xl font-manrope font-bold text-on-surface">{ fmt.Sprintf("%d", len(participants)) }</h2>
-					</div>
-				</div>
-				<div class="bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5">
-					<div class="w-14 h-14 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center">
-						<span class="material-symbols-outlined text-3xl">task_alt</span>
-					</div>
-					<div>
-						<p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Participants Submitted</p>
-						<h2 class="text-3xl font-manrope font-bold text-on-surface">{ fmt.Sprintf("%d", countSubmitted(participants, cell)) }</h2>
-					</div>
-				</div>
-				<div class="bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5">
-					<div class="w-14 h-14 rounded-full bg-orange-500/10 text-orange-600 flex items-center justify-center">
-						<span class="material-symbols-outlined text-3xl">view_module</span>
-					</div>
-					<div>
-						<p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Module</p>
-						<h2 class="text-3xl font-manrope font-bold text-on-surface">{ fmt.Sprintf("%d", len(modules)) }</h2>
-					</div>
-				</div>
-			</div>
-			<div class="bg-surface-container-lowest rounded-xl ambient-shadow border border-outline-variant/20 overflow-hidden">
-				<div class="overflow-x-auto">
-					<table class="w-full text-sm text-left border-collapse">
-						<thead class="bg-surface-container-low border-b border-outline-variant/30">
+		@PageHeader("Submission", "Pantau status pengumpulan tiap modul.") {
+			<a href="/jury/submissions/export.zip" class="btn-tonal">
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">archive</span>
+				Unduh Semua (.zip)
+			</a>
+		}
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+			@statCard("groups", "ok", "Total Peserta", len(participants))
+			@statCard("task_alt", "ok", "Sudah Submit", countSubmitted(participants, cell))
+			@statCard("view_module", "warn", "Total Modul", len(modules))
+		</div>
+		@Card("") {
+			if len(participants) == 0 {
+				@EmptyState("inbox", "Belum ada data", "Submission peserta muncul di sini.") {
+				}
+			} else {
+				<div class="table-wrap">
+					<table class="data-table">
+						<thead>
 							<tr>
-								<th class="px-6 py-5 font-bold text-on-surface uppercase tracking-wider text-xs">Seat</th>
-								<th class="px-6 py-5 font-bold text-on-surface uppercase tracking-wider text-xs">Participant</th>
+								<th>Seat</th>
+								<th>Peserta</th>
 								for _, m := range modules {
-									<th class="px-6 py-5 text-center border-l border-outline-variant/20 min-w-[140px]">
-										<div class="font-bold text-on-surface whitespace-nowrap">{ m.Name }</div>
-										<div class="text-[10px] text-on-surface-variant uppercase tracking-widest mt-1.5">{ fmt.Sprintf("%d", moduleCount(participants, cell, m.ID)) } Collected</div>
+									<th class="text-center">
+										<div class="whitespace-nowrap">{ m.Name }</div>
+										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d terkumpul", moduleCount(participants, cell, m.ID)) }</div>
 									</th>
 								}
 							</tr>
 						</thead>
-						<tbody class="divide-y divide-outline-variant/20">
-							if len(participants) == 0 {
-								<tr>
-									<td colspan={ fmt.Sprintf("%d", len(modules)+2) } class="px-6 py-12 text-center text-on-surface-variant">No participant data available yet.</td>
-								</tr>
-							}
+						<tbody>
 							for _, p := range participants {
-								<tr class="hover:bg-surface-container-low/50 transition-colors">
-									<td class="px-6 py-4">
-										<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant/30 flex items-center justify-center font-bold text-on-surface">
-											if p.PCNumber != nil {
-												{ fmt.Sprintf("%02d", *p.PCNumber) }
-											} else {
-												-
-											}
-										</div>
+								<tr>
+									<td class="font-bold">
+										if p.PCNumber != nil {
+											{ fmt.Sprintf("%02d", *p.PCNumber) }
+										} else {
+											-
+										}
 									</td>
-									<td class="px-6 py-4">
-										<div class="font-bold text-on-surface text-base">{ p.Name }</div>
-										<div class="text-xs text-on-surface-variant mt-1">{ p.School }</div>
+									<td>
+										<div class="text-on-surface">{ p.Name }</div>
+										<div class="text-label-small text-on-surface-variant">{ p.School }</div>
 									</td>
 									for _, m := range modules {
-										<td class="px-6 py-4 text-center border-l border-outline-variant/20">
+										<td class="text-center">
 											if sub := cell[p.ID][m.ID]; sub != nil {
-												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) }
-													class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all">
-													<span class="material-symbols-outlined text-[16px]">download</span>
-													Download
+												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) } class="chip chip-ok" aria-label={ "Unduh " + p.Name + " " + m.Name }>
+													<span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>
+													Unduh
 												</a>
 											} else {
-												<span class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-surface-container-highest text-on-surface-variant opacity-70">
-													<span class="material-symbols-outlined text-[16px]">pending</span>
+												<span class="chip chip-neutral">
+													<span class="material-symbols-outlined text-sm" aria-hidden="true">pending</span>
 													Pending
 												</span>
 											}
@@ -129,7 +95,31 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 						</tbody>
 					</table>
 				</div>
-			</div>
+			}
+		}
+	}
+}
+
+// statCard is a small metric tile used at the top of the submissions view.
+templ statCard(icon string, kind string, label string, value int) {
+	<section class="card flex items-center gap-4">
+		<span class={ "w-12 h-12 rounded-full flex items-center justify-center flex-none", statTint(kind) }>
+			<span class="material-symbols-outlined text-2xl" aria-hidden="true">{ icon }</span>
+		</span>
+		<div>
+			<p class="text-label-small text-on-surface-variant uppercase tracking-wider">{ label }</p>
+			<p class="text-headline-small font-bold text-on-surface">{ fmt.Sprintf("%d", value) }</p>
 		</div>
+	</section>
+}
+
+func statTint(kind string) string {
+	switch kind {
+	case "ok":
+		return "bg-secondary-container text-on-secondary-container"
+	case "warn":
+		return "bg-warning-container text-on-warning-container"
+	default:
+		return "bg-primary-container text-on-primary-container"
 	}
 }

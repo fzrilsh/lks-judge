@@ -2,21 +2,21 @@
 
 ## Runtime Jury IP Flag (2026-08-11) ✅
 
-**Status:** Complete. Adds `--jury-ip`, a repeatable (or comma-separated) flag granting `/jury/*` access to extra IPs or CIDRs. In memory only: never written to `competitions.allowed_ips`, not shown in the setup form, and untouched by Reset, so a fixed operator machine keeps access before any competition exists or after a wipe. Additive to the persisted allowlist; loopback-only fallback still applies when both are empty.
+**Status:** Complete. Adds `--jury-ip`, a repeatable (or comma-separated) flag granting `/jury/*` access to extra IPs or CIDRs. In memory only: never written to `competitions.allowed_ips`, not shown in the setup form, and untouched by Reset, so a fixed operator machine keeps access before any competition exists or after a wipe. Additive to the persisted allowlist. Loopback (`127.0.0.1`, `::1`) is always allowed on top of both lists so the server's own host can always reach `/jury/*`.
 
 ### Files Modified
 ```
 cmd/server/main.go            (--jury-ip flag, multiFlag type, SetExtraNets wiring)
 internal/store/db.go          (Store.extraNets atomic pointer)
 internal/store/competition.go (SetExtraNets/ExtraNets, parseNets extracted)
-internal/web/middleware.go    (juryAllowed also checks ExtraNets)
+internal/web/middleware.go    (juryAllowed: loopback always allowed, then AllowedNets + ExtraNets)
 internal/web/middleware_test.go (TestJuryAllowedExtraNets)
 README.md                     (flag table + behavior note)
 ```
 
 ### Verification
 - ✅ `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run`: clean
-- ✅ `TestJuryAllowedExtraNets`: flag grants CIDR + exact IP, rejects outside, loopback not auto-allowed once an extra net is set, junk entry reported
+- ✅ `TestJuryAllowedExtraNets`: flag grants CIDR + exact IP, rejects outside, loopback always allowed, junk entry reported
 
 ---
 

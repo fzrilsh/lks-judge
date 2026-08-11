@@ -216,7 +216,14 @@ func HandleDashboard(st *store.Store) http.HandlerFunc {
 			formOpen = realtime.FormOpen(comp, seconds)
 		}
 
-		if err := templates.Dashboard(participant, activeModule, publicFiles, existing, formOpen).Render(r.Context(), w); err != nil {
+		// Surface upload failures: uploader.js redirects here with ?error=<msg>
+		// on a failed submission, which otherwise looked identical to success.
+		errorMsg := ""
+		if raw := r.URL.Query().Get("error"); raw != "" {
+			errorMsg = "Upload gagal: " + raw
+		}
+
+		if err := templates.Dashboard(participant, activeModule, publicFiles, existing, formOpen, errorMsg).Render(r.Context(), w); err != nil {
 			log.Printf("render dashboard template: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 		}

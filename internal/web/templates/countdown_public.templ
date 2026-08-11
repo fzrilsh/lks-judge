@@ -7,9 +7,10 @@ import (
 
 templ CountdownPublicPage(comp *model.Competition) {
 	@GuestLayout("Countdown", "", "") {
-		<div class="w-full text-center space-y-8">
+		<div class="w-full text-center max-w-6xl mx-auto">
+			<img src="/static/imgs/logo.png" class="mx-auto w-60 mb-6" alt="Logo"/>
 			if comp != nil {
-				<h1 class="text-headline-large text-on-surface-variant font-manrope">{ comp.Name }</h1>
+				<h1 class="font-manrope font-extrabold text-4xl md:text-5xl text-on-surface mb-8">{ comp.Name }</h1>
 			}
 			<p
 				id="cd-clock"
@@ -21,7 +22,7 @@ templ CountdownPublicPage(comp *model.Competition) {
 			>
 				--:--:--
 			</p>
-			<p class="text-title-large text-on-surface-variant uppercase tracking-widest">
+			<p class="text-title-large text-on-surface-variant uppercase tracking-widest mt-8">
 				<span id="cd-status">
 					if comp != nil {
 						{ comp.Status }

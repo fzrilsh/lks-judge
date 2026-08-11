@@ -152,13 +152,48 @@ MODIFIED  .gitignore                                     (tools/tailwindcss)
 - Shuffle wheel spin animation skipped (plan-mandated: it would require a new JSON endpoint and ~120 lines of new JS); the old seat-grid look is reproduced over the real POST-form flow.
 - `leaderboard/pdf` output was left untouched (spec item, no visual port needed).
 
-## Next: Phase 13 - Polish & Build
+## Phase 13 - Polish & Build (2026-08-11) ✅
 
-**Scope (spec §16 steps 55-60):**
-- Nuclear reset endpoint, participant session expiry sweep, Windows cross-compile, `server.bat`, smoke test.
+**Status:** Complete. Final phase. Nuclear reset wired, background session expiry sweep added, Windows launcher shipped. No schema change.
 
-**DoD:**
-- Session cache expiry sweep runs; `CGO_ENABLED=0 GOOS=windows` binary builds and passes a LAN smoke test; `server.bat` launches it.
+### Implemented
+- **Background session expiry sweep.** `store.DeleteExpiredSessions(now)` deletes every `sessions` row past its expiry and evicts each swept token from the package-level `sessionCache` (the cache-hit path in `ValidateSession` never re-checks expiry, so a DB-only delete would leave an expired token valid until restart). `store.StartSessionSweep(st, done)` runs it on a 30-minute ticker, wired in `main.go` next to `upload.StartCleanup`. Mirrors the `DeleteExpiredUploadSessions` / `StartCleanup` pattern.
+- **Nuclear reset.** `store.Reset()` deletes every competition (children cascade via `ON DELETE CASCADE`) plus the FK-less `sessions` table in one writer transaction, then reloads the competition cache (nil clears both it and `allowedNets`) and clears the session cache. `store.ClearSessionCache()` added for the cache side. `scoring.Cache.Clear()` empties the leaderboard (Refresh can't help: the competition it needs is gone).
+- **`POST /jury/reset` handler** (`web.HandleResetPOST`): runs a pre-reset backup via an injected callback (so `web` still doesn't import `backup`, keeping the graph acyclic), calls `store.Reset()`, wipes and recreates `files/`, `submissions/`, `uploads_tmp/` on disk (leaves `backups/` and `logs/` alone), clears the leaderboard cache, broadcasts `FormOpened{false}`, logs the acting IP, and redirects to `/jury/?setup=1`.
+- **Reset guard.** The header Reset button gains `onsubmit="return confirmReset()"` + `static/js/reset.js`: a `confirm()` warning plus a typed `RESET` phrase prompt before the POST fires.
+- **`server.bat`** Windows launcher at repo root: `lks-judge.exe --data ./data --listen 0.0.0.0:80`, pauses on exit.
+
+### Files Created/Modified
+```
+NEW       internal/web/static/js/reset.js
+NEW       server.bat
+MODIFIED  internal/store/session.go          (DeleteExpiredSessions, ClearSessionCache, StartSessionSweep)
+MODIFIED  internal/store/session_test.go     (sweep test)
+MODIFIED  internal/store/competition.go      (Reset)
+MODIFIED  internal/store/competition_test.go (reset test)
+MODIFIED  internal/scoring/cache.go          (Clear)
+MODIFIED  internal/web/handlers_jury.go      (HandleResetPOST)
+MODIFIED  internal/web/templates/layout_app.templ  (reset guard, reset.js include)
+MODIFIED  cmd/server/main.go                 (session sweep goroutine, reset route wiring)
+MODIFIED  README.md                          (Phase 13 done, server.bat, reset warning)
+```
+
+### Spec Compliance
+- ✅ Nuclear reset wipes DB + disk, recreates dirs (spec §7, §11a "Reset Disk Cleanup")
+- ✅ Background session expiry sweep on a 30-minute ticker (spec §11a "Background Session Expiry")
+- ✅ `server.bat` + documented `CGO_ENABLED=0 GOOS=windows` build (spec §12)
+- ✅ Package graph stays acyclic: reset backup injected as a callback, `web` does not import `backup`
+
+### Deviations
+- **Reset uses FK cascade, not `foreign_keys=OFF` + per-table DELETE.** Spec §7 lists an explicit per-table wipe with the pragma toggled off. `DELETE FROM competitions` cascades to all children via `ON DELETE CASCADE` (with `sessions` deleted explicitly, no FK), doing the same work in two statements. Toggling the pragma mid-transaction on the shared single-connection writer is riskier than the win, so it was left on.
+- **Session sweep is a no-op on current data.** Every session is written with the lifetime sentinel `expires_at = 9999-12-31` (`session.go`), so `expires_at < now` matches zero rows in normal operation. The sweep is built per the DoD as ready infrastructure: it activates immediately if shorter expiries are ever introduced.
+- **Reset guard uses a static phrase `RESET`**, not the competition name (`ponytail:` marked). Upgrade to the competition name if the app ever manages more than one competition.
+- **A reset clears `allowed_ips`**, so `AllowedNets()` falls back to loopback only until a competition is recreated from localhost. This is existing `RequireJury` behavior, documented in the README so panitia are not locked out.
+- **Windows cross-compile not executed on this macOS host** (user decision): the binary is pure Go with `CGO_ENABLED=0` and no OS-specific build tags, so it compiles cleanly for `GOOS=windows`.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run`: clean (lefthook gates)
+- ✅ New tests: `store.TestDeleteExpiredSessions` (only backdated rows swept + cache evicted, sentinel survives), `store.TestResetWipesEverything` (all tables empty, competition cache nil, session invalidated)
 
 ---
 

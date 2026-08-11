@@ -1,5 +1,65 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## UI Redesign (2026-08-12) ✅
+
+**Status:** Complete. Full UI redesign on `feat/ui-redesign`: soft blue-leaning palette, responsive layout, a new jury dashboard, and the heuristic-evaluation fixes from the audit, all done together (visual and UX in one pass). No schema change, no new SQL, no new Go dependency (Chart.js is vendored and embedded).
+
+### Design system
+- MD3 token hex values replaced with a softer palette (`--color-primary` `#004ac6` to `#2f5fd0`, containers turned tonal, surfaces slightly cooler). Token names kept, so every existing class inherits the new values with no per-template edits. Added `--color-warning`/`-container`/`on-` for states that were previously faked with arbitrary colors.
+- Two-layer subtle `ambient-shadow` and a lighter `signature-gradient`.
+- New shared component classes in `tailwind.css`: `.card`/`.card-flush`, `.btn` + `.btn-primary`/`-tonal`/`-ghost`/`-danger`, `.field`/`.input`/`.input-error`, `.chip` + `-ok`/`-warn`/`-danger`/`-neutral`, `.table-wrap`, `.data-table`. These carry `focus-visible` outlines that were entirely absent before.
+- Shared templ primitives in `ui.templ`: `PageHeader`, `Card`, `EmptyState`, `Flash`, `Chip`. Before this the only shared component was `navItem`.
+
+### Layout + responsive
+- `layout_app.templ` sidebar is now a CSS-only off-canvas drawer (`peer` checkbox + backdrop, no new JS); fixed on `lg+`. `main` gets `mx-auto max-w-[1400px]` so wide monitors do not stretch content. Every table now scrolls inside `.table-wrap` instead of forcing body-level horizontal scroll on small screens.
+- Nav order: Dashboard, Competition, Countdown, Participants, Submissions, Modules, Scoring, Files. Decorative icons get `aria-hidden`, active item gets `aria-current="page"`.
+
+### Jury dashboard (new)
+- `GET /jury/` is now a dashboard; the setup form moved to `/jury/competition` (nav item + its own route). `?setup=1`/`?saved=1` redirects retargeted. `HandleDashboardJuryGET` 404s on deep paths under the `/jury/` prefix pattern.
+- Cards: competition status + active module, compact countdown with quick Pause/Resume/Stop, participant + submission progress (`<progress>`), read-only top 3 leaderboard, a derived activity feed, and two submission-timing charts (minutes-after-start histogram + per-module counts).
+- All figures come from existing store list methods (`len()` + in-Go aggregation is correct at ~16 participants); no new SQL. The shared `Data`/`Activity` types live in a new `internal/web/dashboardview` package so the templ template can reference them without a `web -> templates` import cycle.
+- Chart.js 4.4.4 vendored at `internal/web/static/js/vendor/chart.umd.min.js` and embedded via the existing `//go:embed static`, so charts work offline on the LAN. `dashboard_jury.js` renders them from a `<script type="application/json">` payload.
+
+### Heuristic fixes (folded into the restyle)
+- Participant dashboard reads `?error=` and renders a `Flash`: a failed submission upload no longer looks identical to success (the worst audit defect).
+- Destructive and state-changing forms (import, delete, shuffle, generate modules, set-current, countdown save/stop) confirm via `onsubmit` so Enter in a field cannot skip the prompt.
+- Upload is keyboard-reachable: `#dropzone`/import become real `<label for>` targets and the file input is `sr-only` instead of `hidden`. Scoring inputs get `sr-only` labels. Countdown clock and upload percent get `aria-live`.
+- `forms.js`: one delegated submit listener disables the submit button and shows "Menyimpan..." after a real POST, preventing double submits (skips cancelled confirms and the chunked uploader).
+- `countdown.js` flags a frozen clock as stale after 5s of failed polls. `leaderboard.js` shows a retry button instead of a perpetual "Memuat..." when the first fetch fails.
+- Empty participant/module/score states render an `EmptyState` with a next action. Copy is consistent Indonesian to match `<html lang="id">`. The stale "Max file size: 70MB" claim is corrected to 2 GB to match `upload.MaxUploadSize`.
+
+### Deviations from spec
+`docs/rebuild-spec.md` locks `/jury/` as the setup form and has no dashboard route. At the user's request the dashboard takes `/jury/` and setup moves to `/jury/competition`; the spec is left unedited (source of truth) and the deviation is recorded here. Chart.js is the project's first vendored front-end asset.
+
+### Files
+```
+internal/web/tailwind.css                          (soft palette, component classes, @source inline)
+internal/web/css_coverage_test.go                  (guard new stems)
+internal/web/templates/ui.templ                    (new: shared primitives)
+internal/web/templates/layout_app.templ            (responsive drawer, dashboard nav, forms.js)
+internal/web/templates/layout_guest.templ          (tokenized)
+internal/web/templates/dashboard_jury.templ        (new)
+internal/web/dashboardview/data.go                 (new: Data/Activity types)
+internal/web/handlers_dashboard_jury.go            (new: handler + aggregation)
+internal/web/handlers_dashboard_jury_test.go       (new)
+internal/web/handlers_jury.go, handlers_*.go       (setup route retarget)
+internal/web/handlers_auth.go                      (dashboard ?error= flash)
+internal/web/templates/{competition,countdown_jury,participants,shuffle,files,scoring,modules,submissions,login,participant_dashboard,leaderboard}.templ  (restyle)
+internal/web/static/js/{forms.js(new),countdown.js,leaderboard.js,dashboard_jury.js(new)}
+internal/web/static/js/vendor/chart.umd.min.js     (new: vendored Chart.js 4.4.4)
+cmd/server/main.go                                 (/jury/ dashboard + /jury/competition routes)
+```
+
+### Verification
+- ✅ `go generate ./...` (templ then Tailwind), `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run`: clean
+- ✅ `TestCSSCoverage` green after the stem list + `@source inline` updates
+- ✅ `handlers_dashboard_jury_test.go`: aggregates counts/top-3/activity/chart JSON, redirects to `/jury/competition?setup=1` without a competition, 404s on deep paths
+
+### Next
+Phase 13 planned a session-expiry sweep for the `sync.Map` session cache that is still not implemented. Manual responsive/accessibility smoke passes (DevTools at 360/768/1280/1920, full keyboard nav, Lighthouse a11y on `/jury/` and `/`) remain to be run before release.
+
+---
+
 ## Runtime Jury IP Flag (2026-08-11) ✅
 
 **Status:** Complete. Adds `--jury-ip`, a repeatable (or comma-separated) flag granting `/jury/*` access to extra IPs or CIDRs. In memory only: never written to `competitions.allowed_ips`, not shown in the setup form, and untouched by Reset, so a fixed operator machine keeps access before any competition exists or after a wipe. Additive to the persisted allowlist. Loopback (`127.0.0.1`, `::1`) is always allowed on top of both lists so the server's own host can always reach `/jury/*`.

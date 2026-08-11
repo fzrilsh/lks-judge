@@ -21,6 +21,7 @@ import (
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/upload"
 	"github.com/fzrilsh/lks-judge/internal/web"
+	"github.com/fzrilsh/lks-judge/internal/web/templates"
 )
 
 func main() {
@@ -56,6 +57,14 @@ func main() {
 		log.Fatalf("store.Open: %v", err)
 	}
 	defer func() { _ = st.Close() }()
+
+	// header title accessor: templ shell reads the live competition name
+	templates.SetCompetitionName(func() string {
+		if c := st.CompetitionCache.Load(); c != nil && c.Name != "" {
+			return c.Name
+		}
+		return "LKS Judge Platform"
+	})
 
 	log.Printf("database ready at %s", filepath.Join(*dataDir, "lks.sqlite"))
 

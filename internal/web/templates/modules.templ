@@ -46,7 +46,7 @@ templ ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, 
 				<button type="submit" class="btn-tonal">Generate</button>
 			</form>
 		}
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
 			for i, m := range modules {
 				<section class="card relative overflow-hidden">
 					<div class="absolute left-0 top-0 w-1.5 h-full bg-primary" aria-hidden="true"></div>

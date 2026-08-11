@@ -70,7 +70,7 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 													name={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
 													value={ scoreValue(score, p.ID, m.ID) }
 													data-participant={ fmt.Sprintf("%d", p.ID) }
-													class="score-input input w-20 text-center"
+													class="score-input input w-16 text-center px-2"
 												/>
 											</td>
 										}

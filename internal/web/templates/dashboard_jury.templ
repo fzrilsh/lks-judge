@@ -80,7 +80,7 @@ templ DashboardJuryPage(d *dashboardview.Data) {
 		@PageHeader("Dashboard", d.Comp.Name) {
 			@Chip(statusChipKind(d.Comp.Status), d.Comp.Status)
 		}
-		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
 			@dashStatusCard(d)
 			@dashCountdownCard(d)
 			@dashProgressCard(d)
@@ -88,9 +88,7 @@ templ DashboardJuryPage(d *dashboardview.Data) {
 			@dashActivityCard(d)
 			@dashChartsCard()
 		</div>
-		<script type="application/json" id="dash-chart-data">
-			@templ.Raw(d.ChartJSON)
-		</script>
+		@templ.Raw(`<script type="application/json" id="dash-chart-data">` + d.ChartJSON + `</script>`)
 		<script src="/static/js/vendor/chart.umd.min.js" defer></script>
 		<script src="/static/js/dashboard_jury.js" defer></script>
 	}
@@ -178,7 +176,7 @@ templ dashTopCard(d *dashboardview.Data) {
 			@EmptyState("leaderboard", "Belum ada skor", "Nilai peserta muncul di sini setelah scoring.") {
 			}
 		} else {
-			<ol class="space-y-3">
+			<ol class="space-y-3 max-h-72 overflow-y-auto">
 				for _, e := range d.Top {
 					<li class="flex items-center gap-3">
 						<span class="flex-none w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant grid place-items-center text-label-medium font-semibold">{ strconv.Itoa(e.Rank) }</span>

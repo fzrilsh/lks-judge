@@ -41,7 +41,7 @@ func Login(errorMsg string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-[calc(100vh-5rem)] flex items-center justify-center px-4\"><div class=\"card w-full max-w-md p-8 md:p-10\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-28 mb-4\" alt=\"Logo LKS\"><h1 class=\"text-headline-small text-on-surface\">Login Peserta</h1><p class=\"text-body-medium text-on-surface-variant mt-1\">Masuk dengan nomor PC dan password.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-screen flex items-center justify-center px-4\"><div class=\"card w-full max-w-md p-8 md:p-10\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-28 mb-4\" alt=\"Logo LKS\"><h1 class=\"text-headline-small text-on-surface\">Login Peserta</h1><p class=\"text-body-medium text-on-surface-variant mt-1\">Masuk dengan nomor PC dan password.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -57,7 +57,7 @@ func Login(errorMsg string) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = GuestLayout("Login", "", "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = GuestLayout("Login").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

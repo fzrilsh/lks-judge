@@ -1,13 +1,6 @@
 package templates
 
-func navLeftOr(s string) string {
-	if s == "" {
-		return "Lomba Kompetensi Siswa"
-	}
-	return s
-}
-
-templ GuestLayout(title string, navLeft string, navRight string) {
+templ GuestLayout(title string) {
 	<!DOCTYPE html>
 	<html lang="id">
 	<head>
@@ -18,11 +11,7 @@ templ GuestLayout(title string, navLeft string, navRight string) {
 		<link rel="stylesheet" href="/static/css/app.css"/>
 	</head>
 	<body class="bg-surface text-on-surface min-h-screen font-manrope">
-		<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant">
-			<span class="text-lg md:text-xl font-bold text-on-surface">{ navLeftOr(navLeft) }</span>
-			<span class="text-on-surface-variant">{ navRight }</span>
-		</nav>
-		<main class="pt-20 min-h-screen">
+		<main class="min-h-screen">
 			{ children... }
 		</main>
 	</body>

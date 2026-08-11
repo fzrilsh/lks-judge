@@ -28,6 +28,15 @@
 - `countdown.js` flags a frozen clock as stale after 5s of failed polls. `leaderboard.js` shows a retry button instead of a perpetual "Memuat..." when the first fetch fails.
 - Empty participant/module/score states render an `EmptyState` with a next action. Copy is consistent Indonesian to match `<html lang="id">`. The stale "Max file size: 70MB" claim is corrected to 2 GB to match `upload.MaxUploadSize`.
 
+### Refinement pass (post-review)
+- `/jury/modules`: added `mt-6` between the Generate Modul card and the module grid. `/jury/files`: wrapped Aset Aktif in `mt-6`. Both were too tight.
+- `/jury/submissions`: per-module cell chip wrapped in `flex justify-center` so the Unduh/Pending status centers in its column.
+- `/jury/scoring`: score input narrowed from `w-20` to `w-16 px-2` (fits `00,00`).
+- Public countdown clock now matches the jury clock: `font-bold` instead of `font-mono` (kept the `clamp()` projector sizing and `tabular-nums`).
+- Participant view: navbar removed from `GuestLayout` (params `navLeft`/`navRight` and `navLeftOr` dropped, `pt-20` gone); login/leaderboard/participant dashboard updated. Redundant "Modul aktif" line under Upload Submission hidden (kept `#module_name` for the JS contract).
+- `/jury/files` publik/privat chip buttons get `cursor-pointer` + `active:scale-95` press feedback.
+- Jury dashboard cards no longer stretch: grid is `items-start`, Aktivitas Terbaru and Top 3 lists cap at `max-h-72`/`max-h-80` and scroll. Fixed the chart-data `<script>` that emitted a literal `@templ.Raw(...)` string (Statistik Submission was blank); now uses `templ.Raw` around the full script tag.
+
 ### Deviations from spec
 `docs/rebuild-spec.md` locks `/jury/` as the setup form and has no dashboard route. At the user's request the dashboard takes `/jury/` and setup moves to `/jury/competition`; the spec is left unedited (source of truth) and the deviation is recorded here. Chart.js is the project's first vendored front-end asset.
 

@@ -35,7 +35,8 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 				</div>
 			</div>
 		}
-		@Card(fmt.Sprintf("Aset Aktif (%d)", len(files))) {
+		<div class="mt-6">
+			@Card(fmt.Sprintf("Aset Aktif (%d)", len(files))) {
 			if len(files) == 0 {
 				@EmptyState("folder_open", "Belum ada file", "File yang diunggah muncul di sini.") {
 				}
@@ -52,12 +53,12 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 							<div class="flex items-center gap-3 flex-none">
 								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)) }>
 									if f.IsPublic {
-										<button type="submit" class="chip chip-ok" aria-label={ "Sembunyikan " + f.Name }>
+										<button type="submit" class="chip chip-ok cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Sembunyikan " + f.Name }>
 											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility</span>
 											Publik
 										</button>
 									} else {
-										<button type="submit" class="chip chip-neutral" aria-label={ "Publikasikan " + f.Name }>
+										<button type="submit" class="chip chip-neutral cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Publikasikan " + f.Name }>
 											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility_off</span>
 											Privat
 										</button>
@@ -76,7 +77,8 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 					}
 				</ul>
 			}
-		}
+			}
+		</div>
 		<script src="/static/js/uploader.js" defer></script>
 	}
 }

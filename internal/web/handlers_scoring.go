@@ -76,11 +76,7 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 		}
 		// First pass: parse and validate the whole grid before any DB write, so an
 		// invalid cell cannot leave a partial commit with a stale cache/broadcast.
-		type cellUpdate struct {
-			pid, mid int64
-			val      *float64
-		}
-		var updates []cellUpdate
+		var updates []store.ScoreUpdate
 		for key, vals := range r.Form {
 			if !strings.HasPrefix(key, "score_") || len(vals) == 0 {
 				continue
@@ -91,7 +87,7 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 			}
 			raw := strings.TrimSpace(vals[0])
 			if raw == "" {
-				updates = append(updates, cellUpdate{pid: pid, mid: mid, val: nil})
+				updates = append(updates, store.ScoreUpdate{ParticipantID: pid, ModuleID: mid, Score: nil})
 				continue
 			}
 			v, err := strconv.ParseFloat(raw, 64)
@@ -100,21 +96,13 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 				return
 			}
 			vv := v
-			updates = append(updates, cellUpdate{pid: pid, mid: mid, val: &vv})
+			updates = append(updates, store.ScoreUpdate{ParticipantID: pid, ModuleID: mid, Score: &vv})
 		}
-		// Second pass: all values are valid, commit them.
-		for _, u := range updates {
-			if u.val == nil {
-				if err := st.UpsertScore(u.pid, u.mid, nil); err != nil {
-					log.Printf("clear score: %v", err)
-				}
-				continue
-			}
-			if err := st.UpsertScore(u.pid, u.mid, u.val); err != nil {
-				log.Printf("upsert score: %v", err)
-				http.Error(w, "internal error", http.StatusInternalServerError)
-				return
-			}
+		// Second pass: all values valid, commit them in one transaction (all or nothing).
+		if err := st.UpsertScores(updates); err != nil {
+			log.Printf("upsert scores: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
 		}
 		if err := cache.Refresh(st, comp.ID); err != nil {
 			log.Printf("refresh leaderboard cache: %v", err)

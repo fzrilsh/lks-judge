@@ -9,7 +9,7 @@
 - `internal/scoring/formula.go` (NEW): `Median`, `MAD`, `ScaleScore`, `Rank`, `Entry`, and the award consts `AwardGold`/`AwardSilver`/`AwardBronze`/`AwardMedallion`. Robust standardised z-score `700 + 30*(raw-median)/(1.4826*mad)`, clamped [0, 1000], `math.Round`; `mad==0` returns 700. Stdlib only, zero internal imports. Awards by WSI-descending rank: 1/2/3 → Gold/Silver/Bronze, rank >3 with WSI >= 700 → Medallion for Excellence, else none.
 - Median population is per-participant TOTAL raw points: `COALESCE(SUM(score),0)` over all modules, LEFT JOIN so participants with no scores count as a total of 0. Computed on demand from the live population, never stored.
 - `internal/scoring/cache.go` (NEW): `Cache` wrapping `atomic.Pointer[[]byte]` pre-rendered leaderboard JSON. `NewCache`/`Refresh`/`Snapshot`. Imports `store`. Primed at startup in `main.go`, refreshed after every score write.
-- `internal/scoring/pdf.go` (NEW): `PDF(comp, entries, leftLogo, rightLogo)` via `github.com/go-pdf/fpdf` (pure Go). CIS header logos + Name/Member/Result/Award table.
+- `internal/scoring/pdf.go` (NEW): `PDF(comp, entries, leftLogo, rightLogo)` via `github.com/go-pdf/fpdf` (pure Go). CIS header logos + Rank/No/Name/Member/Result/Award table.
 - `internal/web/handlers_scoring.go` (NEW): `HandleScoringGET` (jury raw-score matrix), `HandleScoringPOST` (bulk decimal upsert → cache `Refresh` → `ScoreUpdated` WS broadcast), `HandleScoringExportPDF`, `HandleLeaderboardGET` (serves the cached snapshot for both the HTML shell and the JSON).
 - `internal/web/gzip.go` (NEW): scoped `Gzip` middleware. Applied to `GET /jury/scoring` and both `/leaderboard` routes only; not global, not on export-pdf.
 - `internal/web/templates/scoring.templ`, `internal/web/templates/leaderboard.templ`, `internal/web/static/js/leaderboard.js` (NEW): jury scoring page, public leaderboard that refreshes on the `ScoreUpdated` WS event (no polling).
@@ -36,12 +36,13 @@ NEW       internal/scoring/pdf.go
 NEW       internal/scoring/pdf_test.go
 NEW       internal/web/handlers_scoring.go
 NEW       internal/web/gzip.go
+NEW       internal/web/gzip_test.go
 NEW       internal/web/templates/scoring.templ
 NEW       internal/web/templates/leaderboard.templ
 NEW       internal/web/static/js/leaderboard.js
 MODIFIED  internal/store/migrations/001_initial.sql   (scores.score REAL, wsi_score dropped)
 MODIFIED  internal/model/types.go                      (Score.Score *float64, WSIScore removed)
-MODIFIED  internal/store/submission.go                 (UpsertScore *float64, ScoresByParticipantModule)
+MODIFIED  internal/store/submission.go                 (UpsertScore/UpsertScores *float64, ScoresByParticipantModule)
 MODIFIED  internal/excel/excel.go                      (import ParseFloat, export decimal cells)
 MODIFIED  internal/web/embed.go                        (PDFLogos)
 MODIFIED  cmd/server/main.go                           (scoring routes, cache prime, gzip)

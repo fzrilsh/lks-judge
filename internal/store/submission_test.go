@@ -118,3 +118,43 @@ func TestScoresByParticipantModule(t *testing.T) {
 		t.Fatalf("missing score should be absent, got %v", got[pA][mB])
 	}
 }
+
+func TestUpsertScoresAtomic(t *testing.T) {
+	s, compID := newTestStore(t)
+	f := func(v float64) *float64 { return &v }
+
+	pA, err := s.CreateParticipant(compID, "Alice", "SMK", nil, "x", "")
+	if err != nil {
+		t.Fatalf("participant A: %v", err)
+	}
+	mA, err := s.UpsertModuleByName(compID, "MA")
+	if err != nil {
+		t.Fatalf("module MA: %v", err)
+	}
+
+	// Batch commit: a valid cell plus a forged cell with a nonexistent module id.
+	// The FK violation must roll back the whole batch, leaving no partial commit.
+	err = s.UpsertScores([]ScoreUpdate{
+		{ParticipantID: pA, ModuleID: mA, Score: f(80)},
+		{ParticipantID: pA, ModuleID: 999999, Score: f(90)}, // bad FK
+	})
+	if err == nil {
+		t.Fatal("want FK error on forged module id, got nil")
+	}
+	got, err := s.ScoresByParticipantModule(compID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := got[pA][mA]; ok {
+		t.Fatalf("first cell must have rolled back, got %v", got[pA][mA])
+	}
+
+	// A clean batch lands every cell.
+	if err := s.UpsertScores([]ScoreUpdate{{ParticipantID: pA, ModuleID: mA, Score: f(80)}}); err != nil {
+		t.Fatalf("clean batch: %v", err)
+	}
+	got, _ = s.ScoresByParticipantModule(compID)
+	if got[pA][mA] != 80 {
+		t.Fatalf("A/MA = %v, want 80", got[pA][mA])
+	}
+}

@@ -7,10 +7,13 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-Phases 1-10 are done: setup, participants, modules, the competition
-countdown, the WebSocket hub that pushes live events, chunked resumable
-file upload with jury file management, and participant submissions with the
-jury review matrix. Scoring and the leaderboard are not built yet.
+All eleven phases of core work are done through scoring: setup, participants,
+modules, the competition countdown, the WebSocket hub that pushes live events,
+chunked resumable file upload with jury file management, participant submissions
+with the jury review matrix, and scoring with the robust WSI scale, a cached
+public leaderboard, and a CIS PDF export. Phase 12 (UI modification: match the
+old Laravel design) and Phase 13 (nuclear reset, session expiry sweep, Windows
+build) are the remaining work.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -24,7 +27,9 @@ jury review matrix. Scoring and the leaderboard are not built yet.
 | 8 | WebSocket hub: `GET /ws`, live countdown and module events | done |
 | 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
 | 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
-| 11 | Scoring + leaderboard | not started |
+| 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
+| 12 | UI modification: port the old Laravel design to the templ views | not started |
+| 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | not started |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -37,7 +42,8 @@ Contributors also need [`golangci-lint`](https://golangci-lint.run) and
 [`lefthook`](https://lefthook.dev) for the commit gates.
 
 SQLite is compiled in via `modernc.org/sqlite` (pure Go), so there is nothing to
-install and `CGO_ENABLED=0` works everywhere.
+install and `CGO_ENABLED=0` works everywhere. The CIS PDF export uses
+`github.com/go-pdf/fpdf` (also pure Go), so it ships in the binary too.
 
 ## Build
 
@@ -77,15 +83,21 @@ Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/
 `uploads_tmp/` (in-flight chunks), and `logs/` (per-day `YYYY-MM-DD.log`, also
 teed to the terminal) alongside `lks.sqlite`.
 
-Four routes are public, everything else is behind the jury IP allowlist or a
+Six routes are public, everything else is behind the jury IP allowlist or a
 participant session (plus `GET /login` and the `GET /static/` asset tree):
 
 | Route | Purpose |
 | ----- | ------- |
 | `GET /countdown` | Full-screen countdown for a projector; plays an alert at zero |
 | `GET /countdown/time` | `{"seconds":N,"status":"..."}`, polled once a second |
+| `GET /leaderboard` | Public leaderboard; refreshes live on the `ScoreUpdated` WS event |
+| `GET /leaderboard.json` | Cached leaderboard snapshot (WSI, ranks, awards) |
 | `GET /ws` | WebSocket; anonymous clients get a reduced event set (countdown + score only) |
 | `GET /healthz` | Liveness check |
+
+The jury scoring surface adds `GET/POST /jury/scoring` (raw-score matrix and
+bulk upsert) and `GET /jury/scoring/export-pdf` (the CIS PDF). `/leaderboard`,
+`/leaderboard.json`, and `GET /jury/scoring` are gzip-scoped.
 
 ## Layout
 
@@ -96,6 +108,7 @@ internal/store/     SQLite pools, migrations, caches
 internal/web/       handlers, middleware, templ views, embedded static assets
 internal/realtime/  countdown timing and the WebSocket hub
 internal/upload/    filesystem chunk tracker, resumable upload handlers, session cleanup
+internal/scoring/   robust WSI scale, leaderboard cache, CIS PDF export
 internal/excel/     participant import/export
 internal/backup/    periodic VACUUM INTO
 docs/               changelog and the rebuild spec (source of truth)

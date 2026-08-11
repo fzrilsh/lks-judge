@@ -1,0 +1,31 @@
+package templates
+
+import "github.com/fzrilsh/lks-judge/internal/model"
+
+// Leaderboard is the public ranking page. Rows are rendered client-side by
+// leaderboard.js from the cached JSON and refreshed on the ScoreUpdated WS
+// event; this shell just carries the competition name and mount point.
+templ Leaderboard(comp *model.Competition) {
+	@GuestLayout("Leaderboard") {
+		<div class="w-full max-w-4xl mx-auto space-y-6 py-8">
+			<h1 class="text-headline-large text-on-surface font-manrope text-center">{ comp.Name }</h1>
+			<p class="text-center text-on-surface-variant text-body-medium">WorldSkills Scale Results</p>
+			<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-hidden">
+				<table class="w-full text-body-medium">
+					<thead class="bg-surface-container text-on-surface-variant">
+						<tr>
+							<th class="px-4 py-3 text-left">Rank</th>
+							<th class="px-4 py-3 text-left">Peserta</th>
+							<th class="px-4 py-3 text-center">Result</th>
+							<th class="px-4 py-3 text-center">Award</th>
+						</tr>
+					</thead>
+					<tbody id="leaderboard-body">
+						<tr><td colspan="4" class="text-center px-4 py-8 text-on-surface-variant">Memuat...</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<script src="/static/js/leaderboard.js"></script>
+	}
+}

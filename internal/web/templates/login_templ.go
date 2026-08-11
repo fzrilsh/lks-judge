@@ -41,30 +41,17 @@ func Login(errorMsg string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-[calc(100vh-5rem)] flex items-center justify-center px-4\"><div class=\"w-full max-w-md bg-surface-container-lowest rounded-xl ambient-shadow p-8 md:p-10 border border-outline-variant/20\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-32 mb-4\" alt=\"Logo\"><h1 class=\"font-manrope text-2xl font-extrabold text-on-surface\">Participant Login</h1><p class=\"text-sm text-on-surface-variant mt-2\">Log in with your PC number and password</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-[calc(100vh-5rem)] flex items-center justify-center px-4\"><div class=\"card w-full max-w-md p-8 md:p-10\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-28 mb-4\" alt=\"Logo LKS\"><h1 class=\"text-headline-small text-on-surface\">Login Peserta</h1><p class=\"text-body-medium text-on-surface-variant mt-1\">Masuk dengan nomor PC dan password.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if errorMsg != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"mb-4 bg-error-container text-on-error-container text-sm p-3 rounded-lg text-center font-medium\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var3 string
-				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errorMsg)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `login.templ`, Line: 13, Col: 122}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
+				templ_7745c5c3_Err = Flash("error", errorMsg).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form method=\"POST\" action=\"/login\" class=\"space-y-6\"><div class=\"space-y-2\"><label for=\"pc_number\" class=\"text-xs font-semibold text-on-surface-variant uppercase tracking-wider\">PC Number</label> <input type=\"number\" name=\"pc_number\" id=\"pc_number\" required min=\"1\" placeholder=\"e.g. 1\" class=\"w-full px-4 py-3 bg-surface-container-high rounded-lg focus:ring-1 focus:ring-primary transition\"></div><div class=\"space-y-2\"><label for=\"password\" class=\"text-xs font-semibold text-on-surface-variant uppercase tracking-wider\">Password</label> <input type=\"password\" name=\"password\" id=\"password\" required placeholder=\"••••••\" class=\"w-full px-4 py-3 bg-surface-container-high rounded-lg focus:ring-1 focus:ring-primary transition\"></div><button type=\"submit\" class=\"w-full signature-gradient text-white font-semibold py-4 rounded-lg hover:scale-[0.98] active:scale-95 transition flex items-center justify-center gap-3 shadow-lg shadow-primary/20\"><span class=\"material-symbols-outlined\">login</span><span class=\"text-lg\">Login</span></button></form><div class=\"mt-8 pt-6 border-t border-outline-variant/20 text-center\"><p class=\"text-xs text-on-surface-variant\">LKS Judge Platform v2.0 - Powered by Go</p></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"POST\" action=\"/login\" class=\"space-y-4\"><div class=\"field\"><label for=\"pc_number\">Nomor PC</label> <input id=\"pc_number\" class=\"input\" type=\"number\" name=\"pc_number\" required min=\"1\" placeholder=\"mis. 1\"></div><div class=\"field\"><label for=\"password\">Password</label> <input id=\"password\" class=\"input\" type=\"password\" name=\"password\" required placeholder=\"••••••\"></div><button type=\"submit\" class=\"btn-primary w-full justify-center\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">login</span> Login</button></form><p class=\"mt-8 pt-6 border-t border-outline-variant text-center text-label-small text-on-surface-variant\">LKS Judge Platform v2.0</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

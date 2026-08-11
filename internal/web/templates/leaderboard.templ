@@ -8,35 +8,37 @@ import "github.com/fzrilsh/lks-judge/internal/model"
 // (heading, table frame, fixed columns, legend) and the mount points.
 templ Leaderboard(comp *model.Competition) {
 	@GuestLayout("Leaderboard", "", "") {
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-			<h1 class="text-headline-large text-on-surface font-manrope text-center">{ comp.Name }</h1>
-			<p class="text-center text-on-surface-variant text-body-medium">WorldSkills Scale Results</p>
-			<div class="bg-surface-container-lowest rounded-3xl shadow-xl border border-surface-container overflow-hidden">
-				<div class="overflow-x-auto">
-					<table class="w-full text-left border-collapse whitespace-nowrap">
+		<div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+			<div class="text-center">
+				<h1 class="text-headline-large text-on-surface">{ comp.Name }</h1>
+				<p class="text-body-medium text-on-surface-variant">Hasil skala WorldSkills (WSI)</p>
+			</div>
+			<div class="card card-flush overflow-hidden">
+				<div class="table-wrap border-0 rounded-none">
+					<table class="data-table whitespace-nowrap">
 						<thead>
-							<tr id="leaderboard-head" class="bg-surface-container-low border-b border-surface-container">
-								<th class="py-5 px-6 text-xs uppercase tracking-wider font-bold text-outline">Rank & Seat</th>
-								<th class="py-5 px-6 text-xs uppercase tracking-wider font-bold text-outline">Participant</th>
-								<th class="py-5 px-6 text-xs uppercase tracking-wider font-bold text-primary text-right">Total Score</th>
+							<tr id="leaderboard-head">
+								<th>Rank &amp; Seat</th>
+								<th>Peserta</th>
+								<th class="text-right">Total Score</th>
 							</tr>
 						</thead>
-						<tbody id="leaderboard-body" class="divide-y divide-surface-container">
-							<tr><td colspan="99" class="text-center px-4 py-8 text-on-surface-variant">Loading...</td></tr>
+						<tbody id="leaderboard-body">
+							<tr><td colspan="99" class="text-center py-8 text-on-surface-variant">Memuat...</td></tr>
 						</tbody>
 					</table>
 				</div>
-				<div class="bg-surface-container-low px-6 py-4 border-t border-surface-container flex flex-wrap gap-4 text-xs font-medium text-outline justify-between items-center">
+				<div class="bg-surface-container-low px-6 py-4 border-t border-outline-variant flex flex-wrap gap-4 text-label-medium text-on-surface-variant justify-between items-center">
 					<div class="flex flex-wrap items-center gap-4">
-						<span class="flex items-center gap-1"><span class="text-base">🥇</span> Gold (1st)</span>
-						<span class="flex items-center gap-1"><span class="text-base">🥈</span> Silver (2nd)</span>
-						<span class="flex items-center gap-1"><span class="text-base">🥉</span> Bronze (3rd)</span>
-						<span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span> Medallion for Excellence (&gt;= 700)</span>
+						<span class="flex items-center gap-1"><span class="text-base">🥇</span> Gold (1)</span>
+						<span class="flex items-center gap-1"><span class="text-base">🥈</span> Silver (2)</span>
+						<span class="flex items-center gap-1"><span class="text-base">🥉</span> Bronze (3)</span>
+						<span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-primary"></span> Medallion for Excellence (&gt;= 700)</span>
 					</div>
-					<div class="font-bold">WSI Scale Standard Assessment</div>
+					<div class="font-semibold">WSI Scale Standard Assessment</div>
 				</div>
 			</div>
 		</div>
-		<script src="/static/js/leaderboard.js"></script>
+		<script src="/static/js/leaderboard.js" defer></script>
 	}
 }

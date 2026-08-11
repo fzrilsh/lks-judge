@@ -2,6 +2,7 @@ package scoring
 
 import (
 	"encoding/json"
+	"sync"
 	"sync/atomic"
 
 	"github.com/fzrilsh/lks-judge/internal/store"
@@ -22,7 +23,8 @@ type row struct {
 // population after every score write; Snapshot hands out the current bytes with
 // no DB read, so many concurrent leaderboard loads cost nothing.
 type Cache struct {
-	json atomic.Pointer[[]byte]
+	json    atomic.Pointer[[]byte]
+	refresh sync.Mutex // serializes Refresh so the last write wins the last snapshot
 }
 
 // NewCache returns a Cache pre-seeded with an empty leaderboard, so Snapshot is
@@ -51,8 +53,12 @@ func (c *Cache) store(entries []Entry) {
 	c.json.Store(&b)
 }
 
-// Refresh reloads the population, ranks it and re-renders the JSON.
+// Refresh reloads the population, ranks it and re-renders the JSON. The mutex
+// serializes the read+store so two concurrent writes cannot let an earlier
+// population overwrite a later one (lost update).
 func (c *Cache) Refresh(st *store.Store, competitionID int64) error {
+	c.refresh.Lock()
+	defer c.refresh.Unlock()
 	totals, err := st.ListParticipantTotals(competitionID)
 	if err != nil {
 		return err

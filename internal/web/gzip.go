@@ -13,9 +13,9 @@ type gzipWriter struct {
 
 func (w gzipWriter) Write(b []byte) (int, error) { return w.gz.Write(b) }
 
-// Gzip compresses the response when the client accepts it. Scoped to the two
-// large repeated payloads (/leaderboard, /jury/scoring); not global, so small
-// responses pay nothing (spec Gzip Scope).
+// Gzip compresses the response when the client accepts it. Scoped to the large
+// repeated payloads (/jury/scoring and both /leaderboard routes); not global, so
+// small responses pay nothing (spec Gzip Scope).
 func Gzip(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {

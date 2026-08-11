@@ -128,6 +128,45 @@ func (s *Store) UpsertScore(participantID, moduleID int64, score *float64) error
 	return nil
 }
 
+// ScoreUpdate is one cell to upsert: score nil clears to NULL.
+type ScoreUpdate struct {
+	ParticipantID int64
+	ModuleID      int64
+	Score         *float64
+}
+
+// UpsertScores writes a whole grid in one transaction: either every cell lands
+// or none do, so a mid-batch failure cannot leave a partial commit.
+func (s *Store) UpsertScores(updates []ScoreUpdate) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	now := time.Now().UTC()
+	tx, err := s.Writer.Begin()
+	if err != nil {
+		return fmt.Errorf("upsert scores: begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }() // no-op after Commit
+	stmt, err := tx.Prepare(`
+		INSERT INTO scores(participant_id, module_id, score, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(participant_id, module_id) DO UPDATE SET
+		    score=excluded.score, updated_at=excluded.updated_at`)
+	if err != nil {
+		return fmt.Errorf("upsert scores: prepare: %w", err)
+	}
+	defer func() { _ = stmt.Close() }()
+	for _, u := range updates {
+		if _, err := stmt.Exec(u.ParticipantID, u.ModuleID, u.Score, now, now); err != nil {
+			return fmt.Errorf("upsert scores: exec: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("upsert scores: commit: %w", err)
+	}
+	return nil
+}
+
 // ParticipantTotal is one participant's summed raw score across all modules.
 // Powers the WSI leaderboard; TotalRaw is 0 for a participant with no scores.
 type ParticipantTotal struct {

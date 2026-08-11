@@ -7,7 +7,7 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-All twelve phases of core work are done through scoring: setup, participants,
+All eleven phases of core work are done through scoring: setup, participants,
 modules, the competition countdown, the WebSocket hub that pushes live events,
 chunked resumable file upload with jury file management, participant submissions
 with the jury review matrix, and scoring with the robust WSI scale, a cached

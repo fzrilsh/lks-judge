@@ -46,19 +46,19 @@ func CountdownPublicPage(comp *model.Competition) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full text-center max-w-6xl mx-auto\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-60 mb-6\" alt=\"Logo\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full text-center max-w-6xl mx-auto px-4 sm:px-6\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-32 sm:w-48 md:w-60 mb-4 sm:mb-6\" alt=\"Logo\"> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if comp != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1 class=\"font-manrope font-extrabold text-4xl md:text-5xl text-on-surface mb-8\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1 class=\"font-manrope font-extrabold text-2xl sm:text-4xl md:text-5xl text-on-surface mb-6 sm:mb-8 break-words\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(comp.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_public.templ`, Line: 13, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_public.templ`, Line: 13, Col: 129}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -92,7 +92,7 @@ func CountdownPublicPage(comp *model.Competition) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"text-on-surface font-mono tabular-nums\" style=\"font-size:22vw;line-height:1\">--:--:--</p><p class=\"text-title-large text-on-surface-variant uppercase tracking-widest mt-8\"><span id=\"cd-status\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"text-on-surface font-mono tabular-nums leading-none\" style=\"font-size:clamp(3rem,18vw,16rem)\">--:--:--</p><p class=\"text-base sm:text-title-large text-on-surface-variant uppercase tracking-widest mt-6 sm:mt-8\"><span id=\"cd-status\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -118,7 +118,7 @@ func CountdownPublicPage(comp *model.Competition) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = GuestLayout("Countdown", "", "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = TVLayout("Countdown").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

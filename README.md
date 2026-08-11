@@ -7,13 +7,13 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-All twelve phases through the UI port are done: setup, participants,
+All thirteen phases are done: setup, participants,
 modules, the competition countdown, the WebSocket hub that pushes live events,
 chunked resumable file upload with jury file management, participant submissions
 with the jury review matrix, scoring with the robust WSI scale, a cached
-public leaderboard, a CIS PDF export, and the templ UI restyled to match the
-old Laravel design. Phase 13 (nuclear reset, session expiry sweep, Windows
-build) is the remaining work.
+public leaderboard, a CIS PDF export, the templ UI restyled to match the
+old Laravel design, and the final polish (nuclear reset, session expiry sweep,
+Windows binary + `server.bat`). The server is ready for a LAN competition.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -29,7 +29,7 @@ build) is the remaining work.
 | 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
 | 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
 | 12 | UI modification: port the old Laravel design to the templ views | done |
-| 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | not started |
+| 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | done |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -73,6 +73,10 @@ Windows target:
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o lks-judge.exe ./cmd/server
 ```
 
+Ship `lks-judge.exe` and `server.bat` together on the competition host.
+Double-clicking `server.bat` launches the server on `0.0.0.0:80` with `./data`
+and pauses on exit so a crash message stays readable.
+
 ## Run
 
 ```bash
@@ -110,6 +114,14 @@ participant session (plus `GET /login` and the `GET /static/` asset tree):
 The jury scoring surface adds `GET/POST /jury/scoring` (raw-score matrix and
 bulk upsert) and `GET /jury/scoring/export-pdf` (the CIS PDF). `/leaderboard`,
 `/leaderboard.json`, and `GET /jury/scoring` are gzip-scoped.
+
+The header **Reset** button (`POST /jury/reset`) is a nuclear wipe: it snapshots
+the DB to `backups/` first, then deletes every competition, participant, module,
+score, submission, session, and the `files/`, `submissions/`, `uploads_tmp/`
+directories. A confirm dialog plus typing `RESET` guards it. Note that a reset
+clears `allowed_ips`, so the jury allowlist falls back to loopback only: after a
+reset you must recreate the competition from `127.0.0.1` before remote jury
+machines can reach `/jury/*` again.
 
 ## Layout
 

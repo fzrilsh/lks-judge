@@ -297,3 +297,39 @@ func TestUpsertCompetitionPreservesCountdownState(t *testing.T) {
 		t.Errorf("remaining_seconds clobbered: got %v want 847", c.RemainingSeconds)
 	}
 }
+
+func TestResetWipesEverything(t *testing.T) {
+	s, compID := newTestStore(t)
+	if _, err := s.GenerateModules(compID, 2); err != nil {
+		t.Fatalf("modules: %v", err)
+	}
+	pc := 1
+	pid, err := s.CreateParticipant(compID, "Hana", "S", &pc, hashPw(t, "pw"), "pw")
+	if err != nil {
+		t.Fatalf("participant: %v", err)
+	}
+	token, err := s.CreateSession(pid)
+	if err != nil {
+		t.Fatalf("session: %v", err)
+	}
+
+	if err := s.Reset(); err != nil {
+		t.Fatalf("reset: %v", err)
+	}
+
+	for _, tbl := range []string{"competitions", "modules", "participants", "sessions", "scores"} {
+		var n int
+		if err := s.Reader.QueryRow("SELECT COUNT(*) FROM " + tbl).Scan(&n); err != nil {
+			t.Fatalf("count %s: %v", tbl, err)
+		}
+		if n != 0 {
+			t.Errorf("%s not empty after reset: %d rows", tbl, n)
+		}
+	}
+	if s.CompetitionCache.Load() != nil {
+		t.Error("competition cache not cleared after reset")
+	}
+	if _, err := s.ValidateSession(token); !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("session still valid after reset: %v", err)
+	}
+}

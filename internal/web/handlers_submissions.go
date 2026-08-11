@@ -20,7 +20,7 @@ func HandleSubmissionsGET(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		comp := st.CompetitionCache.Load()
 		if comp == nil {
-			http.Redirect(w, r, "/jury/?setup=1", http.StatusSeeOther)
+			http.Redirect(w, r, "/jury/competition?setup=1", http.StatusSeeOther)
 			return
 		}
 		participants, err := st.ListParticipants(comp.ID)
@@ -103,7 +103,7 @@ func HandleSubmissionsExportZipGET(st *store.Store) http.HandlerFunc {
 		}
 		comp := st.CompetitionCache.Load()
 		if comp == nil {
-			http.Redirect(w, r, "/jury/?setup=1", http.StatusSeeOther)
+			http.Redirect(w, r, "/jury/competition?setup=1", http.StatusSeeOther)
 			return
 		}
 		subs, err := st.ListSubmissions(comp.ID)

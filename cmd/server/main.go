@@ -169,8 +169,9 @@ func main() {
 
 	// jury routes
 	juryMw := web.RequireJury(st)
-	mux.Handle("GET /jury/", juryMw(web.HandleJuryGET(st)))
-	mux.Handle("POST /jury/", juryMw(web.HandleJuryPOST(st)))
+	mux.Handle("GET /jury/", juryMw(web.HandleDashboardJuryGET(st)))
+	mux.Handle("GET /jury/competition", juryMw(web.HandleJuryGET(st)))
+	mux.Handle("POST /jury/competition", juryMw(web.HandleJuryPOST(st)))
 	mux.Handle("POST /jury/reset", juryMw(web.HandleResetPOST(st, scoreCache, hub, *dataDir,
 		func() error { return backup.RunOnce(*dataDir, st.Writer) })))
 

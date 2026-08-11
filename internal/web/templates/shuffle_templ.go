@@ -46,84 +46,99 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-3xl mx-auto space-y-6\"><div class=\"flex items-center justify-between\"><h1 class=\"text-headline-large text-on-surface font-manrope\">Shuffle Seats</h1><a href=\"/jury/participants\" class=\"px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow\">Back</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-6xl mx-auto space-y-8\"><div class=\"text-center\"><h1 class=\"text-2xl font-bold text-on-surface mb-2 font-manrope\">Penentuan Nomor PC</h1><p class=\"text-sm text-on-surface-variant\">Acak peserta ke nomor PC</p><div class=\"flex items-center justify-center gap-4 mt-6\"><a href=\"/jury/participants\" class=\"px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow\">Back</a><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"px-8 py-3 signature-gradient text-white font-bold rounded-full hover:-translate-y-1 transition-all shadow-lg\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(results) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-surface-container-low rounded-3xl shadow-lg p-8 text-center\"><p class=\"text-body-large text-on-surface-variant mb-4\">Belum ada peserta untuk di-shuffle.</p><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-6 rounded-xl hover:shadow-lg transition-shadow\">Run Shuffle</button></form></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Mulai Acak")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-tertiary-container text-on-tertiary-container rounded-xl p-4\"><p class=\"text-body-medium\">Shuffle selesai. ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Acak Ulang")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</button></form></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(results) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-surface-container-low rounded-3xl shadow-lg p-8 text-center\"><p class=\"text-body-large text-on-surface-variant mb-4\">Belum ada peserta untuk di-shuffle.</p></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"signature-gradient text-white rounded-xl p-4\"><p class=\"text-body-medium\">Shuffle selesai. ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(results)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 30, Col: 83}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 37, Col: 83}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " peserta dialokasikan ke seat.</p></div><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"text-left px-4 py-3\">Seat</th><th class=\"text-left px-4 py-3\">Nama</th><th class=\"text-left px-4 py-3\">Sekolah</th></tr></thead> <tbody>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " peserta dialokasikan ke seat.</p></div><div><h3 class=\"text-lg font-bold text-outline mb-4\">Denah Kursi PC</h3><div class=\"grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, r := range results {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<tr class=\"border-t border-outline-variant\"><td class=\"px-4 py-3 font-mono font-semibold\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"bg-surface-container border border-surface-container-high rounded-xl p-4 flex flex-col items-center justify-center min-h-[100px]\"><span class=\"text-xs text-outline font-bold mb-1\">PC - ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%02d", r.Seat))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 44, Col: 84}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 44, Col: 92}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</td><td class=\"px-4 py-3\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</span> <span class=\"text-sm font-bold text-center text-on-surface\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(r.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 45, Col: 39}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 45, Col: 76}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</td><td class=\"px-4 py-3 text-on-surface-variant\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span> <span class=\"text-[10px] text-on-surface-variant text-center mt-1\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(r.School)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 46, Col: 65}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 46, Col: 85}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</tbody></table></div><div class=\"flex justify-end\"><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-6 rounded-xl hover:shadow-lg transition-shadow\">Re-Shuffle</button></form></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

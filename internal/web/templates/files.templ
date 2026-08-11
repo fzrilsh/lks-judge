@@ -7,89 +7,76 @@ import (
 
 templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg string) {
 	@AppLayout("Files", "files") {
-		<div class="max-w-5xl mx-auto">
-			<div class="mb-12">
-				<h1 class="font-manrope font-bold text-4xl text-on-surface mb-2">Competition Files</h1>
-				<p class="text-sm uppercase tracking-widest text-on-surface-variant">Asset & Documentation Repository</p>
-			</div>
-			if saved {
-				<div class="bg-secondary-container text-on-secondary-container rounded-xl p-4 mb-6">
-					<p class="text-body-medium">Saved successfully.</p>
-				</div>
-			}
-			if errMsg != "" {
-				<div class="bg-error-container text-on-error-container rounded-xl p-4 mb-6">
-					<p class="text-body-medium">{ errMsg }</p>
-				</div>
-			}
-			<label id="dropzone"
-				class="group flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-outline-variant/40 rounded-xl py-12 px-6 bg-surface-container-low hover:border-primary hover:bg-primary/5 transition-all duration-200">
-				<div class="w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary">
-					<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition">cloud_upload</span>
-				</div>
-				<p class="font-semibold text-on-surface mb-1">Click or drag file here</p>
-				<p class="text-xs text-on-surface-variant">Upload assets or any files</p>
-				<input id="file-input" type="file" class="hidden"/>
+		@PageHeader("File Lomba", "Repositori aset dan dokumentasi.") {
+		}
+		if saved {
+			@Flash("success", "Tersimpan.")
+		}
+		if errMsg != "" {
+			@Flash("error", errMsg)
+		}
+		@Card("") {
+			<label id="dropzone" for="file-input"
+				class="group flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-outline-variant rounded-xl py-12 px-6 bg-surface-container-low hover:border-primary hover:bg-primary/5 transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+				<span class="w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+					<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition" aria-hidden="true">cloud_upload</span>
+				</span>
+				<p class="text-body-medium text-on-surface mb-1">Klik atau tarik file ke sini</p>
+				<p class="text-label-small text-on-surface-variant">Unggah aset atau file apa pun</p>
+				<input id="file-input" type="file" class="sr-only"/>
 			</label>
 			<div id="progress-wrap" class="hidden mt-4">
 				<div class="flex justify-between text-label-small text-on-surface-variant mb-1">
 					<span id="progress-name"></span>
-					<span id="progress-pct">0%</span>
+					<span id="progress-pct" aria-live="polite">0%</span>
 				</div>
 				<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
 					<div id="progress-bar" class="h-full bg-primary transition-all" style="width:0%"></div>
 				</div>
 			</div>
-			<div class="mt-12">
-				<div class="flex justify-between items-end mb-6">
-					<h2 class="text-2xl font-bold font-manrope">Active Assets</h2>
-					<span class="text-sm text-on-surface-variant">{ fmt.Sprintf("%d", len(files)) } files</span>
-				</div>
-				<div class="pt-4 space-y-4">
-					if len(files) == 0 {
-						<div class="bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant">No files yet.</div>
-					}
+		}
+		@Card(fmt.Sprintf("Aset Aktif (%d)", len(files))) {
+			if len(files) == 0 {
+				@EmptyState("folder_open", "Belum ada file", "File yang diunggah muncul di sini.") {
+				}
+			} else {
+				<ul class="space-y-3">
 					for _, f := range files {
-						<div class="bg-surface-container-lowest rounded-xl p-5 ambient-shadow flex justify-between items-center">
-							<div class="flex items-center gap-4">
-								<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center">
-									<span class="material-symbols-outlined">description</span>
-								</div>
-								<div>
-									<p class="font-bold text-on-surface">{ f.Name }</p>
-								</div>
+						<li class="bg-surface-container-low rounded-xl p-4 flex justify-between items-center gap-4">
+							<div class="flex items-center gap-3 min-w-0">
+								<span class="w-11 h-11 rounded-lg bg-surface-container-high flex items-center justify-center flex-none">
+									<span class="material-symbols-outlined text-on-surface-variant" aria-hidden="true">description</span>
+								</span>
+								<p class="text-on-surface truncate">{ f.Name }</p>
 							</div>
-							<div class="flex items-center gap-8">
-								<div class="flex items-center gap-2">
-									<span class="text-sm text-on-surface-variant">Visible</span>
-									<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)) }>
-										if f.IsPublic {
-											<button type="submit" class="w-11 h-6 rounded-full bg-secondary relative">
-												<span class="absolute top-[2px] right-[2px] bg-white rounded-full h-5 w-5"></span>
-											</button>
-										} else {
-											<button type="submit" class="w-11 h-6 rounded-full bg-surface-container-highest relative">
-												<span class="absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5"></span>
-											</button>
-										}
-									</form>
-								</div>
-								<div class="flex items-center gap-2">
-									<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="p-2 hover:bg-surface-container-high rounded-lg">
-										<span class="material-symbols-outlined">download</span>
-									</a>
-									<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)) }>
-										<button type="submit" class="p-2 hover:bg-error/10 text-error rounded-lg" onclick="return confirm('Delete this file?')">
-											<span class="material-symbols-outlined">delete</span>
+							<div class="flex items-center gap-3 flex-none">
+								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)) }>
+									if f.IsPublic {
+										<button type="submit" class="chip chip-ok" aria-label={ "Sembunyikan " + f.Name }>
+											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility</span>
+											Publik
 										</button>
-									</form>
-								</div>
+									} else {
+										<button type="submit" class="chip chip-neutral" aria-label={ "Publikasikan " + f.Name }>
+											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility_off</span>
+											Privat
+										</button>
+									}
+								</form>
+								<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="btn-ghost px-2 py-1" aria-label={ "Unduh " + f.Name }>
+									<span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
+								</a>
+								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)) } onsubmit="return confirm('Hapus file ini?')">
+									<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Hapus " + f.Name }>
+										<span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
+									</button>
+								</form>
 							</div>
-						</div>
+						</li>
 					}
-				</div>
-			</div>
-		</div>
-		<script src="/static/js/uploader.js"></script>
+				</ul>
+			}
+		}
+		<script src="/static/js/uploader.js" defer></script>
 	}
 }

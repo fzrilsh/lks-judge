@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -113,6 +114,75 @@ func invalidateParticipant(ids ...int64) {
 		}
 		return true
 	})
+}
+
+// DeleteExpiredSessions removes every session whose expires_at is before now and
+// evicts each swept token from the cache. The eviction matters: ValidateSession
+// serves cache hits without an expiry check (see above), so a DB-only delete
+// would leave an expired token valid until the process restarts. Mirrors
+// DeleteExpiredUploadSessions. Returns the swept tokens.
+func (s *Store) DeleteExpiredSessions(now time.Time) ([]string, error) {
+	rows, err := s.Reader.Query(`SELECT token FROM sessions WHERE expires_at < ?`, now)
+	if err != nil {
+		return nil, fmt.Errorf("select expired sessions: %w", err)
+	}
+	var tokens []string
+	for rows.Next() {
+		var tok string
+		if err := rows.Scan(&tok); err != nil {
+			_ = rows.Close()
+			return nil, fmt.Errorf("scan expired session: %w", err)
+		}
+		tokens = append(tokens, tok)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return nil, err
+	}
+	_ = rows.Close()
+
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+	if _, err := s.Writer.Exec(`DELETE FROM sessions WHERE expires_at < ?`, now); err != nil {
+		return nil, fmt.Errorf("delete expired sessions: %w", err)
+	}
+	for _, tok := range tokens {
+		sessionCache.Delete(tok)
+	}
+	return tokens, nil
+}
+
+// ClearSessionCache evicts every cached token. Used by Reset after the sessions
+// table is wiped. Ranges and deletes rather than reassigning the sync.Map, which
+// would race with a concurrent Range.
+func ClearSessionCache() {
+	sessionCache.Range(func(k, _ any) bool {
+		sessionCache.Delete(k)
+		return true
+	})
+}
+
+// StartSessionSweep deletes expired sessions every 30 minutes until done is
+// closed, bounding memory across a multi-day run. Call as a goroutine from main.
+func StartSessionSweep(s *Store, done <-chan struct{}) {
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			tokens, err := s.DeleteExpiredSessions(time.Now().UTC())
+			if err != nil {
+				log.Printf("session sweep: %v", err)
+				continue
+			}
+			if len(tokens) > 0 {
+				log.Printf("session sweep: removed %d expired session(s)", len(tokens))
+			}
+		case <-done:
+			return
+		}
+	}
 }
 
 // generateToken creates a 32-byte random hex string.

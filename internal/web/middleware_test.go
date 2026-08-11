@@ -269,17 +269,32 @@ func TestRequireUploaderPrecedence(t *testing.T) {
 		t.Fatalf("participant session: want participant/%d, got %s/%d", pid, gotRole, gotID)
 	}
 
-	// loopback jury IP + a stale participant cookie -> jury wins (IP checked first)
+	// loopback jury IP + a VALID participant cookie -> participant wins (session
+	// checked first, so a participant on an allowlisted IP is not misread as jury)
 	rec = httptest.NewRecorder()
 	req = httptest.NewRequest(http.MethodPost, "/upload/init", nil)
 	req.RemoteAddr = "127.0.0.1:1234"
 	req.AddCookie(&http.Cookie{Name: "participant_session", Value: token})
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
-		t.Fatalf("loopback jury with cookie: want 200, got %d", rec.Code)
+		t.Fatalf("loopback with valid cookie: want 200, got %d", rec.Code)
+	}
+	if gotRole != "participant" || gotID != pid {
+		t.Fatalf("loopback with valid cookie: want participant/%d, got %s/%d", pid, gotRole, gotID)
+	}
+
+	// loopback jury IP + a stale (invalid) cookie -> jury identity (session fails,
+	// falls through to IP check)
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodPost, "/upload/init", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	req.AddCookie(&http.Cookie{Name: "participant_session", Value: "stale-token"})
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("loopback with stale cookie: want 200, got %d", rec.Code)
 	}
 	if gotRole != "jury" || gotID != 0 {
-		t.Fatalf("loopback jury with cookie: want jury/0, got %s/%d", gotRole, gotID)
+		t.Fatalf("loopback with stale cookie: want jury/0, got %s/%d", gotRole, gotID)
 	}
 
 	// no cookie + loopback -> jury identity

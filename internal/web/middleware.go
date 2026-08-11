@@ -137,27 +137,29 @@ func GetParticipant(r *http.Request) *model.Participant {
 	return p
 }
 
-// RequireUploader authorizes /upload/* requests: an allowlisted jury IP, or
-// failing that a valid participant session. On success it injects the uploader
+// RequireUploader authorizes /upload/* requests: a valid participant session, or
+// failing that an allowlisted jury IP. On success it injects the uploader
 // identity (via the upload package, so the dependency stays web -> upload). On
 // failure it returns 401 JSON, since these endpoints are called from fetch(),
-// not the browser. Jury IP is checked first so a jury station that also holds a
-// stale participant_session cookie (common on a shared dev box, where the jury
-// browses from loopback) still uploads as jury.
+// not the browser. The participant session is checked first: a jury station has
+// no session (stateless IP auth), but a participant often browses from an
+// allowlisted IP (loopback on a dev box, or any listed net), and jury-first
+// there would misclassify them as jury (ID 0), making the submission INSERT fail
+// the participant_id foreign key.
 func RequireUploader(st *store.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if _, ok := juryAllowed(st, r); ok {
-				ctx := upload.WithUploader(r.Context(), upload.Uploader{ID: 0, Role: "jury"})
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
 			if cookie, err := r.Cookie("participant_session"); err == nil {
 				if p, err := st.ValidateSession(cookie.Value); err == nil {
 					ctx := upload.WithUploader(r.Context(), upload.Uploader{ID: p.ID, Role: "participant"})
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
+			}
+			if _, ok := juryAllowed(st, r); ok {
+				ctx := upload.WithUploader(r.Context(), upload.Uploader{ID: 0, Role: "jury"})
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)

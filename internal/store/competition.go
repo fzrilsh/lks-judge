@@ -113,6 +113,38 @@ func (s *Store) LoadCompetitionCache() error {
 	return nil
 }
 
+// Reset performs a nuclear wipe: every competition row and all its children
+// (modules, participants, files, submissions, scores, upload_sessions cascade
+// via ON DELETE CASCADE), plus the sessions table which has no FK. Caches are
+// invalidated only after the commit succeeds. Callers handle on-disk cleanup.
+//
+// Spec §7 asks for foreign_keys=OFF + a per-table DELETE; using the cascade is a
+// deliberate deviation: two statements do the same work, and toggling the pragma
+// mid-transaction on the shared single-connection writer is riskier than the win.
+func (s *Store) Reset() error {
+	tx, err := s.Writer.Begin()
+	if err != nil {
+		return fmt.Errorf("reset: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec(`DELETE FROM competitions`); err != nil {
+		return fmt.Errorf("reset: delete competitions: %w", err)
+	}
+	if _, err := tx.Exec(`DELETE FROM sessions`); err != nil {
+		return fmt.Errorf("reset: delete sessions: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("reset: commit: %w", err)
+	}
+
+	if err := s.LoadCompetitionCache(); err != nil { // nil competition clears both caches
+		return fmt.Errorf("reset: reload cache: %w", err)
+	}
+	ClearSessionCache()
+	return nil
+}
+
 // reloadAllowedNets parses the competition allowlist into net.IPNet once, so
 // request-time jury checks skip JSON + IP parsing. A malformed list stores an
 // empty set: callers treat empty as "loopback only".

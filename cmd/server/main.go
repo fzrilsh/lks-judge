@@ -98,6 +98,9 @@ func main() {
 	// sweep expired upload sessions and their tmp chunk dirs
 	go upload.StartCleanup(st, *dataDir, ctx.Done())
 
+	// sweep expired participant sessions (bounds memory across a multi-day run)
+	go store.StartSessionSweep(st, ctx.Done())
+
 	// WS hub: one goroutine owns the client set for the life of the process
 	hub := realtime.NewHub()
 	go hub.Run(ctx)
@@ -157,9 +160,8 @@ func main() {
 	juryMw := web.RequireJury(st)
 	mux.Handle("GET /jury/", juryMw(web.HandleJuryGET(st)))
 	mux.Handle("POST /jury/", juryMw(web.HandleJuryPOST(st)))
-	mux.Handle("POST /jury/reset", juryMw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "501 Not Implemented", http.StatusNotImplemented)
-	})))
+	mux.Handle("POST /jury/reset", juryMw(web.HandleResetPOST(st, scoreCache, hub, *dataDir,
+		func() error { return backup.RunOnce(*dataDir, st.Writer) })))
 
 	// jury participant routes
 	mux.Handle("GET /jury/participants", juryMw(web.HandleParticipantsGET(st)))

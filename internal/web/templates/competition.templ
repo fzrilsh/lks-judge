@@ -7,13 +7,6 @@ import (
 	"github.com/fzrilsh/lks-judge/internal/model"
 )
 
-func derefStr(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
 // displayAllowedIPs turns the stored JSON array into the comma-separated form
 // the textarea shows. A non-JSON value (or empty) renders as-is.
 func displayAllowedIPs(raw string) string {
@@ -73,14 +66,14 @@ templ CompetitionPage(c *model.Competition, saved bool) {
 							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
 								Start Time
 							</label>
-							<input type="time" name="start_time" value={ derefStr(c.StartTime) }
+							<input type="time" name="start_time" value={ timeValue(c.StartTime) }
 								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
 						</div>
 						<div>
 							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
 								End Time
 							</label>
-							<input type="time" name="end_time" value={ derefStr(c.EndTime) }
+							<input type="time" name="end_time" value={ timeValue(c.EndTime) }
 								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
 						</div>
 					</div>

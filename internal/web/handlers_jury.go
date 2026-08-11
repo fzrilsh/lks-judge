@@ -6,9 +6,13 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
+	"github.com/fzrilsh/lks-judge/internal/realtime"
+	"github.com/fzrilsh/lks-judge/internal/scoring"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web/templates"
 )
@@ -100,5 +104,38 @@ func HandleJuryPOST(st *store.Store) http.HandlerFunc {
 			return
 		}
 		http.Redirect(w, r, "/jury/?saved=1", http.StatusSeeOther)
+	}
+}
+
+// HandleResetPOST performs a nuclear reset: snapshot the DB first (preReset, a
+// backup callback injected by main so web needn't import backup), wipe all data
+// and cached state, then clear the on-disk file/submission/upload dirs. The
+// backups and logs dirs are left alone: backups are the only recovery path and
+// the log rotator holds an open handle. A failed backup is logged, not fatal.
+func HandleResetPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub, dataDir string, preReset func() error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if preReset != nil {
+			if err := preReset(); err != nil {
+				log.Printf("reset: pre-reset backup failed, continuing: %v", err)
+			}
+		}
+		if err := st.Reset(); err != nil {
+			log.Printf("reset: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		for _, d := range []string{"files", "submissions", "uploads_tmp"} {
+			p := filepath.Join(dataDir, d)
+			if err := os.RemoveAll(p); err != nil {
+				log.Printf("reset: remove %s: %v", d, err)
+			}
+			if err := os.MkdirAll(p, 0o755); err != nil {
+				log.Printf("reset: recreate %s: %v", d, err)
+			}
+		}
+		cache.Clear()
+		hub.Broadcast(realtime.EvFormOpened, map[string]any{"status": false})
+		log.Printf("jury reset: wiped all data ip=%s", clientIP(r))
+		http.Redirect(w, r, "/jury/?setup=1", http.StatusSeeOther)
 	}
 }

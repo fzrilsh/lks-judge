@@ -46,7 +46,7 @@ func CountdownPublicPage(comp *model.Competition) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full text-center max-w-6xl mx-auto px-4 sm:px-6\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-32 sm:w-48 md:w-60 mb-4 sm:mb-6\" alt=\"Logo\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full text-center px-4 sm:px-6\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-32 sm:w-48 md:w-60 mb-4 sm:mb-6\" alt=\"Logo\"> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

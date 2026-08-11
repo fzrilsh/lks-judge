@@ -144,7 +144,7 @@ func TestJuryAllowedEmptyAllowlistIsLoopbackOnly(t *testing.T) {
 
 func TestJuryAllowedExtraNets(t *testing.T) {
 	// No competition, so the DB allowlist is empty. The --jury-ip flag alone
-	// must grant access, and its presence must not silently re-enable loopback.
+	// must grant access, and loopback stays allowed regardless.
 	s, err := store.Open(t.TempDir())
 	if err != nil {
 		t.Fatalf("open: %v", err)
@@ -162,7 +162,7 @@ func TestJuryAllowedExtraNets(t *testing.T) {
 		{"10.0.0.42:1", true},   // in CIDR
 		{"192.168.1.7:1", true}, // exact IP
 		{"192.168.1.8:1", false},
-		{"127.0.0.1:1", false}, // loopback NOT auto-allowed once an extra net is set
+		{"127.0.0.1:1", true}, // loopback is always allowed (operator box)
 	} {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		req.RemoteAddr = tc.addr

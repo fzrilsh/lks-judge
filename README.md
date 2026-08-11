@@ -94,8 +94,8 @@ and pauses on exit so a crash message stays readable.
 so it is not shown in the competition setup form and it survives a Reset. Use it
 to keep a fixed operator machine reachable before any competition exists or after
 a wipe, e.g. `--jury-ip 192.168.1.10 --jury-ip 10.0.0.0/24`. It is additive to the
-persisted `allowed_ips`; when both are empty the allowlist still falls back to
-loopback only.
+persisted `allowed_ips`. Loopback (`127.0.0.1`, `::1`) is always allowed on top of
+both lists, so the machine running the server can always reach `/jury/*`.
 
 `--dev` seeds a participant whose password is `123456`. **Never run a real
 competition with `--dev`.**

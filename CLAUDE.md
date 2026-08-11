@@ -42,7 +42,7 @@ go test ./internal/store/...   # single package
 
 **Competition state cache:** `atomic.Pointer[model.Competition]` updated on every write. Hot-path handlers (countdown, jury IP check, form-open check) read from cache, no DB hit.
 
-**Session cache:** `sync.Map[token → *model.Participant]` in `internal/store/session.go`. DB only on cold miss. (Periodic expiry sweep is planned for Phase 12; not yet implemented.)
+**Session cache:** `sync.Map[token → *model.Participant]` in `internal/store/session.go`. DB only on cold miss. (Periodic expiry sweep is planned for Phase 13; not yet implemented.)
 
 **WS hub:** single goroutine owns `clients` map, so no mutex needed. Anonymous connections (no cookie) receive only `CountdownTick` and `ScoreUpdated`.
 

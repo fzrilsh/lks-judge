@@ -69,15 +69,16 @@ MODIFIED  go.mod / go.sum                              (github.com/go-pdf/fpdf v
 
 ---
 
-## Next: Phase 12 - Polish & Build
+## Next: Phase 12 - UI Modification
 
-**Scope (spec §16 steps 50+):**
-- Nuclear competition reset (`POST /jury/reset`): DB wipe transaction + `os.RemoveAll` disk cleanup
-- Background session expiry sweep (30min ticker; see the session-cache note in CLAUDE.md)
-- End-to-end WS event verification, Windows cross-compile, `server.bat`, smoke test
+**Scope (spec §16 steps 50-54):**
+- Add the standalone `tailwindcss` CLI (single binary, no node_modules) + a source `input.css` with design tokens ported from the old Laravel project; wire the CSS build into `go generate` so `internal/web/static/css/app.css` is regenerated, not hand-edited
+- Port the app + guest layout shells and every jury + public/participant page to match the old Laravel design (reference: `/Volumes/StorageTeamGroup/Projects/LKS Judge Platform/resources`)
 
 **DoD:**
-- Reset clears all data and files; expired sessions are swept from both the `sync.Map` cache and the DB; Windows binary runs a 2-tab smoke test clean
+- `go generate` rebuilds `app.css` from templ class usage; every page renders with the old look (header, sidebar, fonts, colour tokens, Material Symbols icons); gzip + Content-Type still correct
+
+Phase 13 (Polish & Build) follows: nuclear reset, session expiry sweep, Windows cross-compile, `server.bat`, smoke test (spec §16 steps 55-60).
 
 ---
 
@@ -701,7 +702,7 @@ go.mod / go.sum           MODIFIED: github.com/xuri/excelize/v2 v2.11.0 added
 ### Routes Added
 - `GET  /jury/` — competition setup form
 - `POST /jury/` — save competition settings
-- `POST /jury/reset` — 501 placeholder (Phase 12)
+- `POST /jury/reset` — 501 placeholder (Phase 13)
 
 ### Files Created/Modified
 ```

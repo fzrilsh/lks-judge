@@ -35,6 +35,9 @@
 }
 
 /* ADDED: Material type scale (size/line-height/weight) as utilities. */
+/* Force-emit the full MD3 type scale; the -medium variants below are defined
+   for completeness but not yet referenced, so Tailwind would tree-shake them. */
+@source inline("text-headline-medium text-title-medium text-label-medium");
 @utility text-headline-large  { font-size: 2rem;     line-height: 2.5rem;   font-weight: 700; }
 @utility text-headline-medium { font-size: 1.75rem;  line-height: 2.25rem;  font-weight: 700; }
 @utility text-title-large     { font-size: 1.375rem; line-height: 1.75rem;  font-weight: 600; }

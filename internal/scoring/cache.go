@@ -11,12 +11,20 @@ import (
 // row is the public JSON shape of one leaderboard line. Separate from Entry so
 // the wire format is explicit and stable regardless of Entry's internals.
 type row struct {
-	Rank     int    `json:"rank"`
-	PCNumber *int   `json:"pc_number,omitempty"`
-	Name     string `json:"name"`
-	School   string `json:"school"`
-	WSI      int    `json:"wsi"`
-	Award    string `json:"award,omitempty"`
+	Rank     int               `json:"rank"`
+	PCNumber *int              `json:"pc_number,omitempty"`
+	Name     string            `json:"name"`
+	School   string            `json:"school"`
+	WSI      int               `json:"wsi"`
+	Award    string            `json:"award,omitempty"`
+	Scores   map[int64]float64 `json:"scores,omitempty"`
+}
+
+// moduleInfo tells the client the column order and names for the per-module
+// score cells. Marshaled alongside the rows in the leaderboard payload.
+type moduleInfo struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 // Cache holds the pre-rendered leaderboard JSON. Refresh recomputes it from the
@@ -31,24 +39,25 @@ type Cache struct {
 // safe to call before the first Refresh.
 func NewCache() *Cache {
 	c := &Cache{}
-	c.store(nil)
+	c.store(nil, nil)
 	return c
 }
 
 // store marshals entries to the wire shape and swaps in the bytes.
-func (c *Cache) store(entries []Entry) {
+func (c *Cache) store(entries []Entry, modules []moduleInfo) {
 	rows := make([]row, 0, len(entries))
 	for _, e := range entries {
 		rows = append(rows, row{
 			Rank: e.Rank, PCNumber: e.PCNumber, Name: e.Name,
-			School: e.School, WSI: e.WSI, Award: e.Award,
+			School: e.School, WSI: e.WSI, Award: e.Award, Scores: e.Scores,
 		})
 	}
 	b, err := json.Marshal(struct {
-		Entries []row `json:"entries"`
-	}{rows})
+		Modules []moduleInfo `json:"modules"`
+		Entries []row        `json:"entries"`
+	}{modules, rows})
 	if err != nil {
-		b = []byte(`{"entries":[]}`) // marshal of plain strings/ints cannot fail; belt and braces
+		b = []byte(`{"modules":null,"entries":[]}`) // marshal of plain strings/ints cannot fail; belt and braces
 	}
 	c.json.Store(&b)
 }
@@ -63,14 +72,26 @@ func (c *Cache) Refresh(st *store.Store, competitionID int64) error {
 	if err != nil {
 		return err
 	}
+	modules, err := st.ListModules(competitionID)
+	if err != nil {
+		return err
+	}
+	cells, err := st.ScoresByParticipantModule(competitionID)
+	if err != nil {
+		return err
+	}
+	mods := make([]moduleInfo, len(modules))
+	for i, m := range modules {
+		mods[i] = moduleInfo{ID: m.ID, Name: m.Name}
+	}
 	entries := make([]Entry, len(totals))
 	for i, t := range totals {
 		entries[i] = Entry{
 			ParticipantID: t.ParticipantID, Name: t.Name, School: t.School,
-			PCNumber: t.PCNumber, TotalRaw: t.TotalRaw,
+			PCNumber: t.PCNumber, TotalRaw: t.TotalRaw, Scores: cells[t.ParticipantID],
 		}
 	}
-	c.store(Rank(entries))
+	c.store(Rank(entries), mods)
 	return nil
 }
 

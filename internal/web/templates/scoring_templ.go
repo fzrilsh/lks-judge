@@ -54,7 +54,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 mb-6\">Tersimpan.</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 mb-6\">Saved.</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -119,7 +119,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"text-center px-6 py-8 text-on-surface-variant\">Belum ada peserta.</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"text-center px-6 py-8 text-on-surface-variant\">No participants yet.</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -238,7 +238,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</tbody></table></div><div class=\"p-6 flex justify-end bg-surface-container-low border-t border-outline-variant gap-3\"><button type=\"submit\" class=\"signature-gradient text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm\"><span class=\"material-symbols-outlined\">save</span> Simpan Nilai</button></div></form></div></div><script>\n\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\tconst inputs = document.querySelectorAll('.score-input');\n\t\t\t\tfunction recompute(participantId) {\n\t\t\t\t\tconst group = document.querySelectorAll(`.score-input[data-participant=\"${participantId}\"]`);\n\t\t\t\t\tlet total = 0;\n\t\t\t\t\tgroup.forEach(inp => { total += parseFloat(inp.value) || 0; });\n\t\t\t\t\tconst el = document.getElementById(`total-${participantId}`);\n\t\t\t\t\tif (el) el.innerText = total.toFixed(2);\n\t\t\t\t}\n\t\t\t\tconst seen = new Set();\n\t\t\t\tinputs.forEach(input => {\n\t\t\t\t\tconst id = input.getAttribute('data-participant');\n\t\t\t\t\tinput.addEventListener('input', function() { recompute(id); });\n\t\t\t\t\tif (!seen.has(id)) { seen.add(id); recompute(id); }\n\t\t\t\t});\n\t\t\t});\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</tbody></table></div><div class=\"p-6 flex justify-end bg-surface-container-low border-t border-outline-variant gap-3\"><button type=\"submit\" class=\"signature-gradient text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm\"><span class=\"material-symbols-outlined\">save</span> Save Scores</button></div></form></div></div><script>\n\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\tconst inputs = document.querySelectorAll('.score-input');\n\t\t\t\tfunction recompute(participantId) {\n\t\t\t\t\tconst group = document.querySelectorAll(`.score-input[data-participant=\"${participantId}\"]`);\n\t\t\t\t\tlet total = 0;\n\t\t\t\t\tgroup.forEach(inp => { total += parseFloat(inp.value) || 0; });\n\t\t\t\t\tconst el = document.getElementById(`total-${participantId}`);\n\t\t\t\t\tif (el) el.innerText = total.toFixed(2);\n\t\t\t\t}\n\t\t\t\tconst seen = new Set();\n\t\t\t\tinputs.forEach(input => {\n\t\t\t\t\tconst id = input.getAttribute('data-participant');\n\t\t\t\t\tinput.addEventListener('input', function() { recompute(id); });\n\t\t\t\t\tif (!seen.has(id)) { seen.add(id); recompute(id); }\n\t\t\t\t});\n\t\t\t});\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

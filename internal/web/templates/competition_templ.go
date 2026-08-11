@@ -8,13 +8,28 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/fzrilsh/lks-judge/internal/model"
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
 
 func derefStr(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
+}
+
+// displayAllowedIPs turns the stored JSON array into the comma-separated form
+// the textarea shows. A non-JSON value (or empty) renders as-is.
+func displayAllowedIPs(raw string) string {
+	var ips []string
+	if json.Unmarshal([]byte(raw), &ips) != nil {
+		return raw
+	}
+	return strings.Join(ips, ", ")
 }
 
 func CompetitionPage(c *model.Competition, saved bool) templ.Component {
@@ -67,33 +82,33 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 27, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 42, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" placeholder=\"Cth: LKS Wilayah II Kota Jakarta Selatan\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Competition Level</label> <input type=\"text\" name=\"level\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" placeholder=\"e.g. LKS Wilayah II Kota Jakarta Selatan\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Competition Level</label> <input type=\"text\" name=\"level\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Level)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 35, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 50, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"Cth: Kota\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\"><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Start Date</label> <input type=\"date\" name=\"start_date\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"e.g. City\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\"><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Start Date</label> <input type=\"date\" name=\"start_date\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.StartDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 45, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 60, Col: 72}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -106,7 +121,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.EndDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 52, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 67, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
@@ -119,7 +134,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(derefStr(c.StartTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 61, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 76, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
@@ -132,52 +147,39 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(derefStr(c.EndTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 68, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 83, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Allowed IPs (Whitelist)</label> <textarea name=\"allowed_ips\" rows=\"3\" placeholder=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\"></div></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Allowed IPs (Whitelist)</label> <textarea name=\"allowed_ips\" rows=\"3\" placeholder=\"192.168.1.1, 192.168.1.2, 10.0.0.0/8\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\" required>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(`["192.168.1.1","192.168.1.2"]`)
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(displayAllowedIPs(c.AllowedIPs))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 76, Col: 89}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 92, Col: 177}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all\" required>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</textarea><p class=\"text-xs text-on-surface-variant/70 mt-2\">Comma-separated IPs or CIDRs</p></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Status</label><p class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 text-on-surface-variant\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(c.AllowedIPs)
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(c.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 77, Col: 158}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 102, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</textarea><p class=\"text-xs text-on-surface-variant/70 mt-2\">JSON array of allowed IPs or CIDRs</p></div><div><label class=\"text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide\">Status</label><p class=\"w-full bg-surface-container-high rounded-lg px-4 py-3 text-on-surface-variant\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(c.Status)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 87, Col: 17}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " <span class=\"text-body-small\">(controlled from the Countdown page)</span></p></div><div class=\"pt-6 flex justify-end\"><button class=\"signature-gradient text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all\">Save Changes</button></div></form></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " <span class=\"text-body-small\">(controlled from the Countdown page)</span></p></div><div class=\"pt-6 flex justify-end\"><button class=\"signature-gradient text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all\">Save Changes</button></div></form></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

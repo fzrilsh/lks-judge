@@ -79,7 +79,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex flex-col md:flex-row justify-between items-end mb-12 gap-8\"><div class=\"max-w-2xl\"><h1 class=\"text-4xl font-manrope font-extrabold text-on-surface\">Define Competition Modules</h1><p class=\"mt-4 text-on-surface-variant\">Atur module lomba untuk penilaian.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex flex-col md:flex-row justify-between items-end mb-12 gap-8\"><div class=\"max-w-2xl\"><h1 class=\"text-4xl font-manrope font-extrabold text-on-surface\">Define Competition Modules</h1><p class=\"mt-4 text-on-surface-variant\">Configure competition modules for scoring.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -202,7 +202,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><button type=\"submit\" class=\"text-red-500 hover:text-red-700\" onclick=\"return confirm('Hapus modul ini?')\">✕</button></form></div><form method=\"POST\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><button type=\"submit\" class=\"text-red-500 hover:text-red-700\" onclick=\"return confirm('Delete this module?')\">✕</button></form></div><form method=\"POST\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -228,28 +228,18 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"w-full bg-surface-container-high rounded px-4 py-2\"></div><button type=\"submit\" class=\"w-full bg-primary text-white py-2 rounded-lg font-bold\">Update</button></form>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if isCurrentModule(comp, m) {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<span class=\"inline-block mt-4 text-xs font-bold px-3 py-1 rounded-lg bg-primary text-on-primary\">Current</span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"w-full bg-surface-container-high rounded px-4 py-2\"></div><button type=\"submit\" class=\"w-full bg-primary text-white py-2 rounded-lg font-bold\">Update</button></form></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<form method=\"POST\" action=\"/jury/modules\" class=\"border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-8 text-center hover:bg-surface-container-low\"><input type=\"text\" name=\"name\" placeholder=\"New Module\" required class=\"mb-3 bg-surface-container-high px-3 py-2 rounded text-center w-full\"> <button type=\"submit\" class=\"text-sm font-bold text-primary\">+ Tambah Module</button></form></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<form method=\"POST\" action=\"/jury/modules\" class=\"border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-8 text-center hover:bg-surface-container-low\"><input type=\"text\" name=\"name\" placeholder=\"New Module\" required class=\"mb-3 bg-surface-container-high px-3 py-2 rounded text-center w-full\"> <button type=\"submit\" class=\"text-sm font-bold text-primary\">+ Add Module</button></form></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = AppLayout("Modul", "modules").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = AppLayout("Modules", "modules").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

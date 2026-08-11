@@ -70,7 +70,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-7xl mx-auto px-8 md:px-12\"><div class=\"mb-10 flex items-start justify-between gap-6\"><div><h1 class=\"text-4xl font-manrope font-extrabold text-on-surface\">Participant Submissions</h1><p class=\"mt-4 text-on-surface-variant\">Pantau status pengumpulan hasil kerja peserta untuk setiap modul kompetisi.</p></div><a href=\"/jury/submissions/export.zip\" class=\"inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap\"><span class=\"material-symbols-outlined text-[16px]\">archive</span> Unduh Semua (.zip)</a></div><div class=\"grid grid-cols-1 md:grid-cols-3 gap-6 mb-10\"><div class=\"bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5\"><div class=\"w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center\"><span class=\"material-symbols-outlined text-3xl\">groups</span></div><div><p class=\"text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1\">Total Peserta</p><h2 class=\"text-3xl font-manrope font-bold text-on-surface\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-7xl mx-auto px-8 md:px-12\"><div class=\"mb-10 flex items-start justify-between gap-6\"><div><h1 class=\"text-4xl font-manrope font-extrabold text-on-surface\">Participant Submissions</h1><p class=\"mt-4 text-on-surface-variant\">Monitor participant work submission status for each competition module.</p></div><a href=\"/jury/submissions/export.zip\" class=\"inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap\"><span class=\"material-symbols-outlined text-[16px]\">archive</span> Download All (.zip)</a></div><div class=\"grid grid-cols-1 md:grid-cols-3 gap-6 mb-10\"><div class=\"bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5\"><div class=\"w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center\"><span class=\"material-symbols-outlined text-3xl\">groups</span></div><div><p class=\"text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1\">Total Participants</p><h2 class=\"text-3xl font-manrope font-bold text-on-surface\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -83,7 +83,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2></div></div><div class=\"bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5\"><div class=\"w-14 h-14 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center\"><span class=\"material-symbols-outlined text-3xl\">task_alt</span></div><div><p class=\"text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1\">Peserta Submit</p><h2 class=\"text-3xl font-manrope font-bold text-on-surface\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2></div></div><div class=\"bg-surface-container-lowest p-6 rounded-xl ambient-shadow border border-outline-variant/20 flex items-center gap-5\"><div class=\"w-14 h-14 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center\"><span class=\"material-symbols-outlined text-3xl\">task_alt</span></div><div><p class=\"text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1\">Participants Submitted</p><h2 class=\"text-3xl font-manrope font-bold text-on-surface\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -140,7 +140,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " Terkumpul</div></th>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " Collected</div></th>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -163,7 +163,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"px-6 py-12 text-center text-on-surface-variant\">Belum ada data peserta yang tersedia.</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"px-6 py-12 text-center text-on-surface-variant\">No participant data available yet.</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -238,12 +238,12 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all\"><span class=\"material-symbols-outlined text-[16px]\">download</span> Unduh</a>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all\"><span class=\"material-symbols-outlined text-[16px]\">download</span> Download</a>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<span class=\"inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-surface-container-highest text-on-surface-variant opacity-70\"><span class=\"material-symbols-outlined text-[16px]\">pending</span> Belum</span>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<span class=\"inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-surface-container-highest text-on-surface-variant opacity-70\"><span class=\"material-symbols-outlined text-[16px]\">pending</span> Pending</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}

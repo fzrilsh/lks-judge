@@ -28,7 +28,7 @@
     var body = document.getElementById("leaderboard-body");
     if (!body) return;
     if (!entries.length) {
-      body.innerHTML = '<tr><td colspan="99" class="text-center px-4 py-8 text-on-surface-variant">Belum ada nilai.</td></tr>';
+      body.innerHTML = '<tr><td colspan="99" class="text-center px-4 py-8 text-on-surface-variant">No scores yet.</td></tr>';
       return;
     }
     body.innerHTML = entries.map(function (e) {

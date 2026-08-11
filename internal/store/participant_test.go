@@ -172,4 +172,10 @@ func TestShuffleSeatsAssignsUniqueSeatsAndPersists(t *testing.T) {
 	if len(seen) != 5 {
 		t.Fatalf("want 5 unique seats, got %d", len(seen))
 	}
+
+	// Re-shuffle: reassigning numbers other rows already hold must not trip
+	// UNIQUE(competition_id, pc_number).
+	if err := s.UpdateParticipantSeats(ShuffleSeats(after)); err != nil {
+		t.Fatalf("re-shuffle: %v", err)
+	}
 }

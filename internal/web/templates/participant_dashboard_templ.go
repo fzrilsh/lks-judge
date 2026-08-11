@@ -49,20 +49,20 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full max-w-4xl mx-auto space-y-6 py-8\"><!-- Header --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6 flex items-center justify-between\"><div><h1 class=\"text-headline-medium text-on-surface font-manrope\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"p-12 px-6 max-w-6xl mx-auto\"><!-- Header --><div class=\"flex items-center justify-between mb-8\"><div><h1 class=\"text-2xl font-bold font-manrope text-on-surface\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 17, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 17, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-body-medium text-on-surface-variant\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-sm text-on-surface-variant\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -94,7 +94,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p></div><form method=\"POST\" action=\"/logout\"><button type=\"submit\" class=\"bg-error text-on-error px-5 py-2 rounded-xl font-semibold hover:shadow-lg transition-shadow\">Logout</button></form></div><!-- Active module + countdown --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><div class=\"flex items-center justify-between\"><div><p class=\"text-label-medium text-on-surface-variant\">Modul aktif</p><p class=\"text-title-large text-on-surface font-manrope\"><span id=\"module_name\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p></div><form method=\"POST\" action=\"/logout\"><button type=\"submit\" class=\"bg-error text-on-error px-5 py-2 rounded-xl font-semibold hover:shadow-lg transition-shadow\">Logout</button></form></div><!-- Active module + countdown --><div class=\"bg-surface-container-low p-5 rounded-xl flex items-center justify-between mb-8\"><div><p class=\"text-sm text-on-surface-variant\">Modul aktif</p><p class=\"text-title-large font-manrope text-on-surface\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -102,7 +102,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(module.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 39, Col: 22}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 37, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -114,156 +114,176 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></p><input type=\"hidden\" id=\"module_id\" value=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 45, Col: 71}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></div><div class=\"text-right\"><p class=\"text-label-medium text-on-surface-variant\">Sisa waktu</p><p id=\"countdown\" class=\"text-title-large text-on-surface font-manrope\">--:--:--</p></div></div></div><!-- Public files --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">File resmi</h2><div id=\"official-files-list\" class=\"grid gap-3 sm:grid-cols-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</p></div><div class=\"text-right\"><p class=\"text-sm text-on-surface-variant\">Sisa waktu</p><p id=\"countdown\" class=\"text-title-large font-manrope text-on-surface\">--:--:--</p></div></div><div class=\"grid grid-cols-1 lg:grid-cols-12 gap-8\"><!-- Left: download files --><div class=\"lg:col-span-7 space-y-4\"><div class=\"mb-6\"><h2 class=\"text-2xl font-bold font-manrope text-on-surface\">Download Files</h2><p class=\"text-sm text-on-surface-variant\">Official files</p></div><div id=\"official-files-list\" class=\"space-y-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(publicFiles) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p class=\"empty-placeholder text-body-medium text-on-surface-variant col-span-full\">Belum ada file publik.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p class=\"empty-placeholder text-sm text-on-surface-variant\">Belum ada file publik.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			for _, f := range publicFiles {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<a data-file-id=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div data-file-id=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var7 string
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(f.ID)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 60, Col: 31}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"bg-surface-container-low p-5 rounded-xl flex justify-between items-center\"><div class=\"flex items-center gap-4\"><div class=\"w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center\"><span class=\"material-symbols-outlined\">description</span></div><div><p class=\"file-name font-bold text-on-surface\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var8 string
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(f.ID)
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 61, Col: 28}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 66, Col: 65}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</p></div></div><a href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var9 templ.SafeURL
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/files/%s/download", f.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 61, Col: 88}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 69, Col: 68}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"flex items-center justify-between gap-2 bg-surface-container rounded-2xl px-4 py-3 hover:bg-surface-container-highest transition-colors\"><span class=\"file-name text-body-medium text-on-surface truncate\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var10 string
-				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 63, Col: 81}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span> <span class=\"text-label-small text-primary\">Download</span></a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"p-2 hover:bg-primary/10 text-primary rounded-lg\"><span class=\"material-symbols-outlined\">download</span></a></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div><!-- Submission form --><div class=\"relative bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">Kumpulkan pekerjaan</h2><div id=\"existing-submission\" class=\"mb-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><!-- Right: upload + guide --><div class=\"lg:col-span-5\"><div class=\"sticky top-24\"><!-- Upload card --><div class=\"rounded-2xl p-8 relative border-2 border-dashed border-outline-variant/30\"><!-- Sensor overlay: hidden while the form is open -->")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 = []any{"absolute inset-0 bg-surface-container-lowest/70 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6 rounded-2xl", templ.KV("hidden", formOpen)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div id=\"sensor-layer\" class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var10).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><div class=\"w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4 shadow\"><span class=\"material-symbols-outlined text-3xl text-on-surface-variant\">lock</span></div><h3 class=\"font-bold text-lg mb-2 text-on-surface\">Submission Locked</h3><p class=\"text-sm text-on-surface-variant\">Submission opens at last 20 minutes</p></div><div class=\"text-center mb-6\"><span class=\"material-symbols-outlined text-4xl text-primary\">cloud_upload</span><h3 class=\"text-xl font-bold mt-2 text-on-surface\">Upload Submission</h3></div><div id=\"existing-submission\" class=\"mb-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if existing != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"bg-tertiary-container text-on-tertiary-container rounded-2xl p-4\"><p class=\"text-body-medium\">Sudah dikumpulkan: <strong>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"bg-secondary-container text-on-secondary-container rounded-2xl p-4\"><p class=\"text-body-medium\">Sudah dikumpulkan: <strong>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var11 string
-				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(existing.Name)
+				var templ_7745c5c3_Var12 string
+				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(existing.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 75, Col: 77}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 97, Col: 80}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</strong></p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</strong></p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if existing.SubmittedAt != nil {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<p class=\"text-label-small\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<p class=\"text-label-small\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var12 string
-					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(existing.SubmittedAt.Local().Format("15:04:05"))
+					var templ_7745c5c3_Var13 string
+					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(existing.SubmittedAt.Local().Format("15:04:05"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 77, Col: 85}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 99, Col: 88}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</p>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<p class=\"text-label-small mt-1\">Upload baru akan menggantikan file ini.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<p class=\"text-label-small mt-1\">Upload baru akan menggantikan file ini.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><label id=\"dropzone\" data-upload-type=\"submission\" data-module-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><span class=\"text-sm font-semibold text-on-surface mb-2 block\">Upload Submission (Current module: <span id=\"module_name\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 85, Col: 43}
+			if module != nil {
+				var templ_7745c5c3_Var14 string
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(module.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 108, Col: 23}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "-")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" data-success-url=\"/\" data-error-url=\"/?error=\" class=\"flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition-colors\"><span class=\"text-body-large text-on-surface\">Drag file ke sini atau klik untuk memilih</span> <span class=\"text-body-small text-on-surface-variant\">Diunggah dalam potongan 2MB, bisa dilanjutkan.</span> <input id=\"file-input\" type=\"file\" class=\"hidden\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div><!-- Sensor overlay: hidden while the form is open -->")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var14 = []any{"absolute inset-0 rounded-3xl bg-surface-container-highest/95 flex items-center justify-center text-center p-6", templ.KV("hidden", formOpen)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var14...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div id=\"sensor-layer\" class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</span>)</span> <input type=\"text\" id=\"module_id\" name=\"module_id\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var14).String())
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 114, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"><p class=\"text-title-medium text-on-surface-variant font-manrope\">Form pengumpulan belum dibuka.</p></div></div></div><script src=\"/static/js/uploader.js\"></script> <script src=\"/static/js/dashboard.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" hidden> <label id=\"dropzone\" data-upload-type=\"submission\" data-module-id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 117, Col: 46}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" data-success-url=\"/\" data-error-url=\"/?error=\" class=\"flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition-colors\"><span class=\"text-body-large text-on-surface\">Drag file ke sini atau klik untuk memilih</span> <span class=\"text-body-small text-on-surface-variant\">Diunggah dalam potongan 2MB, bisa dilanjutkan.</span> <input id=\"file-input\" type=\"file\" class=\"hidden\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div></div><!-- Submission Guide --><div class=\"mt-6 bg-surface-container-lowest p-6 rounded-xl ambient-shadow\"><h4 class=\"font-bold text-on-surface mb-3\">Submission Guide</h4><ul class=\"text-sm space-y-2 text-on-surface-variant\"><li>• Make sure the file name matches the requested format</li><li>• Max file size: 70MB</li><li>• Late submission will be rejected</li></ul></div></div></div></div></div><script src=\"/static/js/uploader.js\"></script> <script src=\"/static/js/dashboard.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

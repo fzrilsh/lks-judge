@@ -91,20 +91,18 @@ func juryAllowed(st *store.Store, r *http.Request) (string, bool) {
 	if remote == nil {
 		return host, false
 	}
+	// Loopback is always allowed: the operator runs the server on this box and
+	// must reach /jury/* regardless of the persisted or flag allowlist (before a
+	// competition exists, after a Reset, or when the allowlist omits localhost).
+	if remote.IsLoopback() {
+		return host, true
+	}
 
-	nets := st.AllowedNets()
-	extra := st.ExtraNets()
-	if len(nets) == 0 && len(extra) == 0 {
-		return host, remote.IsLoopback() // no competition / empty list: loopback only
-	}
-	for i := range nets {
-		if nets[i].Contains(remote) {
-			return host, true
-		}
-	}
-	for i := range extra {
-		if extra[i].Contains(remote) {
-			return host, true
+	for _, nets := range [][]net.IPNet{st.AllowedNets(), st.ExtraNets()} {
+		for i := range nets {
+			if nets[i].Contains(remote) {
+				return host, true
+			}
 		}
 	}
 	return host, false

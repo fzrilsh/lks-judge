@@ -1,12 +1,27 @@
 package templates
 
-import "github.com/fzrilsh/lks-judge/internal/model"
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
 
 func derefStr(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
+}
+
+// displayAllowedIPs turns the stored JSON array into the comma-separated form
+// the textarea shows. A non-JSON value (or empty) renders as-is.
+func displayAllowedIPs(raw string) string {
+	var ips []string
+	if json.Unmarshal([]byte(raw), &ips) != nil {
+		return raw
+	}
+	return strings.Join(ips, ", ")
 }
 
 templ CompetitionPage(c *model.Competition, saved bool) {
@@ -25,7 +40,7 @@ templ CompetitionPage(c *model.Competition, saved bool) {
 								Competition Name
 							</label>
 							<input type="text" name="name" required value={ c.Name }
-								placeholder="Cth: LKS Wilayah II Kota Jakarta Selatan"
+								placeholder="e.g. LKS Wilayah II Kota Jakarta Selatan"
 								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
 						</div>
 						<div>
@@ -33,7 +48,7 @@ templ CompetitionPage(c *model.Competition, saved bool) {
 								Competition Level
 							</label>
 							<input type="text" name="level" required value={ c.Level }
-								placeholder="Cth: Kota"
+								placeholder="e.g. City"
 								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
 						</div>
 					</div>
@@ -73,10 +88,10 @@ templ CompetitionPage(c *model.Competition, saved bool) {
 						<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
 							Allowed IPs (Whitelist)
 						</label>
-						<textarea name="allowed_ips" rows="3" placeholder={ `["192.168.1.1","192.168.1.2"]` }
-							class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all" required>{ c.AllowedIPs }</textarea>
+						<textarea name="allowed_ips" rows="3" placeholder="192.168.1.1, 192.168.1.2, 10.0.0.0/8"
+							class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all" required>{ displayAllowedIPs(c.AllowedIPs) }</textarea>
 						<p class="text-xs text-on-surface-variant/70 mt-2">
-							JSON array of allowed IPs or CIDRs
+							Comma-separated IPs or CIDRs
 						</p>
 					</div>
 					<div>

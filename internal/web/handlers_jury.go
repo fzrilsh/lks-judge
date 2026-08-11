@@ -6,30 +6,38 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
 	"github.com/fzrilsh/lks-judge/internal/web/templates"
 )
 
-// validateAllowedIPs parses the JSON allowlist and rejects any entry that is
-// not a valid IP or CIDR, so a typo cannot silently lock the jury out (a
-// malformed list falls back to loopback at request time).
-func validateAllowedIPs(raw string) error {
+// parseAllowedIPs converts the comma-separated textarea value into the JSON
+// array stored in the DB (and read by reloadAllowedNets), rejecting any entry
+// that is not a valid IP or CIDR so a typo cannot silently lock the jury out.
+func parseAllowedIPs(raw string) (string, error) {
 	var ips []string
-	if err := json.Unmarshal([]byte(raw), &ips); err != nil {
-		return fmt.Errorf("allowed_ips must be a JSON array: %w", err)
-	}
-	for _, s := range ips {
-		if net.ParseIP(s) != nil {
+	for part := range strings.SplitSeq(raw, ",") {
+		s := strings.TrimSpace(part)
+		if s == "" {
 			continue
 		}
-		if _, _, err := net.ParseCIDR(s); err == nil {
-			continue
+		if net.ParseIP(s) == nil {
+			if _, _, err := net.ParseCIDR(s); err != nil {
+				return "", fmt.Errorf("invalid IP or CIDR: %q", s)
+			}
 		}
-		return fmt.Errorf("invalid IP or CIDR: %q", s)
+		ips = append(ips, s)
 	}
-	return nil
+	if ips == nil {
+		ips = []string{}
+	}
+	b, err := json.Marshal(ips)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func HandleJuryGET(st *store.Store) http.HandlerFunc {
@@ -56,10 +64,8 @@ func HandleJuryPOST(st *store.Store) http.HandlerFunc {
 		startTime := r.FormValue("start_time")
 		endTime := r.FormValue("end_time")
 		allowedIPs := r.FormValue("allowed_ips")
-		if allowedIPs == "" {
-			allowedIPs = "[]"
-		}
-		if err := validateAllowedIPs(allowedIPs); err != nil {
+		allowedIPs, err := parseAllowedIPs(allowedIPs)
+		if err != nil {
 			log.Printf("reject allowed_ips: %v", err)
 			http.Error(w, "bad request: "+err.Error(), http.StatusBadRequest)
 			return

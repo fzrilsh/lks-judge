@@ -47,7 +47,7 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 				</div>
 				<div class="pt-4 space-y-4">
 					if len(files) == 0 {
-						<div class="bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant">Belum ada file.</div>
+						<div class="bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant">No files yet.</div>
 					}
 					for _, f := range files {
 						<div class="bg-surface-container-lowest rounded-xl p-5 ambient-shadow flex justify-between items-center">
@@ -79,7 +79,7 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 										<span class="material-symbols-outlined">download</span>
 									</a>
 									<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)) }>
-										<button type="submit" class="p-2 hover:bg-error/10 text-error rounded-lg" onclick="return confirm('Hapus file ini?')">
+										<button type="submit" class="p-2 hover:bg-error/10 text-error rounded-lg" onclick="return confirm('Delete this file?')">
 											<span class="material-symbols-outlined">delete</span>
 										</button>
 									</form>

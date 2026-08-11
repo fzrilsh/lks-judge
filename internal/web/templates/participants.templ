@@ -37,7 +37,7 @@ func queueCount(participants []*model.Participant) int {
 }
 
 templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg string) {
-	@AppLayout("Peserta", "participants") {
+	@AppLayout("Participants", "participants") {
 		<div class="max-w-6xl mx-auto space-y-10">
 			<section class="flex justify-between items-end">
 				<div>
@@ -117,7 +117,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 								</p>
 							</div>
 							<div class="flex justify-end">
-								<button type="submit" onclick="return confirm('Semua data akan di-replace. Yakin lanjut?')"
+								<button type="submit" onclick="return confirm('All data will be replaced. Are you sure you want to continue?')"
 									class="w-full signature-gradient text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all duration-150">
 									<span>Upload &amp; Sync</span>
 									<span class="material-symbols-outlined text-sm">sync</span>
@@ -145,7 +145,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 											<div class="text-sm text-on-surface-variant">{ p.School }</div>
 										</div>
 										<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) }>
-											<button type="submit" class="text-error font-bold" onclick="return confirm('Hapus peserta ini?')">✕</button>
+											<button type="submit" class="text-error font-bold" onclick="return confirm('Delete this participant?')">✕</button>
 										</form>
 									</div>
 								}
@@ -184,7 +184,7 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 												<td class="font-mono">{ pwStr(p) }</td>
 												<td class="py-3">
 													<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) }>
-														<button class="text-error font-bold cursor-pointer" onclick="return confirm('Hapus peserta ini?')">DELETE</button>
+														<button class="text-error font-bold cursor-pointer" onclick="return confirm('Delete this participant?')">DELETE</button>
 													</form>
 												</td>
 											</tr>

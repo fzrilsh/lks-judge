@@ -11,8 +11,9 @@ All eleven phases of core work are done through scoring: setup, participants,
 modules, the competition countdown, the WebSocket hub that pushes live events,
 chunked resumable file upload with jury file management, participant submissions
 with the jury review matrix, and scoring with the robust WSI scale, a cached
-public leaderboard, and a CIS PDF export. Phase 12 (nuclear reset, session
-expiry sweep, Windows build) is the remaining polish.
+public leaderboard, and a CIS PDF export. Phase 12 (UI modification: match the
+old Laravel design) and Phase 13 (nuclear reset, session expiry sweep, Windows
+build) are the remaining work.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -27,6 +28,8 @@ expiry sweep, Windows build) is the remaining polish.
 | 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
 | 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
 | 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
+| 12 | UI modification: port the old Laravel design to the templ views | not started |
+| 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | not started |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 

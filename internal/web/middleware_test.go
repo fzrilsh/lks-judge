@@ -7,6 +7,7 @@ import (
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
+	"github.com/fzrilsh/lks-judge/internal/upload"
 )
 
 // newTestStore opens a fresh store with one competition (loopback allowlist).
@@ -246,7 +247,14 @@ func TestRequireUploaderPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create session: %v", err)
 	}
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	var gotRole string
+	var gotID int64
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if u, ok := upload.UploaderFrom(r.Context()); ok {
+			gotRole, gotID = u.Role, u.ID
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 	h := RequireUploader(s)(next)
 
 	rec := httptest.NewRecorder()
@@ -256,6 +264,22 @@ func TestRequireUploaderPrecedence(t *testing.T) {
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("participant session: want 200, got %d", rec.Code)
+	}
+	if gotRole != "participant" || gotID != pid {
+		t.Fatalf("participant session: want participant/%d, got %s/%d", pid, gotRole, gotID)
+	}
+
+	// loopback jury IP + a stale participant cookie -> jury wins (IP checked first)
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodPost, "/upload/init", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	req.AddCookie(&http.Cookie{Name: "participant_session", Value: token})
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("loopback jury with cookie: want 200, got %d", rec.Code)
+	}
+	if gotRole != "jury" || gotID != 0 {
+		t.Fatalf("loopback jury with cookie: want jury/0, got %s/%d", gotRole, gotID)
 	}
 
 	// no cookie + loopback -> jury identity

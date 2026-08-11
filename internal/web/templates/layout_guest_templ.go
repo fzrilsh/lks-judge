@@ -49,14 +49,14 @@ func GuestLayout(title string, navLeft string, navRight string) templ.Component 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"stylesheet\" href=\"/static/css/app.css\"></head><body class=\"bg-gray-50 min-h-screen\"><nav class=\"fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm\"><span class=\"text-xl font-bold text-gray-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"></head><body class=\"bg-gray-50 min-h-screen\"><nav class=\"fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm\"><span class=\"text-xl font-bold text-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(navLeftOr(navLeft))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 21, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 22, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -69,7 +69,7 @@ func GuestLayout(title string, navLeft string, navRight string) templ.Component 
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(navRight)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 22, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 23, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -121,13 +121,13 @@ func TVLayout(title string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 39, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_guest.templ`, Line: 40, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " - LKS Judge Platform</title><link rel=\"stylesheet\" href=\"/static/css/app.css\"></head><body class=\"bg-gray-50 min-h-screen flex items-center justify-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"></head><body class=\"bg-gray-50 min-h-screen flex items-center justify-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

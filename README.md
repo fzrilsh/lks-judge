@@ -7,13 +7,13 @@ Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
 
 ## Status
 
-All eleven phases of core work are done through scoring: setup, participants,
+All twelve phases through the UI port are done: setup, participants,
 modules, the competition countdown, the WebSocket hub that pushes live events,
 chunked resumable file upload with jury file management, participant submissions
-with the jury review matrix, and scoring with the robust WSI scale, a cached
-public leaderboard, and a CIS PDF export. Phase 12 (UI modification: match the
-old Laravel design) and Phase 13 (nuclear reset, session expiry sweep, Windows
-build) are the remaining work.
+with the jury review matrix, scoring with the robust WSI scale, a cached
+public leaderboard, a CIS PDF export, and the templ UI restyled to match the
+old Laravel design. Phase 13 (nuclear reset, session expiry sweep, Windows
+build) is the remaining work.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -28,7 +28,7 @@ build) are the remaining work.
 | 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
 | 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
 | 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
-| 12 | UI modification: port the old Laravel design to the templ views | not started |
+| 12 | UI modification: port the old Laravel design to the templ views | done |
 | 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | not started |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
@@ -48,12 +48,24 @@ install and `CGO_ENABLED=0` works everywhere. The CIS PDF export uses
 ## Build
 
 ```bash
-go generate ./...          # compiles .templ files, required before every build
+go generate ./...          # compiles .templ files AND rebuilds static/css/app.css, required before every build
 go build ./cmd/server
 ```
 
 Any change to a `.templ` file needs `go generate ./...` (or `templ generate`)
 before `go build`, or you will build against stale views.
+
+### CSS
+
+Styling is Tailwind v4. The source is `internal/web/tailwind.css` (MD3 tokens,
+type scale, self-hosted `@font-face`, component classes); `go generate` runs the
+standalone `tools/tailwindcss` CLI to regenerate the committed, embedded
+`internal/web/static/css/app.css`. The CLI binary is git-ignored and per-OS
+(see [`tools/README.md`](tools/README.md) for the download URL). Because
+`app.css` is committed and embedded, `go build` alone works without the CLI;
+you only need it to regenerate `app.css` after changing `tailwind.css` or the
+class strings in `.templ` / `static/js/*.js` files. Self-hosted fonts live under
+`internal/web/static/fonts/`.
 
 Windows target:
 

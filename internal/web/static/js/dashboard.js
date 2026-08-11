@@ -71,8 +71,11 @@
     if (!payload) return;
     lastSeconds = payload.seconds;
     paint();
+    // Only a running countdown advances. Paused/waiting/finished freeze the
+    // clock, so clear any local ticker and do not decrement.
+    if (localTimer) { clearInterval(localTimer); localTimer = null; }
+    if (payload.status !== "running") return;
     // Server pushes every 5s; decrement locally each second so the clock is smooth.
-    if (localTimer) clearInterval(localTimer);
     localTimer = setInterval(function () {
       if (lastSeconds == null) return;
       if (lastSeconds > 0) lastSeconds -= 1;

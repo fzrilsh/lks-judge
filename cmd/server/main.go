@@ -122,7 +122,11 @@ func main() {
 		Tick: func(seconds int) {
 			tickCount++
 			if tickCount%5 == 0 {
-				hub.Broadcast(realtime.EvCountdownTick, map[string]int{"seconds": seconds})
+				status := "waiting"
+				if c := st.CompetitionCache.Load(); c != nil {
+					status = c.Status
+				}
+				hub.Broadcast(realtime.EvCountdownTick, map[string]any{"seconds": seconds, "status": status})
 			}
 		},
 	}

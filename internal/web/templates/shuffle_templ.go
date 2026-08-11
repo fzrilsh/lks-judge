@@ -46,17 +46,17 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-6xl mx-auto space-y-8\"><div class=\"text-center\"><h1 class=\"text-2xl font-bold text-on-surface mb-2 font-manrope\">Penentuan Nomor PC</h1><p class=\"text-sm text-on-surface-variant\">Acak peserta ke nomor PC</p><div class=\"flex items-center justify-center gap-4 mt-6\"><a href=\"/jury/participants\" class=\"px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow\">Back</a><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"px-8 py-3 signature-gradient text-white font-bold rounded-full hover:-translate-y-1 transition-all shadow-lg\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-6xl mx-auto space-y-8\"><div class=\"text-center\"><h1 class=\"text-2xl font-bold text-on-surface mb-2 font-manrope\">PC Number Assignment</h1><p class=\"text-sm text-on-surface-variant\">Shuffle participants to PC numbers</p><div class=\"flex items-center justify-center gap-4 mt-6\"><a href=\"/jury/participants\" class=\"px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow\">Back</a><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"px-8 py-3 signature-gradient text-white font-bold rounded-full hover:-translate-y-1 transition-all shadow-lg\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(results) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Mulai Acak")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Start Shuffle")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Acak Ulang")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Re-shuffle")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -66,25 +66,25 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if len(results) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-surface-container-low rounded-3xl shadow-lg p-8 text-center\"><p class=\"text-body-large text-on-surface-variant mb-4\">Belum ada peserta untuk di-shuffle.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-surface-container-low rounded-3xl shadow-lg p-8 text-center\"><p class=\"text-body-large text-on-surface-variant mb-4\">No participants to shuffle yet.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"signature-gradient text-white rounded-xl p-4\"><p class=\"text-body-medium\">Shuffle selesai. ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"signature-gradient text-white rounded-xl p-4\"><p class=\"text-body-medium\">Shuffle complete. ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(results)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 37, Col: 83}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `shuffle.templ`, Line: 37, Col: 84}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " peserta dialokasikan ke seat.</p></div><div><h3 class=\"text-lg font-bold text-outline mb-4\">Denah Kursi PC</h3><div class=\"grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " participants allocated to seats.</p></div><div><h3 class=\"text-lg font-bold text-outline mb-4\">PC Seat Map</h3><div class=\"grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -93,7 +93,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				return templ_7745c5c3_Err
 			}
 			if len(files) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant\">Belum ada file.</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant\">No files yet.</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -166,7 +166,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><button type=\"submit\" class=\"p-2 hover:bg-error/10 text-error rounded-lg\" onclick=\"return confirm('Hapus file ini?')\"><span class=\"material-symbols-outlined\">delete</span></button></form></div></div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><button type=\"submit\" class=\"p-2 hover:bg-error/10 text-error rounded-lg\" onclick=\"return confirm('Delete this file?')\"><span class=\"material-symbols-outlined\">delete</span></button></form></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

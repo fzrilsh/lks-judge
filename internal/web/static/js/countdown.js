@@ -7,6 +7,16 @@
   var statusEl = document.getElementById("cd-status");
   var compID = clock.dataset.alert;
   var storeKey = compID ? "last_seconds_" + compID : null;
+  // Jury control panel: toggle each [data-cd-show] element by the live status
+  // so SAVE/RESUME/PAUSE/STOP always match the clock without a reload.
+  var controls = document.querySelectorAll("[data-cd-show]");
+
+  function syncControls(status) {
+    controls.forEach(function (el) {
+      var show = el.dataset.cdShow.split(" ").indexOf(status) !== -1;
+      el.classList.toggle("hidden", !show);
+    });
+  }
 
   function format(s) {
     var h = Math.floor(s / 3600);
@@ -29,6 +39,7 @@
       .then(function (d) {
         clock.textContent = format(d.seconds);
         if (statusEl) statusEl.textContent = d.status;
+        syncControls(d.status);
         if (!storeKey) return;
         if (d.seconds === 0 && d.status !== "waiting") {
           alertZero();

@@ -31,7 +31,7 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 			<!-- Active module + countdown -->
 			<div class="bg-surface-container-low p-5 rounded-xl flex items-center justify-between mb-8">
 				<div>
-					<p class="text-sm text-on-surface-variant">Modul aktif</p>
+					<p class="text-sm text-on-surface-variant">Active module</p>
 					<p class="text-title-large font-manrope text-on-surface">
 						if module != nil {
 							{ module.Name }
@@ -41,7 +41,7 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 					</p>
 				</div>
 				<div class="text-right">
-					<p class="text-sm text-on-surface-variant">Sisa waktu</p>
+					<p class="text-sm text-on-surface-variant">Time remaining</p>
 					<p id="countdown" class="text-title-large font-manrope text-on-surface">--:--:--</p>
 				</div>
 			</div>
@@ -54,7 +54,7 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 					</div>
 					<div id="official-files-list" class="space-y-4">
 						if len(publicFiles) == 0 {
-							<p class="empty-placeholder text-sm text-on-surface-variant">Belum ada file publik.</p>
+							<p class="empty-placeholder text-sm text-on-surface-variant">No public files yet.</p>
 						}
 						for _, f := range publicFiles {
 							<div data-file-id={ f.ID } class="bg-surface-container-low p-5 rounded-xl flex justify-between items-center">
@@ -94,11 +94,11 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 							<div id="existing-submission" class="mb-4">
 								if existing != nil {
 									<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-4">
-										<p class="text-body-medium">Sudah dikumpulkan: <strong>{ existing.Name }</strong></p>
+										<p class="text-body-medium">Submitted: <strong>{ existing.Name }</strong></p>
 										if existing.SubmittedAt != nil {
 											<p class="text-label-small">{ existing.SubmittedAt.Local().Format("15:04:05") }</p>
 										}
-										<p class="text-label-small mt-1">Upload baru akan menggantikan file ini.</p>
+										<p class="text-label-small mt-1">A new upload will replace this file.</p>
 									</div>
 								}
 							</div>
@@ -118,8 +118,7 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 								data-success-url="/"
 								data-error-url="/?error="
 								class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition-colors">
-								<span class="text-body-large text-on-surface">Drag file ke sini atau klik untuk memilih</span>
-								<span class="text-body-small text-on-surface-variant">Diunggah dalam potongan 2MB, bisa dilanjutkan.</span>
+								<span class="text-body-large text-on-surface">Drag a file here or click to select</span>
 								<input id="file-input" type="file" class="hidden"/>
 							</label>
 							<div id="progress-wrap" class="hidden mt-4">

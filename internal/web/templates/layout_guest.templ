@@ -27,3 +27,20 @@ templ GuestLayout(title string, navLeft string, navRight string) {
 	</body>
 	</html>
 }
+
+// TVLayout is a chromeless full-screen shell for projector pages (the public
+// countdown): no navbar, content vertically centered.
+templ TVLayout(title string) {
+	<!DOCTYPE html>
+	<html lang="id">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ title } - LKS Judge Platform</title>
+		<link rel="stylesheet" href="/static/css/app.css"/>
+	</head>
+	<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+		{ children... }
+	</body>
+	</html>
+}

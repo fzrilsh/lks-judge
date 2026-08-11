@@ -6,23 +6,23 @@ import (
 )
 
 templ CountdownPublicPage(comp *model.Competition) {
-	@GuestLayout("Countdown", "", "") {
-		<div class="w-full text-center max-w-6xl mx-auto">
-			<img src="/static/imgs/logo.png" class="mx-auto w-60 mb-6" alt="Logo"/>
+	@TVLayout("Countdown") {
+		<div class="w-full text-center max-w-6xl mx-auto px-4 sm:px-6">
+			<img src="/static/imgs/logo.png" class="mx-auto w-32 sm:w-48 md:w-60 mb-4 sm:mb-6" alt="Logo"/>
 			if comp != nil {
-				<h1 class="font-manrope font-extrabold text-4xl md:text-5xl text-on-surface mb-8">{ comp.Name }</h1>
+				<h1 class="font-manrope font-extrabold text-2xl sm:text-4xl md:text-5xl text-on-surface mb-6 sm:mb-8 break-words">{ comp.Name }</h1>
 			}
 			<p
 				id="cd-clock"
 				if comp != nil {
 					data-alert={ fmt.Sprint(comp.ID) }
 				}
-				class="text-on-surface font-mono tabular-nums"
-				style="font-size:22vw;line-height:1"
+				class="text-on-surface font-mono tabular-nums leading-none"
+				style="font-size:clamp(3rem,18vw,16rem)"
 			>
 				--:--:--
 			</p>
-			<p class="text-title-large text-on-surface-variant uppercase tracking-widest mt-8">
+			<p class="text-base sm:text-title-large text-on-surface-variant uppercase tracking-widest mt-6 sm:mt-8">
 				<span id="cd-status">
 					if comp != nil {
 						{ comp.Status }

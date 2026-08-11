@@ -8,11 +8,12 @@ import (
 	"github.com/go-pdf/fpdf"
 )
 
-// PDF renders the scaled results as a one-table A4 document: a header with two
-// optional logos and a centered title, then Rank, No, Name, Member, Result and
-// Award columns. leftLogo/rightLogo are image bytes (PNG or JPEG); an empty
-// slice skips that logo. It writes text, not markup, so participant names need
-// no escaping.
+// PDF renders the scaled results as a one-table A4 document matching the old
+// design: a header with two optional logos and a centered title block, then a
+// four-column table (Name, Member, Result, Award) with a dark-blue header row
+// and zebra striping. leftLogo/rightLogo are image bytes (PNG or JPEG); an
+// empty slice skips that logo. It writes text, not markup, so participant names
+// need no escaping.
 func PDF(comp *model.Competition, entries []Entry, leftLogo, rightLogo []byte) ([]byte, error) {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.SetMargins(15, 12, 15)
@@ -21,49 +22,45 @@ func PDF(comp *model.Competition, entries []Entry, leftLogo, rightLogo []byte) (
 	const pageW = 210.0
 	if len(leftLogo) > 0 {
 		regImage(pdf, "left", leftLogo)
-		pdf.ImageOptions("left", 15, 10, 22, 0, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
+		pdf.ImageOptions("left", 15, 12, 0, 16, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
 	}
 	if len(rightLogo) > 0 {
 		regImage(pdf, "right", rightLogo)
-		pdf.ImageOptions("right", pageW-15-22, 10, 22, 0, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
+		pdf.ImageOptions("right", pageW-15-16, 12, 0, 16, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
 	}
 
-	pdf.SetFont("Helvetica", "B", 13)
-	pdf.SetY(12)
-	pdf.CellFormat(0, 7, "Web Technologies", "", 1, "C", false, 0, "")
-	pdf.SetFont("Helvetica", "", 11)
+	pdf.SetY(14)
+	pdf.SetFont("Helvetica", "", 18)
+	pdf.CellFormat(0, 8, "Web Technologies", "", 1, "C", false, 0, "")
+	pdf.SetFont("Helvetica", "", 12)
 	pdf.CellFormat(0, 6, "WorldSkills Scale Results", "", 1, "C", false, 0, "")
-	pdf.SetFont("Helvetica", "B", 11)
-	pdf.CellFormat(0, 6, comp.Name, "", 1, "C", false, 0, "")
-	pdf.Ln(6)
+	pdf.SetFont("Helvetica", "", 13)
+	pdf.CellFormat(0, 7, comp.Name, "", 1, "C", false, 0, "")
+	pdf.Ln(10)
 
 	// Table header. Widths sum to the usable A4 width (210 minus two 15mm margins).
-	widths := []float64{16, 14, 62, 52, 22, 14}
-	heads := []string{"Rank", "No", "Name", "Member", "Result", "Award"}
-	pdf.SetFont("Helvetica", "B", 9)
-	pdf.SetFillColor(230, 230, 230)
+	widths := []float64{62, 48, 30, 40}
+	heads := []string{"Name", "Member", "Result", "Award"}
+	aligns := []string{"L", "L", "C", "C"}
+	pdf.SetFont("Helvetica", "B", 10)
+	pdf.SetFillColor(11, 61, 96)
+	pdf.SetTextColor(255, 255, 255)
 	for i, h := range heads {
-		pdf.CellFormat(widths[i], 7, h, "1", 0, "C", true, 0, "")
+		pdf.CellFormat(widths[i], 8, h, "1", 0, aligns[i], true, 0, "")
 	}
 	pdf.Ln(-1)
 
-	pdf.SetFont("Helvetica", "", 9)
-	for _, e := range entries {
-		pc := ""
-		if e.PCNumber != nil {
-			pc = fmt.Sprintf("%02d", *e.PCNumber)
-		}
-		cells := []string{fmt.Sprintf("%d", e.Rank), pc, e.Name, e.School, fmt.Sprintf("%d", e.WSI), awardCode(e.Award)}
-		aligns := []string{"C", "C", "L", "L", "C", "C"}
+	pdf.SetFont("Helvetica", "", 10)
+	pdf.SetTextColor(0, 0, 0)
+	for row, e := range entries {
+		fill := row%2 == 1 // zebra: shade every other row
+		pdf.SetFillColor(249, 249, 249)
+		cells := []string{e.Name, e.School, fmt.Sprintf("%d", e.WSI), e.Award}
 		for i, c := range cells {
-			pdf.CellFormat(widths[i], 6, c, "1", 0, aligns[i], false, 0, "")
+			pdf.CellFormat(widths[i], 7, c, "1", 0, aligns[i], fill, 0, "")
 		}
 		pdf.Ln(-1)
 	}
-
-	pdf.SetFont("Helvetica", "I", 7)
-	pdf.Ln(2)
-	pdf.CellFormat(0, 5, "G Gold  S Silver  B Bronze  M Medallion for Excellence", "", 1, "L", false, 0, "")
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
@@ -72,22 +69,13 @@ func PDF(comp *model.Competition, entries []Entry, leftLogo, rightLogo []byte) (
 	return buf.Bytes(), nil
 }
 
-// awardCode maps an award label to its single-letter table code, empty for none.
-func awardCode(award string) string {
-	switch award {
-	case AwardGold:
-		return "G"
-	case AwardSilver:
-		return "S"
-	case AwardBronze:
-		return "B"
-	case AwardMedallion:
-		return "M"
-	}
-	return ""
-}
-
-// regImage registers image bytes under a name, letting fpdf sniff the type.
+// regImage registers image bytes under a name. A custom reader cannot sniff
+// the format (unlike the file-path variant), so the type must be set from the
+// magic bytes: PNG starts 0x89 P N G, JPEG starts 0xFF 0xD8.
 func regImage(pdf *fpdf.Fpdf, name string, data []byte) {
-	pdf.RegisterImageOptionsReader(name, fpdf.ImageOptions{ReadDpi: true}, bytes.NewReader(data))
+	imgType := "png"
+	if len(data) >= 2 && data[0] == 0xFF && data[1] == 0xD8 {
+		imgType = "jpg"
+	}
+	pdf.RegisterImageOptionsReader(name, fpdf.ImageOptions{ReadDpi: true, ImageType: imgType}, bytes.NewReader(data))
 }

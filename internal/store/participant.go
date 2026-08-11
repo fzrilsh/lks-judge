@@ -183,6 +183,18 @@ func (s *Store) UpdateParticipantSeats(assignments []ShuffleResult) error {
 	defer func() { _ = tx.Rollback() }()
 
 	now := time.Now().UTC()
+	// Clear seats first: a re-shuffle reassigns numbers already held by other
+	// rows, so a straight per-row UPDATE collides on UNIQUE(competition_id,
+	// pc_number) mid-transaction. NULL them all (multiple NULLs are allowed),
+	// then assign the fresh, collision-free set.
+	for _, a := range assignments {
+		if _, err = tx.Exec(
+			`UPDATE participants SET pc_number = NULL, updated_at = ? WHERE id = ?`,
+			now, a.ID,
+		); err != nil {
+			return fmt.Errorf("shuffle seats: clear id=%d: %w", a.ID, err)
+		}
+	}
 	for _, a := range assignments {
 		_, err = tx.Exec(
 			`UPDATE participants SET pc_number = ?, updated_at = ? WHERE id = ?`,

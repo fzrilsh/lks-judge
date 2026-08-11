@@ -7,7 +7,7 @@ import (
 
 templ CountdownPublicPage(comp *model.Competition) {
 	@TVLayout("Countdown") {
-		<div class="w-full text-center max-w-6xl mx-auto px-4 sm:px-6">
+		<div class="text-center max-w-6xl px-4 sm:px-6">
 			<img src="/static/imgs/logo.png" class="mx-auto w-32 sm:w-48 md:w-60 mb-4 sm:mb-6" alt="Logo"/>
 			if comp != nil {
 				<h1 class="font-manrope font-extrabold text-2xl sm:text-4xl md:text-5xl text-on-surface mb-6 sm:mb-8 break-words">{ comp.Name }</h1>

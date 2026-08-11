@@ -30,6 +30,7 @@ type Entry struct {
 	WSI           int
 	Rank          int
 	Award         string
+	Scores        map[int64]float64 // per-module raw score, keyed by module ID; nil/absent module => 0
 }
 
 // Median returns the median of xs. Even count returns the mean of the two

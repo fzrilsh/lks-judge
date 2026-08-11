@@ -10,66 +10,98 @@ import (
 // raw score (nil = blank). Posts the whole grid to /jury/scoring.
 templ Scoring(comp *model.Competition, participants []*model.Participant, modules []*model.Module, score map[int64]map[int64]*float64, saved bool, errMsg string) {
 	@AppLayout("Scoring", "scoring") {
-		<div class="max-w-6xl mx-auto space-y-6">
-			<div class="flex items-center justify-between">
-				<h1 class="text-headline-large text-on-surface font-manrope">Scoring</h1>
-				<div class="flex gap-2">
-					<a href="/leaderboard" target="_blank" class="text-label-large px-4 py-2 bg-secondary-container text-on-secondary-container rounded-xl hover:shadow transition-shadow">Leaderboard</a>
-					<a href="/jury/scoring/export-pdf" class="text-label-large px-4 py-2 bg-primary text-on-primary rounded-xl hover:shadow transition-shadow">Export PDF</a>
+		<div class="max-w-6xl mx-auto">
+			<section class="flex justify-between items-end mb-12">
+				<h1 class="text-4xl font-extrabold font-manrope text-on-surface leading-tight">
+					Participant Manual Scoring System
+				</h1>
+				<div class="flex gap-3">
+					<a href="/leaderboard" target="_blank" class="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl">Leaderboard</a>
+					<a href="/jury/scoring/export-pdf" class="bg-primary text-on-primary px-4 py-2 rounded-xl">Export PDF</a>
 				</div>
-			</div>
+			</section>
 			if saved {
-				<div class="bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 text-body-medium">Tersimpan.</div>
+				<div class="bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 mb-6">Tersimpan.</div>
 			}
 			if errMsg != "" {
-				<div class="bg-error-container text-on-error-container rounded-xl px-4 py-2 text-body-medium">{ errMsg }</div>
+				<div class="bg-error-container text-on-error-container rounded-xl px-4 py-2 mb-6">{ errMsg }</div>
 			}
-			<form method="post" action="/jury/scoring">
-				<div class="bg-surface-container-low rounded-3xl shadow-lg overflow-x-auto">
-					<table class="w-full text-body-medium">
-						<thead class="bg-surface-container text-on-surface-variant">
-							<tr>
-								<th class="text-left px-4 py-3">Peserta</th>
-								for _, m := range modules {
-									<th class="px-4 py-3 text-center">{ m.Name }</th>
-								}
-							</tr>
-						</thead>
-						<tbody>
-							if len(participants) == 0 {
-								<tr><td colspan={ fmt.Sprintf("%d", len(modules)+1) } class="text-center px-4 py-8 text-on-surface-variant">Belum ada peserta.</td></tr>
-							}
-							for _, p := range participants {
-								<tr class="border-t border-outline-variant">
-									<td class="px-4 py-3">
-										<div class="text-on-surface">
-											if p.PCNumber != nil {
-												<span class="font-manrope">{ fmt.Sprintf("%02d", *p.PCNumber) } </span>
-											}
-											{ p.Name }
-										</div>
-										<div class="text-label-small text-on-surface-variant">{ p.School }</div>
-									</td>
+			<div class="bg-surface-container-lowest rounded-2xl ambient-shadow overflow-hidden">
+				<form method="post" action="/jury/scoring">
+					<div class="overflow-x-auto">
+						<table class="w-full text-left border-collapse">
+							<thead>
+								<tr class="bg-surface-container-low border-b border-outline-variant">
+									<th class="py-5 px-6 text-sm font-bold text-on-surface-variant">Seat</th>
+									<th class="py-5 px-6 text-sm font-bold text-on-surface-variant">Participant</th>
 									for _, m := range modules {
-										<td class="px-3 py-2 text-center">
-											<input
-												type="number" step="0.01" min="0" max="100"
-												name={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
-												value={ scoreValue(score, p.ID, m.ID) }
-												class="w-20 px-2 py-1 rounded-lg bg-surface-container text-on-surface text-center"
-											/>
-										</td>
+										<th class="py-5 px-2 w-[80px] text-sm font-bold text-on-surface-variant text-center">{ m.Name }</th>
 									}
+									<th class="py-5 px-6 text-sm font-bold text-primary text-right">Total</th>
 								</tr>
-							}
-						</tbody>
-					</table>
-				</div>
-				<div class="mt-4">
-					<button type="submit" class="text-label-large px-6 py-2 bg-primary text-on-primary rounded-xl hover:shadow transition-shadow">Simpan</button>
-				</div>
-			</form>
+							</thead>
+							<tbody class="divide-y divide-outline-variant">
+								if len(participants) == 0 {
+									<tr><td colspan={ fmt.Sprintf("%d", len(modules)+3) } class="text-center px-6 py-8 text-on-surface-variant">Belum ada peserta.</td></tr>
+								}
+								for _, p := range participants {
+									<tr class="hover:bg-surface-container-low transition-colors">
+										<td class="py-6 px-6 font-bold text-on-surface">
+											<span class="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-surface-container-high text-on-surface">
+												if p.PCNumber != nil {
+													{ fmt.Sprintf("%02d", *p.PCNumber) }
+												} else {
+													-
+												}
+											</span>
+										</td>
+										<td class="py-6 px-6">
+											<p class="font-bold text-on-surface">{ p.Name }</p>
+											<p class="text-xs text-on-surface-variant">{ p.School }</p>
+										</td>
+										for _, m := range modules {
+											<td class="py-6 px-6 w-[100px] text-center">
+												<input
+													type="number" step="0.01" min="0" max="100"
+													name={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
+													value={ scoreValue(score, p.ID, m.ID) }
+													data-participant={ fmt.Sprintf("%d", p.ID) }
+													class="score-input w-16 h-10 bg-surface-container border-none rounded-lg text-center font-bold text-on-surface focus:ring-2 focus:ring-primary transition-all"
+												/>
+											</td>
+										}
+										<td class="py-6 px-6 text-right">
+											<span id={ fmt.Sprintf("total-%d", p.ID) } class="text-2xl font-extrabold text-primary font-manrope">0</span>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="p-6 flex justify-end bg-surface-container-low border-t border-outline-variant gap-3">
+						<button type="submit" class="signature-gradient text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"><span class="material-symbols-outlined">save</span> Simpan Nilai</button>
+					</div>
+				</form>
+			</div>
 		</div>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const inputs = document.querySelectorAll('.score-input');
+				function recompute(participantId) {
+					const group = document.querySelectorAll(`.score-input[data-participant="${participantId}"]`);
+					let total = 0;
+					group.forEach(inp => { total += parseFloat(inp.value) || 0; });
+					const el = document.getElementById(`total-${participantId}`);
+					if (el) el.innerText = total.toFixed(2);
+				}
+				const seen = new Set();
+				inputs.forEach(input => {
+					const id = input.getAttribute('data-participant');
+					input.addEventListener('input', function() { recompute(id); });
+					if (!seen.has(id)) { seen.add(id); recompute(id); }
+				});
+			});
+		</script>
 	}
 }
 

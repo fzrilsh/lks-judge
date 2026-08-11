@@ -14,65 +14,97 @@ func timeValue(t *string) string {
 
 templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
 	@AppLayout("Countdown", "countdown") {
-		<div class="max-w-3xl mx-auto space-y-6">
-			<h1 class="text-headline-large text-on-surface font-manrope">Countdown</h1>
+		<div class="max-w-7xl mx-auto px-8 flex flex-col min-h-[calc(100vh-64px)]">
+			<div class="flex justify-between items-end mb-12">
+				<div>
+					<h1 class="text-4xl font-bold mt-1">
+						Live Competition Countdown
+					</h1>
+				</div>
+				<a href="/countdown" target="_blank" class="text-sm text-on-surface-variant underline">
+					Public display
+				</a>
+			</div>
 			if saved {
-				<div class="bg-tertiary-container text-on-tertiary-container rounded-xl p-4">
-					<p class="text-body-medium">Saved. Countdown re-armed.</p>
+				<div class="bg-secondary-container text-on-secondary-container rounded-xl p-4 mb-8">
+					<p>Saved. Countdown re-armed.</p>
 				</div>
 			}
 			if errMsg != "" {
-				<div class="bg-error-container text-on-error-container rounded-xl p-4">
-					<p class="text-body-medium">{ errMsg }</p>
+				<div class="bg-error-container text-on-error-container rounded-xl p-4 mb-8">
+					<p>{ errMsg }</p>
 				</div>
 			}
-			<div class="bg-surface-container-low rounded-3xl shadow-lg p-8 text-center space-y-4">
-				<p class="text-label-large text-on-surface-variant uppercase tracking-wider">
-					Status: <span id="cd-status" class="font-semibold">{ comp.Status }</span>
-				</p>
-				<p id="cd-clock" class="text-on-surface font-mono tabular-nums" style="font-size:5rem;line-height:1">--:--:--</p>
-				<div class="flex gap-3 justify-center">
-					<form method="POST" action="/jury/countdown/pause">
-						<button type="submit" class="bg-secondary text-on-secondary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
-							Pause
-						</button>
-					</form>
-					<form method="POST" action="/jury/countdown/resume">
-						<button type="submit" class="bg-primary text-on-primary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
-							Resume
-						</button>
-					</form>
-					<form method="POST" action="/jury/countdown/stop">
-						<button type="submit" onclick="return confirm('Hentikan countdown?')"
-							class="bg-error-container text-on-error-container font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow">
-							Stop
-						</button>
-					</form>
+			<section class="flex-grow flex items-center justify-center bg-surface-container-lowest rounded-xl ambient-shadow p-12 mb-12 relative overflow-hidden">
+				<div class="absolute inset-0 opacity-5 pointer-events-none">
+					<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
+					<div class="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary rounded-full blur-3xl"></div>
 				</div>
-				<p class="text-body-small text-on-surface-variant">
-					Public display: <a href="/countdown" target="_blank" class="underline">/countdown</a>
-				</p>
-			</div>
-			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6">
-				<h2 class="text-title-large text-on-surface font-manrope mb-2">Schedule</h2>
-				<p class="text-body-small text-on-surface-variant mb-4">
-					Times run on the current day. Saving restarts the countdown from waiting.
-				</p>
-				<form method="POST" action="/jury/countdown" class="flex gap-3 items-end flex-wrap">
-					<div>
-						<label class="block text-label-large text-on-surface mb-1">Start time</label>
-						<input type="time" name="start_time" required value={ timeValue(comp.StartTime) }
-							class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+				<div class="text-center relative z-10">
+					<p id="cd-clock" class="text-[10rem] leading-none font-bold tabular-nums">--:--:--</p>
+					<p class="mt-4 text-sm uppercase tracking-wider text-on-surface-variant">
+						Status: <span id="cd-status" class="font-semibold">{ comp.Status }</span>
+					</p>
+				</div>
+			</section>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+				<form id="cd-config" method="POST" action="/jury/countdown" class="contents">
+					<div class="bg-surface-container-low p-8 rounded-xl flex flex-col gap-4">
+						<h3 class="font-bold text-lg">Konfigurasi Waktu Mulai</h3>
+						<div>
+							<label class="block text-xs text-on-surface-variant mb-2">
+								WAKTU MULAI
+							</label>
+							<input type="time" name="start_time" required value={ timeValue(comp.StartTime) }
+								class="w-full bg-surface-container-high rounded-xl p-4 text-xl font-bold focus:ring-1 focus:ring-primary"/>
+						</div>
 					</div>
-					<div>
-						<label class="block text-label-large text-on-surface mb-1">End time</label>
-						<input type="time" name="end_time" required value={ timeValue(comp.EndTime) }
-							class="px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary"/>
+					<div class="bg-surface-container-low p-8 rounded-xl flex flex-col gap-4">
+						<h3 class="font-bold text-lg">Konfigurasi Waktu Selesai</h3>
+						<div>
+							<label class="block text-xs text-on-surface-variant mb-2">
+								WAKTU SELESAI
+							</label>
+							<input type="time" name="end_time" required value={ timeValue(comp.EndTime) }
+								class="w-full bg-surface-container-high rounded-xl p-4 text-xl font-bold focus:ring-1 focus:ring-primary"/>
+						</div>
 					</div>
-					<button type="submit" class="bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow">
-						Save
-					</button>
 				</form>
+				<div class="bg-surface-container-highest p-8 rounded-xl flex flex-col justify-between">
+					<div>
+						<h3 class="font-bold text-lg">Kontrol Countdown</h3>
+						<p class="text-sm text-on-surface-variant">
+							Akan berpengaruh ke watchers
+						</p>
+					</div>
+					<div class="flex gap-4 mt-6">
+						if comp.Status == "paused" {
+							<form method="POST" action="/jury/countdown/resume" class="flex-1">
+								<button type="submit" class="w-full text-center signature-gradient text-white py-4 rounded-xl font-bold active:scale-95 transition">
+									RESUME
+								</button>
+							</form>
+						} else {
+							<button type="submit" form="cd-config" class="flex-1 text-center signature-gradient text-white py-4 rounded-xl font-bold active:scale-95 transition">
+								SAVE
+							</button>
+						}
+						if comp.Status == "running" {
+							<form method="POST" action="/jury/countdown/pause" class="flex-1">
+								<button type="submit" class="w-full text-center bg-amber-500 text-white py-4 rounded-xl font-bold active:scale-95 transition">
+									PAUSE
+								</button>
+							</form>
+						} else {
+							<form method="POST" action="/jury/countdown/stop">
+								<button type="submit" onclick="return confirm('Hentikan countdown?')"
+									class="px-6 py-4 text-center bg-red-500 text-white rounded-xl font-bold">
+									STOP
+								</button>
+							</form>
+						}
+					</div>
+				</div>
 			</div>
 		</div>
 		<script src="/static/js/countdown.js" defer></script>

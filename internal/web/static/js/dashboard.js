@@ -40,18 +40,23 @@
       existing.querySelector(".file-name").textContent = payload.name;
       return;
     }
-    var a = document.createElement("a");
-    a.setAttribute("data-file-id", payload.id);
-    a.href = "/files/" + payload.id + "/download";
-    a.className =
-      "flex items-center justify-between gap-2 bg-surface-container rounded-2xl px-4 py-3 hover:bg-surface-container-highest transition-colors";
-    a.innerHTML =
-      '<span class="file-name text-body-medium text-on-surface truncate"></span>' +
-      '<span class="text-label-small text-primary">Download</span>';
-    a.querySelector(".file-name").textContent = payload.name;
+    var node = document.createElement("div");
+    node.setAttribute("data-file-id", payload.id);
+    node.className = "bg-surface-container-low p-5 rounded-xl flex justify-between items-center";
+    node.innerHTML =
+      '<div class="flex items-center gap-4">' +
+        '<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">' +
+          '<span class="material-symbols-outlined">description</span>' +
+        '</div>' +
+        '<div><p class="file-name font-bold text-on-surface"></p></div>' +
+      '</div>' +
+      '<a href="/files/' + payload.id + '/download" class="p-2 hover:bg-primary/10 text-primary rounded-lg">' +
+        '<span class="material-symbols-outlined">download</span>' +
+      '</a>';
+    node.querySelector(".file-name").textContent = payload.name;
     var empty = list.querySelector(".empty-placeholder");
     if (empty) empty.remove();
-    list.appendChild(a);
+    list.appendChild(node);
   }
 
   var lastSeconds = null; // last value from the server; a local 1s ticker fills the gaps

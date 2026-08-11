@@ -53,25 +53,25 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-3xl mx-auto space-y-6\"><h1 class=\"text-headline-large text-on-surface font-manrope\">Countdown</h1>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-7xl mx-auto px-8 flex flex-col min-h-[calc(100vh-64px)]\"><div class=\"flex justify-between items-end mb-12\"><div><h1 class=\"text-4xl font-bold mt-1\">Live Competition Countdown</h1></div><a href=\"/countdown\" target=\"_blank\" class=\"text-sm text-on-surface-variant underline\">Public display</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-tertiary-container text-on-tertiary-container rounded-xl p-4\"><p class=\"text-body-medium\">Saved. Countdown re-armed.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-secondary-container text-on-secondary-container rounded-xl p-4 mb-8\"><p>Saved. Countdown re-armed.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if errMsg != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-error-container text-on-error-container rounded-xl p-4\"><p class=\"text-body-medium\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-error-container text-on-error-container rounded-xl p-4 mb-8\"><p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 26, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 35, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -82,46 +82,72 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-surface-container-low rounded-3xl shadow-lg p-8 text-center space-y-4\"><p class=\"text-label-large text-on-surface-variant uppercase tracking-wider\">Status: <span id=\"cd-status\" class=\"font-semibold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<section class=\"flex-grow flex items-center justify-center bg-surface-container-lowest rounded-xl ambient-shadow p-12 mb-12 relative overflow-hidden\"><div class=\"absolute inset-0 opacity-5 pointer-events-none\"><div class=\"absolute -top-24 -right-24 w-96 h-96 bg-primary rounded-full blur-3xl\"></div><div class=\"absolute -bottom-24 -left-24 w-96 h-96 bg-secondary rounded-full blur-3xl\"></div></div><div class=\"text-center relative z-10\"><p id=\"cd-clock\" class=\"text-[10rem] leading-none font-bold tabular-nums\">--:--:--</p><p class=\"mt-4 text-sm uppercase tracking-wider text-on-surface-variant\">Status: <span id=\"cd-status\" class=\"font-semibold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(comp.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 31, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 46, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></p><p id=\"cd-clock\" class=\"text-on-surface font-mono tabular-nums\" style=\"font-size:5rem;line-height:1\">--:--:--</p><div class=\"flex gap-3 justify-center\"><form method=\"POST\" action=\"/jury/countdown/pause\"><button type=\"submit\" class=\"bg-secondary text-on-secondary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow\">Pause</button></form><form method=\"POST\" action=\"/jury/countdown/resume\"><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow\">Resume</button></form><form method=\"POST\" action=\"/jury/countdown/stop\"><button type=\"submit\" onclick=\"return confirm('Hentikan countdown?')\" class=\"bg-error-container text-on-error-container font-semibold py-2 px-5 rounded-xl hover:shadow-lg transition-shadow\">Stop</button></form></div><p class=\"text-body-small text-on-surface-variant\">Public display: <a href=\"/countdown\" target=\"_blank\" class=\"underline\">/countdown</a></p></div><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-2\">Schedule</h2><p class=\"text-body-small text-on-surface-variant mb-4\">Times run on the current day. Saving restarts the countdown from waiting.</p><form method=\"POST\" action=\"/jury/countdown\" class=\"flex gap-3 items-end flex-wrap\"><div><label class=\"block text-label-large text-on-surface mb-1\">Start time</label> <input type=\"time\" name=\"start_time\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></p></div></section><div class=\"grid grid-cols-1 md:grid-cols-3 gap-8\"><form id=\"cd-config\" method=\"POST\" action=\"/jury/countdown\" class=\"contents\"><div class=\"bg-surface-container-low p-8 rounded-xl flex flex-col gap-4\"><h3 class=\"font-bold text-lg\">Konfigurasi Waktu Mulai</h3><div><label class=\"block text-xs text-on-surface-variant mb-2\">WAKTU MULAI</label> <input type=\"time\" name=\"start_time\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(timeValue(comp.StartTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 64, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 58, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><div><label class=\"block text-label-large text-on-surface mb-1\">End time</label> <input type=\"time\" name=\"end_time\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"w-full bg-surface-container-high rounded-xl p-4 text-xl font-bold focus:ring-1 focus:ring-primary\"></div></div><div class=\"bg-surface-container-low p-8 rounded-xl flex flex-col gap-4\"><h3 class=\"font-bold text-lg\">Konfigurasi Waktu Selesai</h3><div><label class=\"block text-xs text-on-surface-variant mb-2\">WAKTU SELESAI</label> <input type=\"time\" name=\"end_time\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(timeValue(comp.EndTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 69, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `countdown_jury.templ`, Line: 68, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"px-3 py-2 bg-surface-container-highest text-on-surface rounded-xl border border-outline focus:outline-none focus:ring-2 focus:ring-primary\"></div><button type=\"submit\" class=\"bg-primary text-on-primary font-semibold py-2 px-4 rounded-xl hover:shadow-lg transition-shadow\">Save</button></form></div></div><script src=\"/static/js/countdown.js\" defer></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"w-full bg-surface-container-high rounded-xl p-4 text-xl font-bold focus:ring-1 focus:ring-primary\"></div></div></form><div class=\"bg-surface-container-highest p-8 rounded-xl flex flex-col justify-between\"><div><h3 class=\"font-bold text-lg\">Kontrol Countdown</h3><p class=\"text-sm text-on-surface-variant\">Akan berpengaruh ke watchers</p></div><div class=\"flex gap-4 mt-6\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if comp.Status == "paused" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<form method=\"POST\" action=\"/jury/countdown/resume\" class=\"flex-1\"><button type=\"submit\" class=\"w-full text-center signature-gradient text-white py-4 rounded-xl font-bold active:scale-95 transition\">RESUME</button></form>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"submit\" form=\"cd-config\" class=\"flex-1 text-center signature-gradient text-white py-4 rounded-xl font-bold active:scale-95 transition\">SAVE</button> ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if comp.Status == "running" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<form method=\"POST\" action=\"/jury/countdown/pause\" class=\"flex-1\"><button type=\"submit\" class=\"w-full text-center bg-amber-500 text-white py-4 rounded-xl font-bold active:scale-95 transition\">PAUSE</button></form>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<form method=\"POST\" action=\"/jury/countdown/stop\"><button type=\"submit\" onclick=\"return confirm('Hentikan countdown?')\" class=\"px-6 py-4 text-center bg-red-500 text-white rounded-xl font-bold\">STOP</button></form>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div></div></div><script src=\"/static/js/countdown.js\" defer></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

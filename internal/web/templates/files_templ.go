@@ -46,25 +46,25 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-4xl mx-auto space-y-6\"><h1 class=\"text-headline-large text-on-surface font-manrope\">Files</h1>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-5xl mx-auto\"><div class=\"mb-12\"><h1 class=\"font-manrope font-bold text-4xl text-on-surface mb-2\">Competition Files</h1><p class=\"text-sm uppercase tracking-widest text-on-surface-variant\">Asset & Documentation Repository</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-tertiary-container text-on-tertiary-container rounded-xl p-4\"><p class=\"text-body-medium\">Saved successfully.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-secondary-container text-on-secondary-container rounded-xl p-4 mb-6\"><p class=\"text-body-medium\">Saved successfully.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if errMsg != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-error-container text-on-error-container rounded-xl p-4\"><p class=\"text-body-medium\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-error-container text-on-error-container rounded-xl p-4 mb-6\"><p class=\"text-body-medium\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errMsg)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 19, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 22, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -75,90 +75,103 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Dropzone --><div class=\"bg-surface-container-low rounded-3xl shadow-lg p-6\"><h2 class=\"text-title-large text-on-surface font-manrope mb-4\">Upload File</h2><label id=\"dropzone\" class=\"flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition-colors\"><span class=\"text-body-large text-on-surface\">Drag a file here or click to choose</span> <span class=\"text-body-small text-on-surface-variant\">Uploaded in 2MB chunks, resumable.</span> <input id=\"file-input\" type=\"file\" class=\"hidden\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div></div><!-- File table --><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"text-left px-4 py-3\">Name</th><th class=\"px-4 py-3 w-32\">Public</th><th class=\"px-4 py-3\"></th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<label id=\"dropzone\" class=\"group flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-outline-variant/40 rounded-xl py-12 px-6 bg-surface-container-low hover:border-primary hover:bg-primary/5 transition-all duration-200\"><div class=\"w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary\"><span class=\"material-symbols-outlined text-3xl group-hover:scale-110 transition\">cloud_upload</span></div><p class=\"font-semibold text-on-surface mb-1\">Click or drag file here</p><p class=\"text-xs text-on-surface-variant\">Upload assets or any files</p><input id=\"file-input\" type=\"file\" class=\"hidden\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div><div class=\"mt-12\"><div class=\"flex justify-between items-end mb-6\"><h2 class=\"text-2xl font-bold font-manrope\">Active Assets</h2><span class=\"text-sm text-on-surface-variant\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(files)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 46, Col: 82}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " files</span></div><div class=\"pt-4 space-y-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(files) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<tr><td colspan=\"3\" class=\"text-center px-4 py-8 text-on-surface-variant\">Belum ada file.</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-surface-container-lowest rounded-xl p-5 ambient-shadow text-on-surface-variant\">Belum ada file.</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			for _, f := range files {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<tr class=\"border-t border-outline-variant hover:bg-surface-container-lowest transition-colors\"><td class=\"px-4 py-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"bg-surface-container-lowest rounded-xl p-5 ambient-shadow flex justify-between items-center\"><div class=\"flex items-center gap-4\"><div class=\"w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center\"><span class=\"material-symbols-outlined\">description</span></div><div><p class=\"font-bold text-on-surface\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var4 string
-				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(f.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 59, Col: 38}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td><td class=\"px-4 py-3 text-center\"><form method=\"POST\" action=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var5 templ.SafeURL
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 61, Col: 91}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 59, Col: 54}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if f.IsPublic {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"submit\" class=\"text-label-small px-3 py-1 bg-primary text-on-primary rounded-lg hover:shadow transition-shadow\">Public</button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<button type=\"submit\" class=\"text-label-small px-3 py-1 bg-surface-container-highest text-on-surface rounded-lg hover:shadow transition-shadow\">Private</button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</form></td><td class=\"px-4 py-3\"><div class=\"flex gap-2 justify-end\"><a href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</p></div></div><div class=\"flex items-center gap-8\"><div class=\"flex items-center gap-2\"><span class=\"text-sm text-on-surface-variant\">Visible</span><form method=\"POST\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var6 templ.SafeURL
-				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/files/%s/download", f.ID)))
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 71, Col: 70}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 65, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"text-label-small px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg hover:shadow transition-shadow\">Download</a><form method=\"POST\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if f.IsPublic {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<button type=\"submit\" class=\"w-11 h-6 rounded-full bg-secondary relative\"><span class=\"absolute top-[2px] right-[2px] bg-white rounded-full h-5 w-5\"></span></button>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<button type=\"submit\" class=\"w-11 h-6 rounded-full bg-surface-container-highest relative\"><span class=\"absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5\"></span></button>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</form></div><div class=\"flex items-center gap-2\"><a href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var7 templ.SafeURL
-				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)))
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/files/%s/download", f.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 75, Col: 92}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 78, Col: 69}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"><button type=\"submit\" class=\"text-label-small px-3 py-1 bg-error-container text-on-error-container rounded-lg hover:shadow transition-shadow\" onclick=\"return confirm('Hapus file ini?')\">Delete</button></form></div></td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"p-2 hover:bg-surface-container-high rounded-lg\"><span class=\"material-symbols-outlined\">download</span></a><form method=\"POST\" action=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var8 templ.SafeURL
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 81, Col: 91}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><button type=\"submit\" class=\"p-2 hover:bg-error/10 text-error rounded-lg\" onclick=\"return confirm('Hapus file ini?')\"><span class=\"material-symbols-outlined\">delete</span></button></form></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</tbody></table></div></div><script src=\"/static/js/uploader.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div><script src=\"/static/js/uploader.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

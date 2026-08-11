@@ -9,7 +9,7 @@ import (
 // per-module submission form. dashboard.js drives it over the WebSocket. The
 // #sensor-layer overlay covers the form until the submission window opens.
 templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.File, existing *model.Submission, formOpen bool) {
-	@GuestLayout("Dashboard") {
+	@GuestLayout("Dashboard", "", p.Name) {
 		<div class="w-full max-w-4xl mx-auto space-y-6 py-8">
 			<!-- Header -->
 			<div class="bg-surface-container-low rounded-3xl shadow-lg p-6 flex items-center justify-between">

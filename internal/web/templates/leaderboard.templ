@@ -6,7 +6,7 @@ import "github.com/fzrilsh/lks-judge/internal/model"
 // leaderboard.js from the cached JSON and refreshed on the ScoreUpdated WS
 // event; this shell just carries the competition name and mount point.
 templ Leaderboard(comp *model.Competition) {
-	@GuestLayout("Leaderboard") {
+	@GuestLayout("Leaderboard", "", "") {
 		<div class="w-full max-w-4xl mx-auto space-y-6 py-8">
 			<h1 class="text-headline-large text-on-surface font-manrope text-center">{ comp.Name }</h1>
 			<p class="text-center text-on-surface-variant text-body-medium">WorldSkills Scale Results</p>

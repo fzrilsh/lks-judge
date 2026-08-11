@@ -10,9 +10,10 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/fzrilsh/lks-judge/internal/model"
 
-// Leaderboard is the public ranking page. Rows are rendered client-side by
-// leaderboard.js from the cached JSON and refreshed on the ScoreUpdated WS
-// event; this shell just carries the competition name and mount point.
+// Leaderboard is the public ranking page. The head module columns and body rows
+// are both rendered client-side by leaderboard.js from the cached JSON and
+// refreshed on the ScoreUpdated WS event; this shell carries the static chrome
+// (heading, table frame, fixed columns, legend) and the mount points.
 func Leaderboard(comp *model.Competition) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -46,20 +47,20 @@ func Leaderboard(comp *model.Competition) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full max-w-4xl mx-auto space-y-6 py-8\"><h1 class=\"text-headline-large text-on-surface font-manrope text-center\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6\"><h1 class=\"text-headline-large text-on-surface font-manrope text-center\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(comp.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `leaderboard.templ`, Line: 11, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `leaderboard.templ`, Line: 12, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-center text-on-surface-variant text-body-medium\">WorldSkills Scale Results</p><div class=\"bg-surface-container-low rounded-3xl shadow-lg overflow-hidden\"><table class=\"w-full text-body-medium\"><thead class=\"bg-surface-container text-on-surface-variant\"><tr><th class=\"px-4 py-3 text-left\">Rank</th><th class=\"px-4 py-3 text-left\">Peserta</th><th class=\"px-4 py-3 text-center\">Result</th><th class=\"px-4 py-3 text-center\">Award</th></tr></thead> <tbody id=\"leaderboard-body\"><tr><td colspan=\"4\" class=\"text-center px-4 py-8 text-on-surface-variant\">Memuat...</td></tr></tbody></table></div></div><script src=\"/static/js/leaderboard.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-center text-on-surface-variant text-body-medium\">WorldSkills Scale Results</p><div class=\"bg-surface-container-lowest rounded-3xl shadow-xl border border-surface-container overflow-hidden\"><div class=\"overflow-x-auto\"><table class=\"w-full text-left border-collapse whitespace-nowrap\"><thead><tr id=\"leaderboard-head\" class=\"bg-surface-container-low border-b border-surface-container\"><th class=\"py-5 px-6 text-xs uppercase tracking-wider font-bold text-outline\">Rank & Seat</th><th class=\"py-5 px-6 text-xs uppercase tracking-wider font-bold text-outline\">Participant</th><th class=\"py-5 px-6 text-xs uppercase tracking-wider font-bold text-primary text-right\">Total Score</th></tr></thead> <tbody id=\"leaderboard-body\" class=\"divide-y divide-surface-container\"><tr><td colspan=\"99\" class=\"text-center px-4 py-8 text-on-surface-variant\">Memuat...</td></tr></tbody></table></div><div class=\"bg-surface-container-low px-6 py-4 border-t border-surface-container flex flex-wrap gap-4 text-xs font-medium text-outline justify-between items-center\"><div class=\"flex flex-wrap items-center gap-4\"><span class=\"flex items-center gap-1\"><span class=\"text-base\">🥇</span> Gold (1st)</span> <span class=\"flex items-center gap-1\"><span class=\"text-base\">🥈</span> Silver (2nd)</span> <span class=\"flex items-center gap-1\"><span class=\"text-base\">🥉</span> Bronze (3rd)</span> <span class=\"flex items-center gap-1\"><span class=\"inline-block w-2 h-2 rounded-full bg-blue-400\"></span> Medallion for Excellence (&gt;= 700)</span></div><div class=\"font-bold\">WSI Scale Standard Assessment</div></div></div></div><script src=\"/static/js/leaderboard.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

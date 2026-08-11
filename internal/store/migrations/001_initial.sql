@@ -74,8 +74,7 @@ CREATE TABLE IF NOT EXISTS scores (
     id             INTEGER PRIMARY KEY,
     participant_id INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
     module_id      INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
-    score          INTEGER,
-    wsi_score      INTEGER,
+    score          REAL,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(participant_id, module_id)

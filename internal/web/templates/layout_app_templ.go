@@ -50,14 +50,14 @@ func AppLayout(title string, activePage string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/reset.js\" defer></script></head><body class=\"bg-surface text-on-surface min-h-screen font-manrope\"><!-- CSS-only sidebar toggle: the checkbox drives peer-checked on the drawer + backdrop. No JS. --><input type=\"checkbox\" id=\"nav-toggle\" class=\"peer sr-only\"><header class=\"fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant\"><div class=\"flex items-center gap-3 min-w-0\"><label for=\"nav-toggle\" class=\"lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer\" aria-label=\"Buka menu\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></label> <span class=\"text-lg md:text-xl font-bold truncate\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/reset.js\" defer></script><script src=\"/static/js/forms.js\" defer></script></head><body class=\"bg-surface text-on-surface min-h-screen font-manrope\"><!-- CSS-only sidebar toggle: the checkbox drives peer-checked on the drawer + backdrop. No JS. --><input type=\"checkbox\" id=\"nav-toggle\" class=\"peer sr-only\"><header class=\"fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant\"><div class=\"flex items-center gap-3 min-w-0\"><label for=\"nav-toggle\" class=\"lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer\" aria-label=\"Buka menu\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></label> <span class=\"text-lg md:text-xl font-bold truncate\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(competitionName())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 30, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 31, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -143,7 +143,7 @@ func navItem(href string, icon string, label string, active bool) templ.Componen
 		var templ_7745c5c3_Var5 templ.SafeURL
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(href))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 61, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 62, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -166,7 +166,7 @@ func navItem(href string, icon string, label string, active bool) templ.Componen
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 67, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 68, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -179,7 +179,7 @@ func navItem(href string, icon string, label string, active bool) templ.Componen
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 68, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `layout_app.templ`, Line: 69, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {

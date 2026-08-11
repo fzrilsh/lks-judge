@@ -15,13 +15,6 @@ import (
 	"github.com/fzrilsh/lks-judge/internal/model"
 )
 
-func derefStr(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
 // displayAllowedIPs turns the stored JSON array into the comma-separated form
 // the textarea shows. A non-JSON value (or empty) renders as-is.
 func displayAllowedIPs(raw string) string {
@@ -82,7 +75,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 42, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 35, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -95,7 +88,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Level)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 50, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 43, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
@@ -108,7 +101,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.StartDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 60, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 53, Col: 72}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -121,7 +114,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.EndDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 67, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 60, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
@@ -132,9 +125,9 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(derefStr(c.StartTime))
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(timeValue(c.StartTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 76, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 69, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
@@ -145,9 +138,9 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(derefStr(c.EndTime))
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(timeValue(c.EndTime))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 83, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 76, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
@@ -160,7 +153,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(displayAllowedIPs(c.AllowedIPs))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 92, Col: 177}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 85, Col: 177}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -173,7 +166,7 @@ func CompetitionPage(c *model.Competition, saved bool) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(c.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 102, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `competition.templ`, Line: 95, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {

@@ -99,3 +99,11 @@ func (c *Cache) Refresh(st *store.Store, competitionID int64) error {
 func (c *Cache) Snapshot() []byte {
 	return *c.json.Load()
 }
+
+// Clear empties the leaderboard. Used after a nuclear reset, where Refresh can't
+// help because the competition it needs is gone.
+func (c *Cache) Clear() {
+	c.refresh.Lock()
+	defer c.refresh.Unlock()
+	c.store(nil, nil)
+}

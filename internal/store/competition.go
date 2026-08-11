@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
@@ -155,16 +156,56 @@ func (s *Store) reloadAllowedNets(c *model.Competition) {
 		if err := json.Unmarshal([]byte(c.AllowedIPs), &ips); err != nil {
 			log.Printf("allowlist: malformed allowed_ips, treating as empty: %v", err)
 		} else {
-			for _, e := range ips {
-				if _, cidr, err := net.ParseCIDR(e); err == nil {
-					nets = append(nets, *cidr)
-				} else if ip := net.ParseIP(e); ip != nil {
-					nets = append(nets, net.IPNet{IP: ip, Mask: fullMask(ip)})
-				}
-			}
+			nets = parseNets(ips)
 		}
 	}
 	s.allowedNets.Store(&nets)
+}
+
+// parseNets turns allowlist entries (each a CIDR or a bare IP) into net.IPNet.
+// Unparseable entries are skipped.
+func parseNets(entries []string) []net.IPNet {
+	nets := []net.IPNet{}
+	for _, e := range entries {
+		if _, cidr, err := net.ParseCIDR(e); err == nil {
+			nets = append(nets, *cidr)
+		} else if ip := net.ParseIP(e); ip != nil {
+			nets = append(nets, net.IPNet{IP: ip, Mask: fullMask(ip)})
+		}
+	}
+	return nets
+}
+
+// SetExtraNets stores an in-memory jury allowlist from the --jury-ip flag. These
+// nets are never persisted and survive a Reset, so an operator can always reach
+// /jury/* from a fixed machine even before a competition exists or after a wipe.
+// Call once at startup. Returns the entries it could not parse.
+func (s *Store) SetExtraNets(entries []string) []string {
+	var bad []string
+	var ok []string
+	for _, e := range entries {
+		if e = strings.TrimSpace(e); e == "" {
+			continue
+		}
+		if net.ParseIP(e) == nil {
+			if _, _, err := net.ParseCIDR(e); err != nil {
+				bad = append(bad, e)
+				continue
+			}
+		}
+		ok = append(ok, e)
+	}
+	nets := parseNets(ok)
+	s.extraNets.Store(&nets)
+	return bad
+}
+
+// ExtraNets returns the flag-provided jury allowlist. Empty when --jury-ip unset.
+func (s *Store) ExtraNets() []net.IPNet {
+	if p := s.extraNets.Load(); p != nil {
+		return *p
+	}
+	return nil
 }
 
 // fullMask returns a /32 (v4) or /128 (v6) mask so a single-IP entry becomes an

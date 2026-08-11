@@ -142,6 +142,40 @@ func TestJuryAllowedEmptyAllowlistIsLoopbackOnly(t *testing.T) {
 	}
 }
 
+func TestJuryAllowedExtraNets(t *testing.T) {
+	// No competition, so the DB allowlist is empty. The --jury-ip flag alone
+	// must grant access, and its presence must not silently re-enable loopback.
+	s, err := store.Open(t.TempDir())
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	if bad := s.SetExtraNets([]string{"10.0.0.0/24", "192.168.1.7"}); len(bad) != 0 {
+		t.Fatalf("SetExtraNets bad = %v", bad)
+	}
+
+	for _, tc := range []struct {
+		addr string
+		want bool
+	}{
+		{"10.0.0.42:1", true},   // in CIDR
+		{"192.168.1.7:1", true}, // exact IP
+		{"192.168.1.8:1", false},
+		{"127.0.0.1:1", false}, // loopback NOT auto-allowed once an extra net is set
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.RemoteAddr = tc.addr
+		if _, ok := juryAllowed(s, req); ok != tc.want {
+			t.Fatalf("%s: juryAllowed = %v, want %v", tc.addr, ok, tc.want)
+		}
+	}
+
+	if bad := s.SetExtraNets([]string{"not-an-ip"}); len(bad) != 1 || bad[0] != "not-an-ip" {
+		t.Fatalf("SetExtraNets should reject junk, got %v", bad)
+	}
+}
+
 func TestJuryAllowedMalformedAllowlist(t *testing.T) {
 	s, _ := newTestStore(t)
 	if _, err := s.Writer.Exec(`UPDATE competitions SET allowed_ips = '{oops'`); err != nil {

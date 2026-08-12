@@ -38,7 +38,7 @@ func queueCount(participants []*model.Participant) int {
 
 templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg string) {
 	@AppLayout("Participants", "participants") {
-		@PageHeader("Peserta", "Daftarkan peserta lalu acak nomor PC.") {
+		@PageHeader("Participants", "Register participants then shuffle PC numbers.") {
 			<a href="/jury/participants/export" class="btn-tonal">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
 				Export
@@ -49,51 +49,51 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 			</a>
 		}
 		if saved {
-			@Flash("success", "Tersimpan.")
+			@Flash("success", "Saved.")
 		}
 		if errMsg != "" {
 			@Flash("error", errMsg)
 		}
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 lg:col-span-4 space-y-4">
-				@Card("Registrasi") {
+				@Card("Registration") {
 					<form method="POST" action="/jury/participants" class="space-y-4">
 						<div class="field">
-							<label for="p-name">Nama Peserta</label>
-							<input id="p-name" class="input" name="name" required placeholder="Nama lengkap"/>
+							<label for="p-name">Participant Name</label>
+							<input id="p-name" class="input" name="name" required placeholder="Full name"/>
 						</div>
 						<div class="field">
-							<label for="p-school">Institusi</label>
-							<input id="p-school" class="input" name="school" required placeholder="Asal sekolah"/>
+							<label for="p-school">Member</label>
+							<input id="p-school" class="input" name="school" required placeholder="School name"/>
 						</div>
 						<div class="field">
-							<label for="p-pc">Nomor PC (opsional)</label>
-							<input id="p-pc" class="input" type="number" name="pc_number" min="1" max="99" placeholder="mis. 12"/>
+							<label for="p-pc">PC Number (optional)</label>
+							<input id="p-pc" class="input" type="number" name="pc_number" min="1" max="99" placeholder="e.g. 12"/>
 						</div>
 						<button type="submit" class="btn-primary w-full justify-center">
 							<span class="material-symbols-outlined text-lg" aria-hidden="true">person_add</span>
-							Tambah Peserta
+							Add Participant
 						</button>
 					</form>
 				}
-				@Card("Import Peserta") {
+				@Card("Import Participants") {
 					<p class="text-body-small text-on-surface-variant mb-4">
-						Unggah Excel untuk mengganti data peserta dan modul. Header: no_pc, ip_address, member, name, [kolom modul...]
+						Upload an Excel file to replace participant and module data. Headers: no_pc, ip_address, member, name, [module columns...]
 					</p>
-					<form action="/jury/participants/import" method="POST" enctype="multipart/form-data" class="space-y-4" onsubmit="return confirm('Semua data peserta dan modul akan diganti. Lanjut?')">
+					<form action="/jury/participants/import" method="POST" enctype="multipart/form-data" class="space-y-4" onsubmit="return confirm('All participant and module data will be replaced. Continue?')">
 						<label class="group flex items-center justify-between gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low hover:border-primary hover:bg-primary/5 transition cursor-pointer focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
 							<span class="flex items-center gap-3 min-w-0">
 								<span class="material-symbols-outlined text-primary" aria-hidden="true">description</span>
 								<span class="min-w-0">
-									<span class="block text-body-medium text-on-surface">Pilih file</span>
-									<span id="file-name" class="block truncate text-label-small text-on-surface-variant">Belum ada file</span>
+									<span class="block text-body-medium text-on-surface">Choose file</span>
+									<span id="file-name" class="block truncate text-label-small text-on-surface-variant">No file selected</span>
 								</span>
 							</span>
 							<span class="text-label-small font-bold text-primary uppercase">Browse</span>
 							<input type="file" name="file" accept=".xlsx,.xls" required class="sr-only"
-								onchange="document.getElementById('file-name').innerText = this.files[0]?.name || 'Belum ada file'"/>
+								onchange="document.getElementById('file-name').innerText = this.files[0]?.name || 'No file selected'"/>
 						</label>
-						@Flash("warning", "Import menimpa seluruh data peserta dan modul. Pastikan file benar.")
+						@Flash("warning", "Import overwrites all participant and module data. Make sure the file is correct.")
 						<button type="submit" class="btn-primary w-full justify-center">
 							<span class="material-symbols-outlined text-lg" aria-hidden="true">sync</span>
 							Upload &amp; Sync
@@ -102,9 +102,9 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 				}
 			</div>
 			<div class="col-span-12 lg:col-span-8 space-y-4">
-				@Card(fmt.Sprintf("Antrian (%d belum ber-seat)", queueCount(participants))) {
+				@Card(fmt.Sprintf("Queue (%d without a seat)", queueCount(participants))) {
 					if queueCount(participants) == 0 {
-						@EmptyState("group", "Antrian kosong", "Peserta tanpa nomor PC muncul di sini.") {
+						@EmptyState("group", "Queue empty", "Participants without a PC number show up here.") {
 						}
 					} else {
 						<ul class="divide-y divide-outline-variant">
@@ -115,8 +115,8 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 											<div class="text-on-surface truncate">{ p.Name }</div>
 											<div class="text-label-small text-on-surface-variant truncate">{ p.School }</div>
 										</div>
-										<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) } onsubmit="return confirm('Hapus peserta ini?')">
-											<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Hapus " + p.Name }>
+										<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) } onsubmit="return confirm('Delete this participant?')">
+											<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Delete " + p.Name }>
 												<span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
 											</button>
 										</form>
@@ -126,22 +126,22 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 						</ul>
 					}
 				}
-				@Card("Penempatan Seat Final") {
+				@Card("Final Seat Assignment") {
 					<div class="table-wrap">
 						<table class="data-table">
 							<thead>
 								<tr>
 									<th>Seat</th>
 									<th>IP</th>
-									<th>Nama</th>
-									<th>Institusi</th>
+									<th>Name</th>
+									<th>Member</th>
 									<th>Password</th>
-									<th>Aksi</th>
+									<th>Action</th>
 								</tr>
 							</thead>
 							<tbody>
 								if len(participants)-queueCount(participants) == 0 {
-									<tr><td colspan="6" class="text-center text-on-surface-variant py-8">Belum di-shuffle.</td></tr>
+									<tr><td colspan="6" class="text-center text-on-surface-variant py-8">Not shuffled yet.</td></tr>
 								}
 								for _, p := range participants {
 									if p.PCNumber != nil {
@@ -152,8 +152,8 @@ templ ParticipantsPage(participants []*model.Participant, saved bool, errMsg str
 											<td>{ p.School }</td>
 											<td class="font-mono">{ pwStr(p) }</td>
 											<td>
-												<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) } onsubmit="return confirm('Hapus peserta ini?')">
-													<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Hapus " + p.Name }>Hapus</button>
+												<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/participants/%d/delete", p.ID)) } onsubmit="return confirm('Delete this participant?')">
+													<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Delete " + p.Name }>Delete</button>
 												</form>
 											</td>
 										</tr>

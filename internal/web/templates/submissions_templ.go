@@ -82,13 +82,13 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/jury/submissions/export.zip\" class=\"btn-tonal\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">archive</span> Unduh Semua (.zip)</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/jury/submissions/export.zip\" class=\"btn-tonal\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">archive</span> Download All (.zip)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Submission", "Pantau status pengumpulan tiap modul.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Submissions", "Track collection status per module.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -96,15 +96,15 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = statCard("groups", "ok", "Total Peserta", len(participants)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = statCard("groups", "ok", "Total Participants", len(participants)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = statCard("task_alt", "ok", "Sudah Submit", countSubmitted(participants, cell)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = statCard("task_alt", "ok", "Submitted", countSubmitted(participants, cell)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = statCard("view_module", "warn", "Total Modul", len(modules)).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = statCard("view_module", "warn", "Total Modules", len(modules)).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -139,12 +139,12 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 						ctx = templ.InitializeContext(ctx)
 						return nil
 					})
-					templ_7745c5c3_Err = EmptyState("inbox", "Belum ada data", "Submission peserta muncul di sini.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = EmptyState("inbox", "No data yet", "Participant submissions show up here.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>Peserta</th>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>Participant</th>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -167,7 +167,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var7 string
-						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d terkumpul", moduleCount(participants, cell, m.ID)))
+						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d collected", moduleCount(participants, cell, m.ID)))
 						if templ_7745c5c3_Err != nil {
 							return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 59, Col: 144}
 						}
@@ -259,15 +259,15 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 									return templ_7745c5c3_Err
 								}
 								var templ_7745c5c3_Var12 string
-								templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue("Unduh " + p.Name + " " + m.Name)
+								templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue("Download " + p.Name + " " + m.Name)
 								if templ_7745c5c3_Err != nil {
-									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 81, Col: 154}
+									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 81, Col: 157}
 								}
 								_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 								if templ_7745c5c3_Err != nil {
 									return templ_7745c5c3_Err
 								}
-								templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">download</span> Unduh</a>")
+								templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">download</span> Download</a>")
 								if templ_7745c5c3_Err != nil {
 									return templ_7745c5c3_Err
 								}

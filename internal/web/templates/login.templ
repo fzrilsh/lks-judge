@@ -5,17 +5,17 @@ templ Login(errorMsg string) {
 		<div class="min-h-screen flex items-center justify-center px-4">
 			<div class="card w-full max-w-md p-8 md:p-10">
 				<div class="mb-8 text-center">
-					<img src="/static/imgs/logo.png" class="mx-auto w-28 mb-4" alt="Logo LKS"/>
-					<h1 class="text-headline-small text-on-surface">Login Peserta</h1>
-					<p class="text-body-medium text-on-surface-variant mt-1">Masuk dengan nomor PC dan password.</p>
+					<img src="/static/imgs/logo.png" class="mx-auto w-28 mb-4" alt="LKS Logo"/>
+					<h1 class="text-headline-small text-on-surface">Participant Login</h1>
+					<p class="text-body-medium text-on-surface-variant mt-1">Sign in with your PC number and password.</p>
 				</div>
 				if errorMsg != "" {
 					@Flash("error", errorMsg)
 				}
 				<form method="POST" action="/login" class="space-y-4">
 					<div class="field">
-						<label for="pc_number">Nomor PC</label>
-						<input id="pc_number" class="input" type="number" name="pc_number" required min="1" placeholder="mis. 1"/>
+						<label for="pc_number">PC Number</label>
+						<input id="pc_number" class="input" type="number" name="pc_number" required min="1" placeholder="e.g. 1"/>
 					</div>
 					<div class="field">
 						<label for="password">Password</label>

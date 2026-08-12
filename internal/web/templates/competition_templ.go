@@ -72,7 +72,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				ctx = templ.InitializeContext(ctx)
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Competition", "Atur detail lomba dan whitelist IP juri.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Competition", "Configure competition details and the jury IP whitelist.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -81,7 +81,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				return templ_7745c5c3_Err
 			}
 			if needSetup {
-				templ_7745c5c3_Err = Flash("info", "Buat competition dulu sebelum membuka menu lain.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("info", "Create a competition first before opening the other menus.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -91,7 +91,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Perubahan tersimpan.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Changes saved.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -112,7 +112,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form method=\"POST\" action=\"/jury/competition\" class=\"space-y-6\"><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-name\">Nama Competition</label> <input id=\"f-name\" class=\"input\" type=\"text\" name=\"name\" required value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form method=\"POST\" action=\"/jury/competition\" class=\"space-y-6\"><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-name\">Competition Name</label> <input id=\"f-name\" class=\"input\" type=\"text\" name=\"name\" required value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -125,7 +125,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"mis. LKS Wilayah II Kota Jakarta Selatan\"></div><div class=\"field\"><label for=\"f-level\">Level Competition</label> <input id=\"f-level\" class=\"input\" type=\"text\" name=\"level\" required value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"e.g. LKS Wilayah II Kota Jakarta Selatan\"></div><div class=\"field\"><label for=\"f-level\">Competition Level</label> <input id=\"f-level\" class=\"input\" type=\"text\" name=\"level\" required value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -138,7 +138,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" placeholder=\"mis. Kota\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-sd\">Tanggal Mulai</label> <input id=\"f-sd\" class=\"input\" type=\"date\" name=\"start_date\" required value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" placeholder=\"e.g. City\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-sd\">Start Date</label> <input id=\"f-sd\" class=\"input\" type=\"date\" name=\"start_date\" required value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -151,7 +151,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></div><div class=\"field\"><label for=\"f-ed\">Tanggal Selesai</label> <input id=\"f-ed\" class=\"input\" type=\"date\" name=\"end_date\" required value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></div><div class=\"field\"><label for=\"f-ed\">End Date</label> <input id=\"f-ed\" class=\"input\" type=\"date\" name=\"end_date\" required value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -164,7 +164,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-st\">Jam Mulai</label> <input id=\"f-st\" class=\"input\" type=\"time\" name=\"start_time\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></div></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><div class=\"field\"><label for=\"f-st\">Start Time</label> <input id=\"f-st\" class=\"input\" type=\"time\" name=\"start_time\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -177,7 +177,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"></div><div class=\"field\"><label for=\"f-et\">Jam Selesai</label> <input id=\"f-et\" class=\"input\" type=\"time\" name=\"end_time\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"></div><div class=\"field\"><label for=\"f-et\">End Time</label> <input id=\"f-et\" class=\"input\" type=\"time\" name=\"end_time\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -203,7 +203,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</textarea><p class=\"text-label-small text-on-surface-variant\">Pisahkan IP atau CIDR dengan koma. Loopback selalu diizinkan.</p></div><div class=\"field\"><label>Status</label><p class=\"input bg-surface-container-low text-on-surface-variant\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</textarea><p class=\"text-label-small text-on-surface-variant\">Separate IPs or CIDRs with commas. Loopback is always allowed.</p></div><div class=\"field\"><label>Status</label><p class=\"input bg-surface-container-low text-on-surface-variant\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -216,7 +216,7 @@ func CompetitionPage(c *model.Competition, saved bool, needSetup bool) templ.Com
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " (dikontrol dari halaman Countdown)</p></div><div class=\"flex justify-end\"><button type=\"submit\" class=\"btn-primary\">Simpan Perubahan</button></div></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " (controlled from the Countdown page)</p></div><div class=\"flex justify-end\"><button type=\"submit\" class=\"btn-primary\">Save Changes</button></div></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

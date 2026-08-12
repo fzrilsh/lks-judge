@@ -86,15 +86,15 @@
       })
       .then(function (d) { loaded = true; render(d.entries || [], d.modules || []); })
       .catch(function () {
-        // First load failed: replace the "Memuat..." row with a retry affordance
+        // First load failed: replace the "Loading..." row with a retry affordance
         // instead of hanging forever. A later failure keeps the last good render.
         if (loaded) return;
         var body = document.getElementById("leaderboard-body");
         if (!body) return;
         body.innerHTML =
           '<tr><td colspan="99" class="text-center py-8 text-on-surface-variant">' +
-            'Gagal memuat data. ' +
-            '<button type="button" id="lb-retry" class="chip chip-neutral">Coba lagi</button>' +
+            'Failed to load data. ' +
+            '<button type="button" id="lb-retry" class="chip chip-neutral">Try again</button>' +
           '</td></tr>';
         var btn = document.getElementById("lb-retry");
         if (btn) btn.addEventListener("click", refresh);

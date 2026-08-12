@@ -41,7 +41,7 @@ func Login(errorMsg string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-screen flex items-center justify-center px-4\"><div class=\"card w-full max-w-md p-8 md:p-10\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-28 mb-4\" alt=\"Logo LKS\"><h1 class=\"text-headline-small text-on-surface\">Login Peserta</h1><p class=\"text-body-medium text-on-surface-variant mt-1\">Masuk dengan nomor PC dan password.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-screen flex items-center justify-center px-4\"><div class=\"card w-full max-w-md p-8 md:p-10\"><div class=\"mb-8 text-center\"><img src=\"/static/imgs/logo.png\" class=\"mx-auto w-28 mb-4\" alt=\"LKS Logo\"><h1 class=\"text-headline-small text-on-surface\">Participant Login</h1><p class=\"text-body-medium text-on-surface-variant mt-1\">Sign in with your PC number and password.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -51,7 +51,7 @@ func Login(errorMsg string) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"POST\" action=\"/login\" class=\"space-y-4\"><div class=\"field\"><label for=\"pc_number\">Nomor PC</label> <input id=\"pc_number\" class=\"input\" type=\"number\" name=\"pc_number\" required min=\"1\" placeholder=\"mis. 1\"></div><div class=\"field\"><label for=\"password\">Password</label> <input id=\"password\" class=\"input\" type=\"password\" name=\"password\" required placeholder=\"••••••\"></div><button type=\"submit\" class=\"btn-primary w-full justify-center\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">login</span> Login</button></form><p class=\"mt-8 pt-6 border-t border-outline-variant text-center text-label-small text-on-surface-variant\">LKS Judge Platform v2.0</p></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<form method=\"POST\" action=\"/login\" class=\"space-y-4\"><div class=\"field\"><label for=\"pc_number\">PC Number</label> <input id=\"pc_number\" class=\"input\" type=\"number\" name=\"pc_number\" required min=\"1\" placeholder=\"e.g. 1\"></div><div class=\"field\"><label for=\"password\">Password</label> <input id=\"password\" class=\"input\" type=\"password\" name=\"password\" required placeholder=\"••••••\"></div><button type=\"submit\" class=\"btn-primary w-full justify-center\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">login</span> Login</button></form><p class=\"mt-8 pt-6 border-t border-outline-variant text-center text-label-small text-on-surface-variant\">LKS Judge Platform v2.0</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

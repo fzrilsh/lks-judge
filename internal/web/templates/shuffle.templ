@@ -7,30 +7,30 @@ import (
 
 templ ShufflePage(results []store.ShuffleResult) {
 	@AppLayout("Shuffle", "participants") {
-		@PageHeader("Penempatan Nomor PC", "Acak peserta ke nomor PC.") {
+		@PageHeader("PC Number Assignment", "Shuffle participants into PC numbers.") {
 			<a href="/jury/participants" class="btn-ghost">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">arrow_back</span>
-				Kembali
+				Back
 			</a>
 			<form method="POST" action="/jury/participants/shuffle">
 				<button type="submit" class="btn-primary">
 					<span class="material-symbols-outlined text-lg" aria-hidden="true">shuffle</span>
 					if len(results) == 0 {
-						Mulai Shuffle
+						Start Shuffle
 					} else {
-						Ulangi Shuffle
+						Re-shuffle
 					}
 				</button>
 			</form>
 		}
 		if len(results) == 0 {
 			@Card("") {
-				@EmptyState("shuffle", "Belum ada yang di-shuffle", "Tambahkan peserta lalu jalankan shuffle.") {
+				@EmptyState("shuffle", "Nothing shuffled yet", "Add participants then run the shuffle.") {
 				}
 			}
 		} else {
-			@Flash("success", fmt.Sprintf("Shuffle selesai. %d peserta ditempatkan.", len(results)))
-			@Card("Peta Seat PC") {
+			@Flash("success", fmt.Sprintf("Shuffle done. %d participants placed.", len(results)))
+			@Card("PC Seat Map") {
 				<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
 					for _, r := range results {
 						<div class="bg-surface-container rounded-xl p-4 flex flex-col items-center justify-center text-center min-h-[100px]">

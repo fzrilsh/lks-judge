@@ -63,7 +63,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				}
 				ctx = templ.InitializeContext(ctx)
 				if len(modules) > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form method=\"POST\" action=\"/jury/modules/set-current\" class=\"flex items-end gap-2\" onsubmit=\"return confirm('Jadikan modul ini yang aktif?')\"><div class=\"field\"><label for=\"cur-mod\">Modul aktif</label> <select id=\"cur-mod\" name=\"module_id\" class=\"input\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form method=\"POST\" action=\"/jury/modules/set-current\" class=\"flex items-end gap-2\" onsubmit=\"return confirm('Make this the active module?')\"><div class=\"field\"><label for=\"cur-mod\">Active module</label> <select id=\"cur-mod\" name=\"module_id\" class=\"input\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -116,7 +116,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Modul", "Atur modul lomba untuk scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Modules", "Configure competition modules for scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -125,7 +125,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Tersimpan.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Saved.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -156,7 +156,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p class=\"text-body-small text-on-surface-variant mb-4\">Membuat MA, MB, MC, ... setelah modul yang sudah ada.</p><form method=\"POST\" action=\"/jury/modules/generate\" class=\"flex gap-3 items-end\" onsubmit=\"return confirm('Generate modul baru?')\"><div class=\"field\"><label for=\"gen-total\">Jumlah</label> <select id=\"gen-total\" name=\"total\" class=\"input\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p class=\"text-body-small text-on-surface-variant mb-4\">Creates MA, MB, MC, ... after the existing modules.</p><form method=\"POST\" action=\"/jury/modules/generate\" class=\"flex gap-3 items-end\" onsubmit=\"return confirm('Generate new modules?')\"><div class=\"field\"><label for=\"gen-total\">Count</label> <select id=\"gen-total\" name=\"total\" class=\"input\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -198,7 +198,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card("Generate Modul").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card("Generate Modules").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -233,14 +233,14 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" onsubmit=\"return confirm('Hapus modul ini?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" onsubmit=\"return confirm('Delete this module?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var11 string
-				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("Hapus " + m.Name)
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("Delete " + m.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `modules.templ`, Line: 55, Col: 98}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `modules.templ`, Line: 55, Col: 99}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 				if templ_7745c5c3_Err != nil {
@@ -272,7 +272,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\">Nama Modul</label> <input id=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\">Module Name</label> <input id=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -303,7 +303,7 @@ func ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, e
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<form method=\"POST\" action=\"/jury/modules\" class=\"card border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-3 text-center hover:bg-surface-container-low\"><label class=\"sr-only\" for=\"new-mod\">Nama modul baru</label> <input id=\"new-mod\" type=\"text\" name=\"name\" placeholder=\"Modul baru\" required class=\"input text-center\"> <button type=\"submit\" class=\"btn-ghost text-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">add</span> Tambah Modul</button></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<form method=\"POST\" action=\"/jury/modules\" class=\"card border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-3 text-center hover:bg-surface-container-low\"><label class=\"sr-only\" for=\"new-mod\">New module name</label> <input id=\"new-mod\" type=\"text\" name=\"name\" placeholder=\"New module\" required class=\"input text-center\"> <button type=\"submit\" class=\"btn-ghost text-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">add</span> Add Module</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

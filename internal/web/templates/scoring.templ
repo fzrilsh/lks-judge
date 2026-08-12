@@ -10,7 +10,7 @@ import (
 // raw score (nil = blank). Posts the whole grid to /jury/scoring.
 templ Scoring(comp *model.Competition, participants []*model.Participant, modules []*model.Module, score map[int64]map[int64]*float64, saved bool, errMsg string) {
 	@AppLayout("Scoring", "scoring") {
-		@PageHeader("Scoring", "Input nilai mentah tiap peserta per modul.") {
+		@PageHeader("Scoring", "Enter each participant's raw score per module.") {
 			<a href="/leaderboard" target="_blank" class="btn-tonal">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">leaderboard</span>
 				Leaderboard
@@ -21,15 +21,15 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 			</a>
 		}
 		if saved {
-			@Flash("success", "Tersimpan.")
+			@Flash("success", "Saved.")
 		}
 		if errMsg != "" {
 			@Flash("error", errMsg)
 		}
 		if len(participants) == 0 {
 			@Card("") {
-				@EmptyState("groups", "Belum ada peserta", "Daftarkan peserta dulu sebelum scoring.") {
-					<a href="/jury/participants" class="btn-primary">Ke Peserta</a>
+				@EmptyState("groups", "No participants yet", "Register participants before scoring.") {
+					<a href="/jury/participants" class="btn-primary">Go to Participants</a>
 				}
 			}
 		} else {
@@ -40,7 +40,7 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 							<thead>
 								<tr>
 									<th>Seat</th>
-									<th>Peserta</th>
+									<th>Participant</th>
 									for _, m := range modules {
 										<th class="text-center">{ m.Name }</th>
 									}
@@ -59,8 +59,7 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 										</td>
 										<td>
 											<p class="text-on-surface">{ p.Name }</p>
-											<p class="text-label-small text-on-surface-variant">{ p.School }</p>
-										</td>
+											<p class="text-label-small text-on-surface-variant">{ p.School }</p></td>
 										for _, m := range modules {
 											<td class="text-center">
 												<label class="sr-only" for={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }>{ p.Name + " - " + m.Name }</label>
@@ -85,7 +84,7 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 					<div class="flex justify-end mt-4">
 						<button type="submit" class="btn-primary">
 							<span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
-							Simpan Nilai
+							Save Scores
 						</button>
 					</div>
 				</form>

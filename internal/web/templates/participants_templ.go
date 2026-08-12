@@ -95,7 +95,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Peserta", "Daftarkan peserta lalu acak nomor PC.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Participants", "Register participants then shuffle PC numbers.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -104,7 +104,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Tersimpan.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Saved.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -135,13 +135,13 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<form method=\"POST\" action=\"/jury/participants\" class=\"space-y-4\"><div class=\"field\"><label for=\"p-name\">Nama Peserta</label> <input id=\"p-name\" class=\"input\" name=\"name\" required placeholder=\"Nama lengkap\"></div><div class=\"field\"><label for=\"p-school\">Institusi</label> <input id=\"p-school\" class=\"input\" name=\"school\" required placeholder=\"Asal sekolah\"></div><div class=\"field\"><label for=\"p-pc\">Nomor PC (opsional)</label> <input id=\"p-pc\" class=\"input\" type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" placeholder=\"mis. 12\"></div><button type=\"submit\" class=\"btn-primary w-full justify-center\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">person_add</span> Tambah Peserta</button></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<form method=\"POST\" action=\"/jury/participants\" class=\"space-y-4\"><div class=\"field\"><label for=\"p-name\">Participant Name</label> <input id=\"p-name\" class=\"input\" name=\"name\" required placeholder=\"Full name\"></div><div class=\"field\"><label for=\"p-school\">Member</label> <input id=\"p-school\" class=\"input\" name=\"school\" required placeholder=\"School name\"></div><div class=\"field\"><label for=\"p-pc\">PC Number (optional)</label> <input id=\"p-pc\" class=\"input\" type=\"number\" name=\"pc_number\" min=\"1\" max=\"99\" placeholder=\"e.g. 12\"></div><button type=\"submit\" class=\"btn-primary w-full justify-center\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">person_add</span> Add Participant</button></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card("Registrasi").Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card("Registration").Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -157,11 +157,11 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p class=\"text-body-small text-on-surface-variant mb-4\">Unggah Excel untuk mengganti data peserta dan modul. Header: no_pc, ip_address, member, name, [kolom modul...]</p><form action=\"/jury/participants/import\" method=\"POST\" enctype=\"multipart/form-data\" class=\"space-y-4\" onsubmit=\"return confirm('Semua data peserta dan modul akan diganti. Lanjut?')\"><label class=\"group flex items-center justify-between gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low hover:border-primary hover:bg-primary/5 transition cursor-pointer focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary\"><span class=\"flex items-center gap-3 min-w-0\"><span class=\"material-symbols-outlined text-primary\" aria-hidden=\"true\">description</span> <span class=\"min-w-0\"><span class=\"block text-body-medium text-on-surface\">Pilih file</span> <span id=\"file-name\" class=\"block truncate text-label-small text-on-surface-variant\">Belum ada file</span></span></span> <span class=\"text-label-small font-bold text-primary uppercase\">Browse</span> <input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required class=\"sr-only\" onchange=\"document.getElementById('file-name').innerText = this.files[0]?.name || 'Belum ada file'\"></label>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p class=\"text-body-small text-on-surface-variant mb-4\">Upload an Excel file to replace participant and module data. Headers: no_pc, ip_address, member, name, [module columns...]</p><form action=\"/jury/participants/import\" method=\"POST\" enctype=\"multipart/form-data\" class=\"space-y-4\" onsubmit=\"return confirm('All participant and module data will be replaced. Continue?')\"><label class=\"group flex items-center justify-between gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low hover:border-primary hover:bg-primary/5 transition cursor-pointer focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary\"><span class=\"flex items-center gap-3 min-w-0\"><span class=\"material-symbols-outlined text-primary\" aria-hidden=\"true\">description</span> <span class=\"min-w-0\"><span class=\"block text-body-medium text-on-surface\">Choose file</span> <span id=\"file-name\" class=\"block truncate text-label-small text-on-surface-variant\">No file selected</span></span></span> <span class=\"text-label-small font-bold text-primary uppercase\">Browse</span> <input type=\"file\" name=\"file\" accept=\".xlsx,.xls\" required class=\"sr-only\" onchange=\"document.getElementById('file-name').innerText = this.files[0]?.name || 'No file selected'\"></label>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = Flash("warning", "Import menimpa seluruh data peserta dan modul. Pastikan file benar.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("warning", "Import overwrites all participant and module data. Make sure the file is correct.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -171,7 +171,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card("Import Peserta").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card("Import Participants").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -206,7 +206,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 						ctx = templ.InitializeContext(ctx)
 						return nil
 					})
-					templ_7745c5c3_Err = EmptyState("group", "Antrian kosong", "Peserta tanpa nomor PC muncul di sini.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = EmptyState("group", "Queue empty", "Participants without a PC number show up here.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -256,14 +256,14 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" onsubmit=\"return confirm('Hapus peserta ini?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" onsubmit=\"return confirm('Delete this participant?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var11 string
-							templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("Hapus " + p.Name)
+							templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("Delete " + p.Name)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 119, Col: 102}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 119, Col: 103}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 							if templ_7745c5c3_Err != nil {
@@ -282,7 +282,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card(fmt.Sprintf("Antrian (%d belum ber-seat)", queueCount(participants))).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card(fmt.Sprintf("Queue (%d without a seat)", queueCount(participants))).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -298,12 +298,12 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>IP</th><th>Nama</th><th>Institusi</th><th>Password</th><th>Aksi</th></tr></thead> <tbody>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>IP</th><th>Name</th><th>Member</th><th>Password</th><th>Action</th></tr></thead> <tbody>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if len(participants)-queueCount(participants) == 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<tr><td colspan=\"6\" class=\"text-center text-on-surface-variant py-8\">Belum di-shuffle.</td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<tr><td colspan=\"6\" class=\"text-center text-on-surface-variant py-8\">Not shuffled yet.</td></tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -388,20 +388,20 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" onsubmit=\"return confirm('Hapus peserta ini?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" onsubmit=\"return confirm('Delete this participant?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var19 string
-						templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue("Hapus " + p.Name)
+						templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue("Delete " + p.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 156, Col: 104}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `participants.templ`, Line: 156, Col: 105}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\">Hapus</button></form></td></tr>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\">Delete</button></form></td></tr>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -413,7 +413,7 @@ func ParticipantsPage(participants []*model.Participant, saved bool, errMsg stri
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card("Penempatan Seat Final").Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card("Final Seat Assignment").Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -7,10 +7,10 @@ import (
 
 templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg string) {
 	@AppLayout("Files", "files") {
-		@PageHeader("File Lomba", "Repositori aset dan dokumentasi.") {
+		@PageHeader("Competition Files", "Asset and documentation repository.") {
 		}
 		if saved {
-			@Flash("success", "Tersimpan.")
+			@Flash("success", "Saved.")
 		}
 		if errMsg != "" {
 			@Flash("error", errMsg)
@@ -21,8 +21,8 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 				<span class="w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary">
 					<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition" aria-hidden="true">cloud_upload</span>
 				</span>
-				<p class="text-body-medium text-on-surface mb-1">Klik atau tarik file ke sini</p>
-				<p class="text-label-small text-on-surface-variant">Unggah aset atau file apa pun</p>
+				<p class="text-body-medium text-on-surface mb-1">Click or drag a file here</p>
+				<p class="text-label-small text-on-surface-variant">Upload an asset or any file</p>
 				<input id="file-input" type="file" class="sr-only"/>
 			</label>
 			<div id="progress-wrap" class="hidden mt-4">
@@ -36,9 +36,9 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 			</div>
 		}
 		<div class="mt-6">
-			@Card(fmt.Sprintf("Aset Aktif (%d)", len(files))) {
+			@Card(fmt.Sprintf("Active Assets (%d)", len(files))) {
 			if len(files) == 0 {
-				@EmptyState("folder_open", "Belum ada file", "File yang diunggah muncul di sini.") {
+				@EmptyState("folder_open", "No files yet", "Uploaded files show up here.") {
 				}
 			} else {
 				<ul class="space-y-3">
@@ -53,22 +53,22 @@ templ FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg
 							<div class="flex items-center gap-3 flex-none">
 								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/toggle", f.ID)) }>
 									if f.IsPublic {
-										<button type="submit" class="chip chip-ok cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Sembunyikan " + f.Name }>
+										<button type="submit" class="chip chip-ok cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Hide " + f.Name }>
 											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility</span>
-											Publik
+											Public
 										</button>
 									} else {
-										<button type="submit" class="chip chip-neutral cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Publikasikan " + f.Name }>
+										<button type="submit" class="chip chip-neutral cursor-pointer transition active:scale-95 hover:brightness-95" aria-label={ "Publish " + f.Name }>
 											<span class="material-symbols-outlined text-sm" aria-hidden="true">visibility_off</span>
-											Privat
+											Private
 										</button>
 									}
 								</form>
-								<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="btn-ghost px-2 py-1" aria-label={ "Unduh " + f.Name }>
+								<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="btn-ghost px-2 py-1" aria-label={ "Download " + f.Name }>
 									<span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
 								</a>
-								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)) } onsubmit="return confirm('Hapus file ini?')">
-									<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Hapus " + f.Name }>
+								<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/files/%s/delete", f.ID)) } onsubmit="return confirm('Delete this file?')">
+									<button type="submit" class="btn-ghost text-error px-2 py-1" aria-label={ "Delete " + f.Name }>
 										<span class="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
 									</button>
 								</form>

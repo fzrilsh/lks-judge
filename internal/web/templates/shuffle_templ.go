@@ -58,17 +58,17 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/jury/participants\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">arrow_back</span> Kembali</a><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">shuffle</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/jury/participants\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">arrow_back</span> Back</a><form method=\"POST\" action=\"/jury/participants/shuffle\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">shuffle</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if len(results) == 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Mulai Shuffle")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Start Shuffle")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Ulangi Shuffle")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Re-shuffle")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -79,7 +79,7 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Penempatan Nomor PC", "Acak peserta ke nomor PC.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("PC Number Assignment", "Shuffle participants into PC numbers.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -114,7 +114,7 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 						ctx = templ.InitializeContext(ctx)
 						return nil
 					})
-					templ_7745c5c3_Err = EmptyState("shuffle", "Belum ada yang di-shuffle", "Tambahkan peserta lalu jalankan shuffle.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = EmptyState("shuffle", "Nothing shuffled yet", "Add participants then run the shuffle.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -125,7 +125,7 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = Flash("success", fmt.Sprintf("Shuffle selesai. %d peserta ditempatkan.", len(results))).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", fmt.Sprintf("Shuffle done. %d participants placed.", len(results))).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -200,7 +200,7 @@ func ShufflePage(results []store.ShuffleResult) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = Card("Peta Seat PC").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Card("PC Seat Map").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

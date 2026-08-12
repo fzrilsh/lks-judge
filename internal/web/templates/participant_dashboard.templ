@@ -8,31 +8,33 @@ import (
 // Dashboard is the participant's live page: active module, public files, and the
 // per-module submission form. dashboard.js drives it over the WebSocket. The
 // #sensor-layer overlay covers the form until the submission window opens.
-templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.File, existing *model.Submission, formOpen bool) {
-	@GuestLayout("Dashboard", "", p.Name) {
-		<div class="p-12 px-6 max-w-6xl mx-auto">
-			<!-- Header -->
-			<div class="flex items-center justify-between mb-8">
-				<div>
-					<h1 class="text-2xl font-bold font-manrope text-on-surface">{ p.Name }</h1>
-					<p class="text-sm text-on-surface-variant">
+templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.File, existing *model.Submission, formOpen bool, errorMsg string) {
+	@GuestLayout("Dashboard") {
+		<div class="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
+			<div class="flex items-center justify-between gap-4 mb-6">
+				<div class="min-w-0">
+					<h1 class="text-headline-small text-on-surface truncate">{ p.Name }</h1>
+					<p class="text-body-medium text-on-surface-variant">
 						if p.PCNumber != nil {
-							PC <strong>{ fmt.Sprintf("%02d", *p.PCNumber) }</strong> |
+							PC <strong>{ fmt.Sprintf("%02d", *p.PCNumber) }</strong> ·
 						}
 						{ p.School }
 					</p>
 				</div>
 				<form method="POST" action="/logout">
-					<button type="submit" class="bg-error text-on-error px-5 py-2 rounded-xl font-semibold hover:shadow-lg transition-shadow">
+					<button type="submit" class="btn-danger">
+						<span class="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
 						Logout
 					</button>
 				</form>
 			</div>
-			<!-- Active module + countdown -->
-			<div class="bg-surface-container-low p-5 rounded-xl flex items-center justify-between mb-8">
+			if errorMsg != "" {
+				@Flash("error", errorMsg)
+			}
+			<div class="card flex items-center justify-between gap-4 mb-6">
 				<div>
-					<p class="text-sm text-on-surface-variant">Active module</p>
-					<p class="text-title-large font-manrope text-on-surface">
+					<p class="text-label-medium text-on-surface-variant">Active module</p>
+					<p class="text-title-large text-on-surface">
 						if module != nil {
 							{ module.Name }
 						} else {
@@ -41,59 +43,52 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 					</p>
 				</div>
 				<div class="text-right">
-					<p class="text-sm text-on-surface-variant">Time remaining</p>
-					<p id="countdown" class="text-title-large font-manrope text-on-surface">--:--:--</p>
+					<p class="text-label-medium text-on-surface-variant">Time left</p>
+					<p id="countdown" class="text-title-large font-mono tabular-nums text-on-surface" aria-live="polite">--:--:--</p>
 				</div>
 			</div>
-			<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-				<!-- Left: download files -->
+			<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 				<div class="lg:col-span-7 space-y-4">
-					<div class="mb-6">
-						<h2 class="text-2xl font-bold font-manrope text-on-surface">Download Files</h2>
-						<p class="text-sm text-on-surface-variant">Official files</p>
-					</div>
-					<div id="official-files-list" class="space-y-4">
+					<h2 class="text-title-large text-on-surface">Official Files</h2>
+					<div id="official-files-list" class="space-y-3">
 						if len(publicFiles) == 0 {
-							<p class="empty-placeholder text-sm text-on-surface-variant">No public files yet.</p>
+							<p class="empty-placeholder text-body-medium text-on-surface-variant">No public files yet.</p>
 						}
 						for _, f := range publicFiles {
 							<div data-file-id={ f.ID } class="bg-surface-container-low p-5 rounded-xl flex justify-between items-center">
 								<div class="flex items-center gap-4">
 									<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">
-										<span class="material-symbols-outlined">description</span>
+										<span class="material-symbols-outlined" aria-hidden="true">description</span>
 									</div>
 									<div>
 										<p class="file-name font-bold text-on-surface">{ f.Name }</p>
 									</div>
 								</div>
-								<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="p-2 hover:bg-primary/10 text-primary rounded-lg">
-									<span class="material-symbols-outlined">download</span>
+								<a href={ templ.URL(fmt.Sprintf("/files/%s/download", f.ID)) } class="p-2 hover:bg-primary/10 text-primary rounded-lg" aria-label={ "Download " + f.Name }>
+									<span class="material-symbols-outlined" aria-hidden="true">download</span>
 								</a>
 							</div>
 						}
 					</div>
 				</div>
-				<!-- Right: upload + guide -->
 				<div class="lg:col-span-5">
-					<div class="sticky top-24">
-						<!-- Upload card -->
-						<div class="rounded-2xl p-8 relative border-2 border-dashed border-outline-variant/30">
-							<!-- Sensor overlay: hidden while the form is open -->
+					<div class="sticky top-24 space-y-6">
+						<div class="card relative">
 							<div id="sensor-layer"
 								class={ "absolute inset-0 bg-surface-container-lowest/70 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6 rounded-2xl", templ.KV("hidden", formOpen) }>
-								<div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4 shadow">
-									<span class="material-symbols-outlined text-3xl text-on-surface-variant">lock</span>
+								<div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
+									<span class="material-symbols-outlined text-3xl text-on-surface-variant" aria-hidden="true">lock</span>
 								</div>
-								<h3 class="font-bold text-lg mb-2 text-on-surface">Submission Locked</h3>
-								<p class="text-sm text-on-surface-variant">Submission opens at last 20 minutes</p>
+								<h3 class="text-title-medium text-on-surface mb-1">Submission Locked</h3>
+								<p class="text-body-medium text-on-surface-variant">Opens in the last 20 minutes.</p>
 							</div>
-							<div class="text-center mb-6">
-								<span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
-								<h3 class="text-xl font-bold mt-2 text-on-surface">Upload Submission</h3>
+							<div class="text-center mb-4">
+								<span class="material-symbols-outlined text-4xl text-primary" aria-hidden="true">cloud_upload</span>
+								<h3 class="text-title-large text-on-surface mt-1">Upload Submission</h3>
 							</div>
 							<div id="existing-submission" class="mb-4">
 								if existing != nil {
-									<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-4">
+									<div class="bg-secondary-container text-on-secondary-container rounded-xl p-4">
 										<p class="text-body-medium">Submitted: <strong>{ existing.Name }</strong></p>
 										if existing.SubmittedAt != nil {
 											<p class="text-label-small">{ existing.SubmittedAt.Local().Format("15:04:05") }</p>
@@ -102,50 +97,48 @@ templ Dashboard(p *model.Participant, module *model.Module, publicFiles []*model
 									</div>
 								}
 							</div>
-							<span class="text-sm font-semibold text-on-surface mb-2 block">
-								Upload Submission (Current module: <span id="module_name">
+							<span class="text-body-medium text-on-surface mb-2 hidden">
+								<span id="module_name">
 									if module != nil {
 										{ module.Name }
 									} else {
 										-
 									}
-								</span>)
+								</span>
 							</span>
 							<input type="text" id="module_id" name="module_id" value={ moduleIDValue(module) } hidden/>
-							<label id="dropzone"
+							<label id="dropzone" for="file-input"
 								data-upload-type="submission"
 								data-module-id={ moduleIDValue(module) }
 								data-success-url="/"
 								data-error-url="/?error="
-								class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition-colors">
+								class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline rounded-2xl px-6 py-10 text-center cursor-pointer hover:bg-surface-container-highest transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
 								<span class="text-body-large text-on-surface">Drag a file here or click to select</span>
-								<input id="file-input" type="file" class="hidden"/>
+								<input id="file-input" type="file" class="sr-only"/>
 							</label>
 							<div id="progress-wrap" class="hidden mt-4">
 								<div class="flex justify-between text-label-small text-on-surface-variant mb-1">
 									<span id="progress-name"></span>
-									<span id="progress-pct">0%</span>
+									<span id="progress-pct" aria-live="polite">0%</span>
 								</div>
 								<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
 									<div id="progress-bar" class="h-full bg-primary transition-all" style="width:0%"></div>
 								</div>
 							</div>
 						</div>
-						<!-- Submission Guide -->
-						<div class="mt-6 bg-surface-container-lowest p-6 rounded-xl ambient-shadow">
-							<h4 class="font-bold text-on-surface mb-3">Submission Guide</h4>
-							<ul class="text-sm space-y-2 text-on-surface-variant">
-								<li>• Make sure the file name matches the requested format</li>
-								<li>• Max file size: 70MB</li>
-								<li>• Late submission will be rejected</li>
+						@Card("Submission Guidelines") {
+							<ul class="text-body-medium space-y-2 text-on-surface-variant list-disc pl-5">
+								<li>Make sure the file name matches the requested format.</li>
+								<li>Maximum file size is 2 GB.</li>
+								<li>Late submissions will be rejected.</li>
 							</ul>
-						</div>
+						}
 					</div>
 				</div>
 			</div>
 		</div>
-		<script src="/static/js/uploader.js"></script>
-		<script src="/static/js/dashboard.js"></script>
+		<script src="/static/js/uploader.js" defer></script>
+		<script src="/static/js/dashboard.js" defer></script>
 	}
 }
 

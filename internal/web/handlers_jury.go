@@ -51,7 +51,8 @@ func HandleJuryGET(st *store.Store) http.HandlerFunc {
 			c = &model.Competition{Status: "waiting", AllowedIPs: "[]"}
 		}
 		saved := r.URL.Query().Get("saved") == "1"
-		if err := templates.CompetitionPage(c, saved).Render(r.Context(), w); err != nil {
+		needSetup := r.URL.Query().Get("setup") == "1"
+		if err := templates.CompetitionPage(c, saved, needSetup).Render(r.Context(), w); err != nil {
 			log.Printf("render competition: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 		}
@@ -103,7 +104,7 @@ func HandleJuryPOST(st *store.Store) http.HandlerFunc {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(w, r, "/jury/?saved=1", http.StatusSeeOther)
+		http.Redirect(w, r, "/jury/competition?saved=1", http.StatusSeeOther)
 	}
 }
 
@@ -136,6 +137,6 @@ func HandleResetPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub, d
 		cache.Clear()
 		hub.Broadcast(realtime.EvFormOpened, map[string]any{"status": false})
 		log.Printf("jury reset: wiped all data ip=%s", clientIP(r))
-		http.Redirect(w, r, "/jury/?setup=1", http.StatusSeeOther)
+		http.Redirect(w, r, "/jury/competition?setup=1", http.StatusSeeOther)
 	}
 }

@@ -1,0 +1,86 @@
+package templates
+
+// Shared UI primitives used across every page. Before this file the only shared
+// component was navItem, so each page rewrote its own header and card markup.
+
+// PageHeader renders a page title, an optional subtitle, and an optional slot of
+// action buttons on the right. Pass an empty subtitle to omit it.
+templ PageHeader(title string, subtitle string) {
+	<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+		<div>
+			<h1 class="text-headline-medium text-on-surface">{ title }</h1>
+			if subtitle != "" {
+				<p class="text-body-medium text-on-surface-variant mt-1">{ subtitle }</p>
+			}
+		</div>
+		<div class="flex flex-wrap items-center gap-2">
+			{ children... }
+		</div>
+	</div>
+}
+
+// Card is a padded surface panel. Pass an empty title to omit the heading.
+templ Card(title string) {
+	<section class="card">
+		if title != "" {
+			<h2 class="text-title-medium text-on-surface mb-4">{ title }</h2>
+		}
+		{ children... }
+	</section>
+}
+
+// EmptyState fills a blank list/table region with an icon, a headline, and a
+// hint, plus an optional action slot. Handles the "zero modules / zero
+// participants" cases the old pages left blank.
+templ EmptyState(icon string, title string, hint string) {
+	<div class="flex flex-col items-center justify-center text-center gap-2 py-12 px-6">
+		<span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">{ icon }</span>
+		<p class="text-title-medium text-on-surface">{ title }</p>
+		if hint != "" {
+			<p class="text-body-medium text-on-surface-variant max-w-sm">{ hint }</p>
+		}
+		<div class="mt-2 flex items-center gap-2">
+			{ children... }
+		</div>
+	</div>
+}
+
+// flashClass maps a flash kind to its tonal container classes.
+func flashClass(kind string) string {
+	switch kind {
+	case "error":
+		return "bg-error-container text-on-error-container"
+	case "success":
+		return "bg-secondary-container text-on-secondary-container"
+	case "warning":
+		return "bg-warning-container text-on-warning-container"
+	default:
+		return "bg-primary-container text-on-primary-container"
+	}
+}
+
+func flashIcon(kind string) string {
+	switch kind {
+	case "error":
+		return "error"
+	case "success":
+		return "check_circle"
+	case "warning":
+		return "warning"
+	default:
+		return "info"
+	}
+}
+
+// Flash is an inline alert banner. kind: error | success | warning | info.
+templ Flash(kind string, msg string) {
+	<div class={ "flex items-start gap-3 rounded-xl px-4 py-3 mb-6 text-body-medium", flashClass(kind) } role="alert">
+		<span class="material-symbols-outlined text-xl" aria-hidden="true">{ flashIcon(kind) }</span>
+		<span>{ msg }</span>
+	</div>
+}
+
+// Chip is a small status pill. kind: ok | warn | danger | neutral.
+templ Chip(kind string, label string) {
+	<span class={ "chip", "chip-" + kind }>{ label }</span>
+}

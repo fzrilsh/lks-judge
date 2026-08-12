@@ -15,7 +15,7 @@ func HandleCountdownJuryGET(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		comp := st.CompetitionCache.Load()
 		if comp == nil {
-			http.Redirect(w, r, "/jury/?setup=1", http.StatusSeeOther)
+			http.Redirect(w, r, "/jury/competition?setup=1", http.StatusSeeOther)
 			return
 		}
 		saved := r.URL.Query().Get("saved") == "1"

@@ -1,13 +1,6 @@
 package templates
 
-func navLeftOr(s string) string {
-	if s == "" {
-		return "Lomba Kompetensi Siswa"
-	}
-	return s
-}
-
-templ GuestLayout(title string, navLeft string, navRight string) {
+templ GuestLayout(title string) {
 	<!DOCTYPE html>
 	<html lang="id">
 	<head>
@@ -17,12 +10,8 @@ templ GuestLayout(title string, navLeft string, navRight string) {
 		<link rel="icon" type="image/png" href="/static/imgs/logo.png"/>
 		<link rel="stylesheet" href="/static/css/app.css"/>
 	</head>
-	<body class="bg-gray-50 min-h-screen">
-		<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-md shadow-sm">
-			<span class="text-xl font-bold text-gray-900">{ navLeftOr(navLeft) }</span>
-			<span>{ navRight }</span>
-		</nav>
-		<main class="pt-20 min-h-screen">
+	<body class="bg-surface text-on-surface min-h-screen font-manrope">
+		<main class="min-h-screen">
 			{ children... }
 		</main>
 	</body>
@@ -41,7 +30,7 @@ templ TVLayout(title string) {
 		<link rel="icon" type="image/png" href="/static/imgs/logo.png"/>
 		<link rel="stylesheet" href="/static/css/app.css"/>
 	</head>
-	<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+	<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center font-manrope">
 		{ children... }
 	</body>
 	</html>

@@ -17,91 +17,61 @@ func displayAllowedIPs(raw string) string {
 	return strings.Join(ips, ", ")
 }
 
-templ CompetitionPage(c *model.Competition, saved bool) {
+templ CompetitionPage(c *model.Competition, saved bool, needSetup bool) {
 	@AppLayout("Competition", "competition") {
-		<div class="max-w-6xl mx-auto px-12">
-			<div class="rounded-xl relative">
-				if saved {
-					<div class="bg-secondary-container text-on-secondary-container rounded-xl p-4 mb-6">
-						<p class="text-body-medium">Saved successfully.</p>
+		@PageHeader("Competition", "Configure competition details and the jury IP whitelist.") {
+		}
+		if needSetup {
+			@Flash("info", "Create a competition first before opening the other menus.")
+		}
+		if saved {
+			@Flash("success", "Changes saved.")
+		}
+		@Card("") {
+			<form method="POST" action="/jury/competition" class="space-y-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="field">
+						<label for="f-name">Competition Name</label>
+						<input id="f-name" class="input" type="text" name="name" required value={ c.Name } placeholder="e.g. LKS Wilayah II Kota Jakarta Selatan"/>
 					</div>
-				}
-				<form method="POST" action="/jury/" class="space-y-6 pl-2">
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								Competition Name
-							</label>
-							<input type="text" name="name" required value={ c.Name }
-								placeholder="e.g. LKS Wilayah II Kota Jakarta Selatan"
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								Competition Level
-							</label>
-							<input type="text" name="level" required value={ c.Level }
-								placeholder="e.g. City"
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
+					<div class="field">
+						<label for="f-level">Competition Level</label>
+						<input id="f-level" class="input" type="text" name="level" required value={ c.Level } placeholder="e.g. City"/>
 					</div>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								Start Date
-							</label>
-							<input type="date" name="start_date" required value={ c.StartDate }
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								End Date
-							</label>
-							<input type="date" name="end_date" required value={ c.EndDate }
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="field">
+						<label for="f-sd">Start Date</label>
+						<input id="f-sd" class="input" type="date" name="start_date" required value={ c.StartDate }/>
 					</div>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								Start Time
-							</label>
-							<input type="time" name="start_time" value={ timeValue(c.StartTime) }
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
-						<div>
-							<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-								End Time
-							</label>
-							<input type="time" name="end_time" value={ timeValue(c.EndTime) }
-								class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all"/>
-						</div>
+					<div class="field">
+						<label for="f-ed">End Date</label>
+						<input id="f-ed" class="input" type="date" name="end_date" required value={ c.EndDate }/>
 					</div>
-					<div>
-						<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-							Allowed IPs (Whitelist)
-						</label>
-						<textarea name="allowed_ips" rows="3" placeholder="192.168.1.1, 192.168.1.2, 10.0.0.0/8"
-							class="w-full bg-surface-container-high rounded-lg px-4 py-3 focus:ring-1 focus:ring-primary focus:outline-none transition-all" required>{ displayAllowedIPs(c.AllowedIPs) }</textarea>
-						<p class="text-xs text-on-surface-variant/70 mt-2">
-							Comma-separated IPs or CIDRs
-						</p>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="field">
+						<label for="f-st">Start Time</label>
+						<input id="f-st" class="input" type="time" name="start_time" value={ timeValue(c.StartTime) }/>
 					</div>
-					<div>
-						<label class="text-xs text-on-surface-variant block mb-2 font-bold uppercase tracking-wide">
-							Status
-						</label>
-						<p class="w-full bg-surface-container-high rounded-lg px-4 py-3 text-on-surface-variant">
-							{ c.Status } <span class="text-body-small">(controlled from the Countdown page)</span>
-						</p>
+					<div class="field">
+						<label for="f-et">End Time</label>
+						<input id="f-et" class="input" type="time" name="end_time" value={ timeValue(c.EndTime) }/>
 					</div>
-					<div class="pt-6 flex justify-end">
-						<button class="signature-gradient text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all">
-							Save Changes
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
+				</div>
+				<div class="field">
+					<label for="f-ips">Allowed IPs (Whitelist)</label>
+					<textarea id="f-ips" class="input" name="allowed_ips" rows="3" placeholder="192.168.1.1, 192.168.1.2, 10.0.0.0/8" required>{ displayAllowedIPs(c.AllowedIPs) }</textarea>
+					<p class="text-label-small text-on-surface-variant">Separate IPs or CIDRs with commas. Loopback is always allowed.</p>
+				</div>
+				<div class="field">
+					<label>Status</label>
+					<p class="input bg-surface-container-low text-on-surface-variant">{ c.Status } (controlled from the Countdown page)</p>
+				</div>
+				<div class="flex justify-end">
+					<button type="submit" class="btn-primary">Save Changes</button>
+				</div>
+			</form>
+		}
 	}
 }

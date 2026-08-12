@@ -11,9 +11,11 @@ All thirteen phases are done: setup, participants,
 modules, the competition countdown, the WebSocket hub that pushes live events,
 chunked resumable file upload with jury file management, participant submissions
 with the jury review matrix, scoring with the robust WSI scale, a cached
-public leaderboard, a CIS PDF export, the templ UI restyled to match the
-old Laravel design, and the final polish (nuclear reset, session expiry sweep,
-Windows binary + `server.bat`). The server is ready for a LAN competition.
+public leaderboard, a CIS PDF export, and the final polish (nuclear reset,
+Windows binary + `server.bat`). A subsequent UI redesign pass gave the whole app
+a softer palette, a responsive CSS-only sidebar drawer, a jury dashboard at
+`/jury/` (with vendored Chart.js insight charts), and the accessibility and
+usability fixes from a heuristic audit. The server is ready for a LAN competition.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -30,6 +32,7 @@ Windows binary + `server.bat`). The server is ready for a LAN competition.
 | 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
 | 12 | UI modification: port the old Laravel design to the templ views | done |
 | 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | done |
+| UI | UI redesign: soft palette, responsive drawer, jury dashboard at `/jury/`, heuristic fixes | done |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -65,7 +68,9 @@ standalone `tools/tailwindcss` CLI to regenerate the committed, embedded
 `app.css` is committed and embedded, `go build` alone works without the CLI;
 you only need it to regenerate `app.css` after changing `tailwind.css` or the
 class strings in `.templ` / `static/js/*.js` files. Self-hosted fonts live under
-`internal/web/static/fonts/`.
+`internal/web/static/fonts/`. Vendored front-end libraries (currently Chart.js
+for the jury dashboard) live under `internal/web/static/js/vendor/`, which
+Tailwind does not scan, and ship embedded so the app works offline on the LAN.
 
 Windows target:
 
@@ -122,6 +127,10 @@ participant session (plus `GET /login` and the `GET /static/` asset tree):
 The jury scoring surface adds `GET/POST /jury/scoring` (raw-score matrix and
 bulk upsert) and `GET /jury/scoring/export-pdf` (the CIS PDF). `/leaderboard`,
 `/leaderboard.json`, and `GET /jury/scoring` are gzip-scoped.
+
+`GET /jury/` is the jury dashboard (competition status, countdown controls,
+progress, top 3, activity feed, submission-timing charts); the competition setup
+form lives at `GET/POST /jury/competition`.
 
 The header **Reset** button (`POST /jury/reset`) is a nuclear wipe: it snapshots
 the DB to `backups/` first, then deletes every competition, participant, module,

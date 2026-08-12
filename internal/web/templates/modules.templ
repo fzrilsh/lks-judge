@@ -48,8 +48,7 @@ templ ModulesPage(comp *model.Competition, modules []*model.Module, saved bool, 
 		}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
 			for i, m := range modules {
-				<section class="card relative overflow-hidden">
-					<div class="absolute left-0 top-0 w-1.5 h-full bg-primary" aria-hidden="true"></div>
+				<section class="card">
 					<div class="flex justify-between items-start mb-4">
 						<span class="h-11 w-11 bg-primary-container text-on-primary-container rounded-lg flex items-center justify-center font-bold">{ "M" + fmt.Sprint(i+1) }</span>
 						<form method="POST" action={ templ.URL(fmt.Sprintf("/jury/modules/%d/delete", m.ID)) } onsubmit="return confirm('Hapus modul ini?')">

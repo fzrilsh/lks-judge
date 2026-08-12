@@ -149,7 +149,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 						return templ_7745c5c3_Err
 					}
 					for _, m := range modules {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<th><div class=\"whitespace-nowrap\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<th class=\"text-center\"><div class=\"whitespace-nowrap\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -236,7 +236,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 							return templ_7745c5c3_Err
 						}
 						for _, m := range modules {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<td class=\"text-center\">")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}

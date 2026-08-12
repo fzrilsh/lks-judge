@@ -54,7 +54,7 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 								<th>Seat</th>
 								<th>Peserta</th>
 								for _, m := range modules {
-									<th class="text-center">
+									<th>
 										<div class="whitespace-nowrap">{ m.Name }</div>
 										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d terkumpul", moduleCount(participants, cell, m.ID)) }</div>
 									</th>
@@ -77,7 +77,6 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 									</td>
 									for _, m := range modules {
 										<td>
-											<div class="flex justify-center">
 											if sub := cell[p.ID][m.ID]; sub != nil {
 												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) } class="chip chip-ok" aria-label={ "Unduh " + p.Name + " " + m.Name }>
 													<span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>
@@ -89,7 +88,6 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 													Pending
 												</span>
 											}
-											</div>
 										</td>
 									}
 								</tr>

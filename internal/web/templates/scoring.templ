@@ -10,80 +10,86 @@ import (
 // raw score (nil = blank). Posts the whole grid to /jury/scoring.
 templ Scoring(comp *model.Competition, participants []*model.Participant, modules []*model.Module, score map[int64]map[int64]*float64, saved bool, errMsg string) {
 	@AppLayout("Scoring", "scoring") {
-		<div class="max-w-6xl mx-auto">
-			<section class="flex justify-between items-end mb-12">
-				<h1 class="text-4xl font-extrabold font-manrope text-on-surface leading-tight">
-					Participant Manual Scoring System
-				</h1>
-				<div class="flex gap-3">
-					<a href="/leaderboard" target="_blank" class="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl">Leaderboard</a>
-					<a href="/jury/scoring/export-pdf" class="bg-primary text-on-primary px-4 py-2 rounded-xl">Export PDF</a>
-				</div>
-			</section>
-			if saved {
-				<div class="bg-secondary-container text-on-secondary-container rounded-xl px-4 py-2 mb-6">Saved.</div>
+		@PageHeader("Scoring", "Enter each participant's raw score per module.") {
+			<a href="/leaderboard" target="_blank" class="btn-tonal">
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">leaderboard</span>
+				Leaderboard
+			</a>
+			<a href="/jury/scoring/export-pdf" class="btn-primary">
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">picture_as_pdf</span>
+				Export PDF
+			</a>
+		}
+		if saved {
+			@Flash("success", "Saved.")
+		}
+		if errMsg != "" {
+			@Flash("error", errMsg)
+		}
+		if len(participants) == 0 {
+			@Card("") {
+				@EmptyState("groups", "No participants yet", "Register participants before scoring.") {
+					<a href="/jury/participants" class="btn-primary">Go to Participants</a>
+				}
 			}
-			if errMsg != "" {
-				<div class="bg-error-container text-on-error-container rounded-xl px-4 py-2 mb-6">{ errMsg }</div>
-			}
-			<div class="bg-surface-container-lowest rounded-2xl ambient-shadow overflow-hidden">
+		} else {
+			@Card("") {
 				<form method="post" action="/jury/scoring">
-					<div class="overflow-x-auto">
-						<table class="w-full text-left border-collapse">
+					<div class="table-wrap">
+						<table class="data-table">
 							<thead>
-								<tr class="bg-surface-container-low border-b border-outline-variant">
-									<th class="py-5 px-6 text-sm font-bold text-on-surface-variant">Seat</th>
-									<th class="py-5 px-6 text-sm font-bold text-on-surface-variant">Participant</th>
+								<tr>
+									<th>Seat</th>
+									<th>Participant</th>
 									for _, m := range modules {
-										<th class="py-5 px-2 w-[80px] text-sm font-bold text-on-surface-variant text-center">{ m.Name }</th>
+										<th class="text-center">{ m.Name }</th>
 									}
-									<th class="py-5 px-6 text-sm font-bold text-primary text-right">Total</th>
+									<th class="text-right">Total</th>
 								</tr>
 							</thead>
-							<tbody class="divide-y divide-outline-variant">
-								if len(participants) == 0 {
-									<tr><td colspan={ fmt.Sprintf("%d", len(modules)+3) } class="text-center px-6 py-8 text-on-surface-variant">No participants yet.</td></tr>
-								}
+							<tbody>
 								for _, p := range participants {
-									<tr class="hover:bg-surface-container-low transition-colors">
-										<td class="py-6 px-6 font-bold text-on-surface">
-											<span class="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-surface-container-high text-on-surface">
-												if p.PCNumber != nil {
-													{ fmt.Sprintf("%02d", *p.PCNumber) }
-												} else {
-													-
-												}
-											</span>
+									<tr>
+										<td class="font-bold">
+											if p.PCNumber != nil {
+												{ fmt.Sprintf("%02d", *p.PCNumber) }
+											} else {
+												-
+											}
 										</td>
-										<td class="py-6 px-6">
-											<p class="font-bold text-on-surface">{ p.Name }</p>
-											<p class="text-xs text-on-surface-variant">{ p.School }</p>
-										</td>
+										<td>
+											<p class="text-on-surface">{ p.Name }</p>
+											<p class="text-label-small text-on-surface-variant">{ p.School }</p></td>
 										for _, m := range modules {
-											<td class="py-6 px-6 w-[100px] text-center">
+											<td class="text-center">
+												<label class="sr-only" for={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }>{ p.Name + " - " + m.Name }</label>
 												<input
+													id={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
 													type="number" step="0.01" min="0" max="100"
 													name={ fmt.Sprintf("score_%d_%d", p.ID, m.ID) }
 													value={ scoreValue(score, p.ID, m.ID) }
 													data-participant={ fmt.Sprintf("%d", p.ID) }
-													class="score-input w-16 h-10 bg-surface-container border-none rounded-lg text-center font-bold text-on-surface focus:ring-2 focus:ring-primary transition-all"
+													class="score-input input w-16 text-center px-2"
 												/>
 											</td>
 										}
-										<td class="py-6 px-6 text-right">
-											<span id={ fmt.Sprintf("total-%d", p.ID) } class="text-2xl font-extrabold text-primary font-manrope">0</span>
+										<td class="text-right">
+											<span id={ fmt.Sprintf("total-%d", p.ID) } class="text-title-medium font-bold text-primary tabular-nums">0</span>
 										</td>
 									</tr>
 								}
 							</tbody>
 						</table>
 					</div>
-					<div class="p-6 flex justify-end bg-surface-container-low border-t border-outline-variant gap-3">
-						<button type="submit" class="signature-gradient text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"><span class="material-symbols-outlined">save</span> Save Scores</button>
+					<div class="flex justify-end mt-4">
+						<button type="submit" class="btn-primary">
+							<span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+							Save Scores
+						</button>
 					</div>
 				</form>
-			</div>
-		</div>
+			}
+		}
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
 				const inputs = document.querySelectorAll('.score-input');

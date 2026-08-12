@@ -33,10 +33,19 @@
     }
   }
 
+  var lastOk = Date.now(); // wall-clock of the last successful poll
+
+  function markStale(stale) {
+    clock.classList.toggle("opacity-40", stale);
+    if (statusEl && stale) statusEl.textContent = "connection lost";
+  }
+
   function poll() {
     fetch("/countdown/time", { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (d) {
+        lastOk = Date.now();
+        markStale(false);
         clock.textContent = format(d.seconds);
         if (statusEl) statusEl.textContent = d.status;
         syncControls(d.status);
@@ -49,7 +58,11 @@
         }
         localStorage.setItem(storeKey, String(d.seconds));
       })
-      .catch(function () {});
+      .catch(function () {
+        // Server unreachable: flag the frozen clock as stale after 5s so a dead
+        // poll is not mistaken for a genuinely stopped countdown.
+        if (Date.now() - lastOk > 5000) markStale(true);
+      });
   }
 
   poll();

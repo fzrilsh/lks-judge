@@ -92,7 +92,7 @@ func CountdownPublicPage(comp *model.Competition) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"text-on-surface font-mono tabular-nums leading-none\" style=\"font-size:clamp(3rem,18vw,16rem)\">--:--:--</p><p class=\"text-base sm:text-title-large text-on-surface-variant uppercase tracking-widest mt-6 sm:mt-8\"><span id=\"cd-status\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " class=\"text-on-surface font-bold tabular-nums leading-none\" style=\"font-size:clamp(3rem,18vw,16rem)\">--:--:--</p><p class=\"text-base sm:text-title-large text-on-surface-variant uppercase tracking-widest mt-6 sm:mt-8\"><span id=\"cd-status\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

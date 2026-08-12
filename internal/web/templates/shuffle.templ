@@ -7,48 +7,40 @@ import (
 
 templ ShufflePage(results []store.ShuffleResult) {
 	@AppLayout("Shuffle", "participants") {
-		<div class="max-w-6xl mx-auto space-y-8">
-			<div class="text-center">
-				<h1 class="text-2xl font-bold text-on-surface mb-2 font-manrope">PC Number Assignment</h1>
-				<p class="text-sm text-on-surface-variant">Shuffle participants to PC numbers</p>
-				<div class="flex items-center justify-center gap-4 mt-6">
-					<a href="/jury/participants"
-						class="px-4 py-2 bg-surface-container text-on-surface rounded-xl text-label-large hover:shadow transition-shadow">
-						Back
-					</a>
-					<form method="POST" action="/jury/participants/shuffle">
-						<button type="submit"
-							class="px-8 py-3 signature-gradient text-white font-bold rounded-full hover:-translate-y-1 transition-all shadow-lg">
-							if len(results) == 0 {
-								Start Shuffle
-							} else {
-								Re-shuffle
-							}
-						</button>
-					</form>
-				</div>
-			</div>
-			if len(results) == 0 {
-				<div class="bg-surface-container-low rounded-3xl shadow-lg p-8 text-center">
-					<p class="text-body-large text-on-surface-variant mb-4">No participants to shuffle yet.</p>
-				</div>
-			} else {
-				<div class="signature-gradient text-white rounded-xl p-4">
-					<p class="text-body-medium">Shuffle complete. { fmt.Sprintf("%d", len(results)) } participants allocated to seats.</p>
-				</div>
-				<div>
-					<h3 class="text-lg font-bold text-outline mb-4">PC Seat Map</h3>
-					<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-						for _, r := range results {
-							<div class="bg-surface-container border border-surface-container-high rounded-xl p-4 flex flex-col items-center justify-center min-h-[100px]">
-								<span class="text-xs text-outline font-bold mb-1">PC - { fmt.Sprintf("%02d", r.Seat) }</span>
-								<span class="text-sm font-bold text-center text-on-surface">{ r.Name }</span>
-								<span class="text-[10px] text-on-surface-variant text-center mt-1">{ r.School }</span>
-							</div>
-						}
-					</div>
+		@PageHeader("PC Number Assignment", "Shuffle participants into PC numbers.") {
+			<a href="/jury/participants" class="btn-ghost">
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">arrow_back</span>
+				Back
+			</a>
+			<form method="POST" action="/jury/participants/shuffle">
+				<button type="submit" class="btn-primary">
+					<span class="material-symbols-outlined text-lg" aria-hidden="true">shuffle</span>
+					if len(results) == 0 {
+						Start Shuffle
+					} else {
+						Re-shuffle
+					}
+				</button>
+			</form>
+		}
+		if len(results) == 0 {
+			@Card("") {
+				@EmptyState("shuffle", "Nothing shuffled yet", "Add participants then run the shuffle.") {
+				}
+			}
+		} else {
+			@Flash("success", fmt.Sprintf("Shuffle done. %d participants placed.", len(results)))
+			@Card("PC Seat Map") {
+				<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+					for _, r := range results {
+						<div class="bg-surface-container rounded-xl p-4 flex flex-col items-center justify-center text-center min-h-[100px]">
+							<span class="text-label-small text-outline font-bold mb-1">PC - { fmt.Sprintf("%02d", r.Seat) }</span>
+							<span class="text-body-medium font-bold text-on-surface">{ r.Name }</span>
+							<span class="text-label-small text-on-surface-variant mt-1">{ r.School }</span>
+						</div>
+					}
 				</div>
 			}
-		</div>
+		}
 	}
 }

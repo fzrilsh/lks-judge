@@ -14,14 +14,14 @@ func timeValue(t *string) string {
 
 templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
 	@AppLayout("Countdown", "countdown") {
-		@PageHeader("Countdown", "Kontrol jam lomba yang dilihat semua peserta.") {
+		@PageHeader("Countdown", "Control the competition clock all participants see.") {
 			<a href="/countdown" target="_blank" class="btn-ghost">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">open_in_new</span>
-				Tampilan publik
+				Public view
 			</a>
 		}
 		if saved {
-			@Flash("success", "Tersimpan. Countdown di-arm ulang.")
+			@Flash("success", "Saved. Countdown re-armed.")
 		}
 		if errMsg != "" {
 			@Flash("error", errMsg)
@@ -40,20 +40,20 @@ templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
 				</div>
 			</section>
 			<div class="lg:col-span-2 flex flex-col gap-4">
-				<form id="cd-config" method="POST" action="/jury/countdown" class="card space-y-4" onsubmit="return confirm('Simpan konfigurasi dan arm ulang countdown?')">
-					<h2 class="text-title-medium text-on-surface">Konfigurasi Waktu</h2>
+				<form id="cd-config" method="POST" action="/jury/countdown" class="card space-y-4" onsubmit="return confirm('Save configuration and re-arm the countdown?')">
+					<h2 class="text-title-medium text-on-surface">Time Configuration</h2>
 					<div class="field">
-						<label for="cd-start">Jam Mulai</label>
+						<label for="cd-start">Start Time</label>
 						<input id="cd-start" class="input" type="time" name="start_time" required value={ timeValue(comp.StartTime) }/>
 					</div>
 					<div class="field">
-						<label for="cd-end">Jam Selesai</label>
+						<label for="cd-end">End Time</label>
 						<input id="cd-end" class="input" type="time" name="end_time" required value={ timeValue(comp.EndTime) }/>
 					</div>
 				</form>
 				<div class="card">
-					<h2 class="text-title-medium text-on-surface">Kontrol</h2>
-					<p class="text-body-small text-on-surface-variant mt-1 mb-4">Berpengaruh langsung ke semua peserta.</p>
+					<h2 class="text-title-medium text-on-surface">Controls</h2>
+					<p class="text-body-small text-on-surface-variant mt-1 mb-4">Applies immediately to all participants.</p>
 					<div class="flex flex-wrap gap-2">
 						<!-- All four controls live in the DOM; countdown.js shows the pair
 						     that matches the polled status so the buttons stay in sync with
@@ -66,7 +66,7 @@ templ CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) {
 						<form method="POST" action="/jury/countdown/pause" data-cd-show="running">
 							<button type="submit" class="btn-tonal">PAUSE</button>
 						</form>
-						<form method="POST" action="/jury/countdown/stop" data-cd-show="waiting paused" onsubmit="return confirm('Hentikan countdown?')">
+						<form method="POST" action="/jury/countdown/stop" data-cd-show="waiting paused" onsubmit="return confirm('Stop the countdown?')">
 							<button type="submit" class="btn-danger">STOP</button>
 						</form>
 					</div>

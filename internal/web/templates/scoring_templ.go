@@ -67,7 +67,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Scoring", "Input nilai mentah tiap peserta per modul.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Scoring", "Enter each participant's raw score per module.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -76,7 +76,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Tersimpan.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Saved.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -120,13 +120,13 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							}()
 						}
 						ctx = templ.InitializeContext(ctx)
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<a href=\"/jury/participants\" class=\"btn-primary\">Ke Peserta</a>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<a href=\"/jury/participants\" class=\"btn-primary\">Go to Participants</a>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = EmptyState("groups", "Belum ada peserta", "Daftarkan peserta dulu sebelum scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = EmptyState("groups", "No participants yet", "Register participants before scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -149,7 +149,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 						}()
 					}
 					ctx = templ.InitializeContext(ctx)
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<form method=\"post\" action=\"/jury/scoring\"><div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>Peserta</th>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<form method=\"post\" action=\"/jury/scoring\"><div class=\"table-wrap\"><table class=\"data-table\"><thead><tr><th>Seat</th><th>Participant</th>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -235,7 +235,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var11 string
 							templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("score_%d_%d", p.ID, m.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 66, Col: 79}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 65, Col: 79}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 							if templ_7745c5c3_Err != nil {
@@ -248,7 +248,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var12 string
 							templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Name + " - " + m.Name)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 66, Col: 107}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 65, Col: 107}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 							if templ_7745c5c3_Err != nil {
@@ -261,7 +261,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var13 string
 							templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("score_%d_%d", p.ID, m.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 68, Col: 56}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 67, Col: 56}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 							if templ_7745c5c3_Err != nil {
@@ -274,7 +274,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var14 string
 							templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("score_%d_%d", p.ID, m.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 70, Col: 58}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 69, Col: 58}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 							if templ_7745c5c3_Err != nil {
@@ -287,7 +287,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var15 string
 							templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(scoreValue(score, p.ID, m.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 71, Col: 50}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 70, Col: 50}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 							if templ_7745c5c3_Err != nil {
@@ -300,7 +300,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							var templ_7745c5c3_Var16 string
 							templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("%d", p.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 72, Col: 55}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 71, Col: 55}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 							if templ_7745c5c3_Err != nil {
@@ -318,7 +318,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 						var templ_7745c5c3_Var17 string
 						templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("total-%d", p.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 78, Col: 51}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `scoring.templ`, Line: 77, Col: 51}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 						if templ_7745c5c3_Err != nil {
@@ -329,7 +329,7 @@ func Scoring(comp *model.Competition, participants []*model.Participant, modules
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</tbody></table></div><div class=\"flex justify-end mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Simpan Nilai</button></div></form>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</tbody></table></div><div class=\"flex justify-end mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Save Scores</button></div></form>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

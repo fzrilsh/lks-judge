@@ -137,7 +137,7 @@ func buildActivity(subs []*model.Submission, participants []*model.Participant, 
 		acts = append(acts, dashboardview.Activity{
 			When: when,
 			Icon: "upload_file",
-			Text: pName[s.ParticipantID] + " mengumpulkan " + s.Name,
+			Text: pName[s.ParticipantID] + " submitted " + s.Name,
 		})
 	}
 	for _, p := range participants {
@@ -145,7 +145,7 @@ func buildActivity(subs []*model.Submission, participants []*model.Participant, 
 			acts = append(acts, dashboardview.Activity{
 				When: p.UpdatedAt,
 				Icon: "person",
-				Text: p.Name + " aktif dari " + *p.IPAddress,
+				Text: p.Name + " active from " + *p.IPAddress,
 			})
 		}
 	}

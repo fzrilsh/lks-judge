@@ -37,7 +37,7 @@
 
   function markStale(stale) {
     clock.classList.toggle("opacity-40", stale);
-    if (statusEl && stale) statusEl.textContent = "koneksi terputus";
+    if (statusEl && stale) statusEl.textContent = "connection lost";
   }
 
   function poll() {

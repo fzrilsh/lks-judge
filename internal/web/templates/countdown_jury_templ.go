@@ -65,13 +65,13 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/countdown\" target=\"_blank\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">open_in_new</span> Tampilan publik</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a href=\"/countdown\" target=\"_blank\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">open_in_new</span> Public view</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("Countdown", "Kontrol jam lomba yang dilihat semua peserta.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Countdown", "Control the competition clock all participants see.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -80,7 +80,7 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Tersimpan. Countdown di-arm ulang.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Saved. Countdown re-armed.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -108,7 +108,7 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span></p></div></section><div class=\"lg:col-span-2 flex flex-col gap-4\"><form id=\"cd-config\" method=\"POST\" action=\"/jury/countdown\" class=\"card space-y-4\" onsubmit=\"return confirm('Simpan konfigurasi dan arm ulang countdown?')\"><h2 class=\"text-title-medium text-on-surface\">Konfigurasi Waktu</h2><div class=\"field\"><label for=\"cd-start\">Jam Mulai</label> <input id=\"cd-start\" class=\"input\" type=\"time\" name=\"start_time\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span></p></div></section><div class=\"lg:col-span-2 flex flex-col gap-4\"><form id=\"cd-config\" method=\"POST\" action=\"/jury/countdown\" class=\"card space-y-4\" onsubmit=\"return confirm('Save configuration and re-arm the countdown?')\"><h2 class=\"text-title-medium text-on-surface\">Time Configuration</h2><div class=\"field\"><label for=\"cd-start\">Start Time</label> <input id=\"cd-start\" class=\"input\" type=\"time\" name=\"start_time\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -121,7 +121,7 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"></div><div class=\"field\"><label for=\"cd-end\">Jam Selesai</label> <input id=\"cd-end\" class=\"input\" type=\"time\" name=\"end_time\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"></div><div class=\"field\"><label for=\"cd-end\">End Time</label> <input id=\"cd-end\" class=\"input\" type=\"time\" name=\"end_time\" required value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -134,7 +134,7 @@ func CountdownJuryPage(comp *model.Competition, saved bool, errMsg string) templ
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></div></form><div class=\"card\"><h2 class=\"text-title-medium text-on-surface\">Kontrol</h2><p class=\"text-body-small text-on-surface-variant mt-1 mb-4\">Berpengaruh langsung ke semua peserta.</p><div class=\"flex flex-wrap gap-2\"><!-- All four controls live in the DOM; countdown.js shows the pair\n\t\t\t\t\t\t     that matches the polled status so the buttons stay in sync with\n\t\t\t\t\t\t     the clock without a page reload. data-cd-show lists the statuses\n\t\t\t\t\t\t     each control is visible for. --><button type=\"submit\" form=\"cd-config\" class=\"btn-primary\" data-cd-show=\"waiting running\">SAVE</button><form method=\"POST\" action=\"/jury/countdown/resume\" data-cd-show=\"paused\"><button type=\"submit\" class=\"btn-primary\">RESUME</button></form><form method=\"POST\" action=\"/jury/countdown/pause\" data-cd-show=\"running\"><button type=\"submit\" class=\"btn-tonal\">PAUSE</button></form><form method=\"POST\" action=\"/jury/countdown/stop\" data-cd-show=\"waiting paused\" onsubmit=\"return confirm('Hentikan countdown?')\"><button type=\"submit\" class=\"btn-danger\">STOP</button></form></div></div></div></div><script src=\"/static/js/countdown.js\" defer></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></div></form><div class=\"card\"><h2 class=\"text-title-medium text-on-surface\">Controls</h2><p class=\"text-body-small text-on-surface-variant mt-1 mb-4\">Applies immediately to all participants.</p><div class=\"flex flex-wrap gap-2\"><!-- All four controls live in the DOM; countdown.js shows the pair\n\t\t\t\t\t\t     that matches the polled status so the buttons stay in sync with\n\t\t\t\t\t\t     the clock without a page reload. data-cd-show lists the statuses\n\t\t\t\t\t\t     each control is visible for. --><button type=\"submit\" form=\"cd-config\" class=\"btn-primary\" data-cd-show=\"waiting running\">SAVE</button><form method=\"POST\" action=\"/jury/countdown/resume\" data-cd-show=\"paused\"><button type=\"submit\" class=\"btn-primary\">RESUME</button></form><form method=\"POST\" action=\"/jury/countdown/pause\" data-cd-show=\"running\"><button type=\"submit\" class=\"btn-tonal\">PAUSE</button></form><form method=\"POST\" action=\"/jury/countdown/stop\" data-cd-show=\"waiting paused\" onsubmit=\"return confirm('Stop the countdown?')\"><button type=\"submit\" class=\"btn-danger\">STOP</button></form></div></div></div></div><script src=\"/static/js/countdown.js\" defer></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

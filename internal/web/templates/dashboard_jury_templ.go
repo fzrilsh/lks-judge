@@ -28,16 +28,16 @@ func dashSeconds(s int) string {
 	return fmt.Sprintf("%02d:%02d", m, sec)
 }
 
-// dashRelative renders a coarse "x menit lalu" relative time.
+// dashRelative renders a coarse "x minutes ago" relative time.
 func dashRelative(t time.Time) string {
 	d := time.Since(t)
 	switch {
 	case d < time.Minute:
-		return "baru saja"
+		return "just now"
 	case d < time.Hour:
-		return strconv.Itoa(int(d.Minutes())) + " menit lalu"
+		return strconv.Itoa(int(d.Minutes())) + " min ago"
 	case d < 24*time.Hour:
-		return strconv.Itoa(int(d.Hours())) + " jam lalu"
+		return strconv.Itoa(int(d.Hours())) + " hr ago"
 	default:
 		return t.Format("2 Jan 15:04")
 	}
@@ -234,7 +234,7 @@ func dashStatusCard(d *dashboardview.Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Tanggal</dt><dd class=\"text-on-surface text-right\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Date</dt><dd class=\"text-on-surface text-right\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -260,7 +260,7 @@ func dashStatusCard(d *dashboardview.Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Modul aktif</dt><dd class=\"text-on-surface text-right\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Active module</dt><dd class=\"text-on-surface text-right\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -275,12 +275,12 @@ func dashStatusCard(d *dashboardview.Data) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"text-on-surface-variant\">belum dipilih</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"text-on-surface-variant\">not selected</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Total modul</dt><dd class=\"text-on-surface text-right\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</dd></div><div class=\"flex justify-between gap-4\"><dt class=\"text-on-surface-variant\">Total modules</dt><dd class=\"text-on-surface text-right\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -299,7 +299,7 @@ func dashStatusCard(d *dashboardview.Data) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Card("Status Kompetisi").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Card("Competition Status").Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -362,17 +362,17 @@ func dashCountdownCard(d *dashboardview.Data) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if d.FormOpen {
-				templ_7745c5c3_Err = Chip("ok", "Form terbuka").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Chip("ok", "Form open").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = Chip("neutral", "Form tertutup").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Chip("neutral", "Form closed").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"mt-4 flex flex-wrap gap-2\"><form method=\"post\" action=\"/jury/countdown/pause\"><button type=\"submit\" class=\"btn-ghost px-3 py-2 text-label-medium\">Pause</button></form><form method=\"post\" action=\"/jury/countdown/resume\"><button type=\"submit\" class=\"btn-ghost px-3 py-2 text-label-medium\">Resume</button></form><form method=\"post\" action=\"/jury/countdown/stop\" onsubmit=\"return confirm('Hentikan countdown?')\"><button type=\"submit\" class=\"btn-danger px-3 py-2 text-label-medium\">Stop</button></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><div class=\"mt-4 flex flex-wrap gap-2\"><form method=\"post\" action=\"/jury/countdown/pause\"><button type=\"submit\" class=\"btn-ghost px-3 py-2 text-label-medium\">Pause</button></form><form method=\"post\" action=\"/jury/countdown/resume\"><button type=\"submit\" class=\"btn-ghost px-3 py-2 text-label-medium\">Resume</button></form><form method=\"post\" action=\"/jury/countdown/stop\" onsubmit=\"return confirm('Stop the countdown?')\"><button type=\"submit\" class=\"btn-danger px-3 py-2 text-label-medium\">Stop</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -432,20 +432,20 @@ func dashProgressCard(d *dashboardview.Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</p><p class=\"text-label-medium text-on-surface-variant\">Peserta (")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</p><p class=\"text-label-medium text-on-surface-variant\">Participants (")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(d.Seated))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `dashboard_jury.templ`, Line: 156, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `dashboard_jury.templ`, Line: 156, Col: 95}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " ber-seat)</p></div><div><p class=\"text-headline-medium text-on-surface\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " seated)</p></div><div><p class=\"text-headline-medium text-on-surface\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -458,7 +458,7 @@ func dashProgressCard(d *dashboardview.Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</p><p class=\"text-label-medium text-on-surface-variant\">Belum submit apa pun</p></div></div><div class=\"mt-4\"><div class=\"flex justify-between text-label-medium text-on-surface-variant mb-1\"><span>Submission</span> <span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</p><p class=\"text-label-medium text-on-surface-variant\">Nothing submitted yet</p></div></div><div class=\"mt-4\"><div class=\"flex justify-between text-label-medium text-on-surface-variant mb-1\"><span>Submissions</span> <span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -572,7 +572,7 @@ func dashTopCard(d *dashboardview.Data) templ.Component {
 					ctx = templ.InitializeContext(ctx)
 					return nil
 				})
-				templ_7745c5c3_Err = EmptyState("leaderboard", "Belum ada skor", "Nilai peserta muncul di sini setelah scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var25), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = EmptyState("leaderboard", "No scores yet", "Participant scores show up here after scoring.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var25), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -712,7 +712,7 @@ func dashActivityCard(d *dashboardview.Data) templ.Component {
 					ctx = templ.InitializeContext(ctx)
 					return nil
 				})
-				templ_7745c5c3_Err = EmptyState("history", "Belum ada aktivitas", "Pengumpulan submission dan peserta aktif tampil di sini.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var32), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = EmptyState("history", "No activity yet", "Submission collection and active participants show up here.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var32), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -773,7 +773,7 @@ func dashActivityCard(d *dashboardview.Data) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Card("Aktivitas Terbaru").Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Card("Recent Activity").Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -802,7 +802,7 @@ func dashChartsCard() templ.Component {
 			templ_7745c5c3_Var36 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<section class=\"card md:col-span-2 xl:col-span-3\"><h2 class=\"text-title-medium text-on-surface mb-4\">Statistik Submission</h2><div class=\"grid grid-cols-1 lg:grid-cols-2 gap-6\"><div><p class=\"text-label-medium text-on-surface-variant mb-2\">Waktu pengumpulan (menit setelah mulai)</p><canvas id=\"chart-timing\" height=\"200\"></canvas></div><div><p class=\"text-label-medium text-on-surface-variant mb-2\">Submission per modul</p><canvas id=\"chart-module\" height=\"200\"></canvas></div></div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<section class=\"card md:col-span-2 xl:col-span-3\"><h2 class=\"text-title-medium text-on-surface mb-4\">Submission Statistics</h2><div class=\"grid grid-cols-1 lg:grid-cols-2 gap-6\"><div><p class=\"text-label-medium text-on-surface-variant mb-2\">Collection time (minutes after start)</p><canvas id=\"chart-timing\" height=\"200\"></canvas></div><div><p class=\"text-label-medium text-on-surface-variant mb-2\">Submissions per module</p><canvas id=\"chart-module\" height=\"200\"></canvas></div></div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

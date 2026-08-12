@@ -19,57 +19,57 @@ func displayAllowedIPs(raw string) string {
 
 templ CompetitionPage(c *model.Competition, saved bool, needSetup bool) {
 	@AppLayout("Competition", "competition") {
-		@PageHeader("Competition", "Atur detail lomba dan whitelist IP juri.") {
+		@PageHeader("Competition", "Configure competition details and the jury IP whitelist.") {
 		}
 		if needSetup {
-			@Flash("info", "Buat competition dulu sebelum membuka menu lain.")
+			@Flash("info", "Create a competition first before opening the other menus.")
 		}
 		if saved {
-			@Flash("success", "Perubahan tersimpan.")
+			@Flash("success", "Changes saved.")
 		}
 		@Card("") {
 			<form method="POST" action="/jury/competition" class="space-y-6">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="field">
-						<label for="f-name">Nama Competition</label>
-						<input id="f-name" class="input" type="text" name="name" required value={ c.Name } placeholder="mis. LKS Wilayah II Kota Jakarta Selatan"/>
+						<label for="f-name">Competition Name</label>
+						<input id="f-name" class="input" type="text" name="name" required value={ c.Name } placeholder="e.g. LKS Wilayah II Kota Jakarta Selatan"/>
 					</div>
 					<div class="field">
-						<label for="f-level">Level Competition</label>
-						<input id="f-level" class="input" type="text" name="level" required value={ c.Level } placeholder="mis. Kota"/>
+						<label for="f-level">Competition Level</label>
+						<input id="f-level" class="input" type="text" name="level" required value={ c.Level } placeholder="e.g. City"/>
 					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="field">
-						<label for="f-sd">Tanggal Mulai</label>
+						<label for="f-sd">Start Date</label>
 						<input id="f-sd" class="input" type="date" name="start_date" required value={ c.StartDate }/>
 					</div>
 					<div class="field">
-						<label for="f-ed">Tanggal Selesai</label>
+						<label for="f-ed">End Date</label>
 						<input id="f-ed" class="input" type="date" name="end_date" required value={ c.EndDate }/>
 					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="field">
-						<label for="f-st">Jam Mulai</label>
+						<label for="f-st">Start Time</label>
 						<input id="f-st" class="input" type="time" name="start_time" value={ timeValue(c.StartTime) }/>
 					</div>
 					<div class="field">
-						<label for="f-et">Jam Selesai</label>
+						<label for="f-et">End Time</label>
 						<input id="f-et" class="input" type="time" name="end_time" value={ timeValue(c.EndTime) }/>
 					</div>
 				</div>
 				<div class="field">
 					<label for="f-ips">Allowed IPs (Whitelist)</label>
 					<textarea id="f-ips" class="input" name="allowed_ips" rows="3" placeholder="192.168.1.1, 192.168.1.2, 10.0.0.0/8" required>{ displayAllowedIPs(c.AllowedIPs) }</textarea>
-					<p class="text-label-small text-on-surface-variant">Pisahkan IP atau CIDR dengan koma. Loopback selalu diizinkan.</p>
+					<p class="text-label-small text-on-surface-variant">Separate IPs or CIDRs with commas. Loopback is always allowed.</p>
 				</div>
 				<div class="field">
 					<label>Status</label>
-					<p class="input bg-surface-container-low text-on-surface-variant">{ c.Status } (dikontrol dari halaman Countdown)</p>
+					<p class="input bg-surface-container-low text-on-surface-variant">{ c.Status } (controlled from the Countdown page)</p>
 				</div>
 				<div class="flex justify-end">
-					<button type="submit" class="btn-primary">Simpan Perubahan</button>
+					<button type="submit" class="btn-primary">Save Changes</button>
 				</div>
 			</form>
 		}

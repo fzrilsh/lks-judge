@@ -60,7 +60,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				ctx = templ.InitializeContext(ctx)
 				return nil
 			})
-			templ_7745c5c3_Err = PageHeader("File Lomba", "Repositori aset dan dokumentasi.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PageHeader("Competition Files", "Asset and documentation repository.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -69,7 +69,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				return templ_7745c5c3_Err
 			}
 			if saved {
-				templ_7745c5c3_Err = Flash("success", "Tersimpan.").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = Flash("success", "Saved.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -100,7 +100,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<label id=\"dropzone\" for=\"file-input\" class=\"group flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-outline-variant rounded-xl py-12 px-6 bg-surface-container-low hover:border-primary hover:bg-primary/5 transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary\"><span class=\"w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary\"><span class=\"material-symbols-outlined text-3xl group-hover:scale-110 transition\" aria-hidden=\"true\">cloud_upload</span></span><p class=\"text-body-medium text-on-surface mb-1\">Klik atau tarik file ke sini</p><p class=\"text-label-small text-on-surface-variant\">Unggah aset atau file apa pun</p><input id=\"file-input\" type=\"file\" class=\"sr-only\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\" aria-live=\"polite\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<label id=\"dropzone\" for=\"file-input\" class=\"group flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-outline-variant rounded-xl py-12 px-6 bg-surface-container-low hover:border-primary hover:bg-primary/5 transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary\"><span class=\"w-14 h-14 mb-4 flex items-center justify-center rounded-full bg-primary/10 text-primary\"><span class=\"material-symbols-outlined text-3xl group-hover:scale-110 transition\" aria-hidden=\"true\">cloud_upload</span></span><p class=\"text-body-medium text-on-surface mb-1\">Click or drag a file here</p><p class=\"text-label-small text-on-surface-variant\">Upload an asset or any file</p><input id=\"file-input\" type=\"file\" class=\"sr-only\"></label><div id=\"progress-wrap\" class=\"hidden mt-4\"><div class=\"flex justify-between text-label-small text-on-surface-variant mb-1\"><span id=\"progress-name\"></span> <span id=\"progress-pct\" aria-live=\"polite\">0%</span></div><div class=\"w-full h-2 bg-surface-container-highest rounded-full overflow-hidden\"><div id=\"progress-bar\" class=\"h-full bg-primary transition-all\" style=\"width:0%\"></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -141,7 +141,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 						ctx = templ.InitializeContext(ctx)
 						return nil
 					})
-					templ_7745c5c3_Err = EmptyState("folder_open", "Belum ada file", "File yang diunggah muncul di sini.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = EmptyState("folder_open", "No files yet", "Uploaded files show up here.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -187,15 +187,15 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var9 string
-							templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue("Sembunyikan " + f.Name)
+							templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue("Hide " + f.Name)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 56, Col: 151}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 56, Col: 144}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">visibility</span> Publik</button>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">visibility</span> Public</button>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -205,15 +205,15 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var10 string
-							templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue("Publikasikan " + f.Name)
+							templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue("Publish " + f.Name)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 61, Col: 157}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 61, Col: 152}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">visibility_off</span> Privat</button>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><span class=\"material-symbols-outlined text-sm\" aria-hidden=\"true\">visibility_off</span> Private</button>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -236,9 +236,9 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var12 string
-						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue("Unduh " + f.Name)
+						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue("Download " + f.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 67, Col: 129}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 67, Col: 132}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 						if templ_7745c5c3_Err != nil {
@@ -257,14 +257,14 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" onsubmit=\"return confirm('Hapus file ini?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" onsubmit=\"return confirm('Delete this file?')\"><button type=\"submit\" class=\"btn-ghost text-error px-2 py-1\" aria-label=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var14 string
-						templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue("Hapus " + f.Name)
+						templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue("Delete " + f.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 71, Col: 100}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `files.templ`, Line: 71, Col: 101}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 						if templ_7745c5c3_Err != nil {
@@ -282,7 +282,7 @@ func FilesPage(comp *model.Competition, files []*model.File, saved bool, errMsg 
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = Card(fmt.Sprintf("Aset Aktif (%d)", len(files))).Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = Card(fmt.Sprintf("Active Assets (%d)", len(files))).Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

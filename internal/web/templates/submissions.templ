@@ -31,20 +31,20 @@ func moduleCount(participants []*model.Participant, cell map[int64]map[int64]*mo
 // cell[participantID][moduleID] holds the submission for that pair, or nil.
 templ Submissions(comp *model.Competition, participants []*model.Participant, modules []*model.Module, cell map[int64]map[int64]*model.Submission) {
 	@AppLayout("Submissions", "submissions") {
-		@PageHeader("Submission", "Pantau status pengumpulan tiap modul.") {
+		@PageHeader("Submissions", "Track collection status per module.") {
 			<a href="/jury/submissions/export.zip" class="btn-tonal">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">archive</span>
-				Unduh Semua (.zip)
+				Download All (.zip)
 			</a>
 		}
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-			@statCard("groups", "ok", "Total Peserta", len(participants))
-			@statCard("task_alt", "ok", "Sudah Submit", countSubmitted(participants, cell))
-			@statCard("view_module", "warn", "Total Modul", len(modules))
+			@statCard("groups", "ok", "Total Participants", len(participants))
+			@statCard("task_alt", "ok", "Submitted", countSubmitted(participants, cell))
+			@statCard("view_module", "warn", "Total Modules", len(modules))
 		</div>
 		@Card("") {
 			if len(participants) == 0 {
-				@EmptyState("inbox", "Belum ada data", "Submission peserta muncul di sini.") {
+				@EmptyState("inbox", "No data yet", "Participant submissions show up here.") {
 				}
 			} else {
 				<div class="table-wrap">
@@ -52,11 +52,11 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 						<thead>
 							<tr>
 								<th>Seat</th>
-								<th>Peserta</th>
+								<th>Participant</th>
 								for _, m := range modules {
 									<th class="text-center">
 										<div class="whitespace-nowrap">{ m.Name }</div>
-										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d terkumpul", moduleCount(participants, cell, m.ID)) }</div>
+										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d collected", moduleCount(participants, cell, m.ID)) }</div>
 									</th>
 								}
 							</tr>
@@ -78,9 +78,9 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 									for _, m := range modules {
 										<td class="text-center">
 											if sub := cell[p.ID][m.ID]; sub != nil {
-												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) } class="chip chip-ok" aria-label={ "Unduh " + p.Name + " " + m.Name }>
+												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) } class="chip chip-ok" aria-label={ "Download " + p.Name + " " + m.Name }>
 													<span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>
-													Unduh
+													Download
 												</a>
 											} else {
 												<span class="chip chip-neutral">

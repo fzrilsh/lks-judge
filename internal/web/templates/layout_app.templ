@@ -10,7 +10,7 @@ func SetCompetitionName(fn func() string) { competitionName = fn }
 
 templ AppLayout(title string, activePage string) {
 	<!DOCTYPE html>
-	<html lang="id">
+	<html lang="en">
 	<head>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -25,13 +25,13 @@ templ AppLayout(title string, activePage string) {
 		<input type="checkbox" id="nav-toggle" class="peer sr-only"/>
 		<header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant">
 			<div class="flex items-center gap-3 min-w-0">
-				<label for="nav-toggle" class="lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer" aria-label="Buka menu">
+				<label for="nav-toggle" class="lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer" aria-label="Open menu">
 					<span class="material-symbols-outlined" aria-hidden="true">menu</span>
 				</label>
 				<span class="text-lg md:text-xl font-bold truncate">{ competitionName() }</span>
 			</div>
 			<form method="post" action="/jury/reset" onsubmit="return confirmReset()">
-				<button type="submit" class="btn-danger px-3 py-2 text-label-medium" aria-label="Reset semua data">Reset</button>
+				<button type="submit" class="btn-danger px-3 py-2 text-label-medium" aria-label="Reset all data">Reset</button>
 			</form>
 		</header>
 		<!-- Backdrop: only interactive when the drawer is open (<lg). Clicking it unchecks the toggle. -->

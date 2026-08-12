@@ -20,16 +20,16 @@ func dashSeconds(s int) string {
 	return fmt.Sprintf("%02d:%02d", m, sec)
 }
 
-// dashRelative renders a coarse "x menit lalu" relative time.
+// dashRelative renders a coarse "x minutes ago" relative time.
 func dashRelative(t time.Time) string {
 	d := time.Since(t)
 	switch {
 	case d < time.Minute:
-		return "baru saja"
+		return "just now"
 	case d < time.Hour:
-		return strconv.Itoa(int(d.Minutes())) + " menit lalu"
+		return strconv.Itoa(int(d.Minutes())) + " min ago"
 	case d < 24*time.Hour:
-		return strconv.Itoa(int(d.Hours())) + " jam lalu"
+		return strconv.Itoa(int(d.Hours())) + " hr ago"
 	default:
 		return t.Format("2 Jan 15:04")
 	}
@@ -95,28 +95,28 @@ templ DashboardJuryPage(d *dashboardview.Data) {
 }
 
 templ dashStatusCard(d *dashboardview.Data) {
-	@Card("Status Kompetisi") {
+	@Card("Competition Status") {
 		<dl class="space-y-3 text-body-medium">
 			<div class="flex justify-between gap-4">
 				<dt class="text-on-surface-variant">Level</dt>
 				<dd class="text-on-surface text-right">{ orDash(d.Comp.Level) }</dd>
 			</div>
 			<div class="flex justify-between gap-4">
-				<dt class="text-on-surface-variant">Tanggal</dt>
+				<dt class="text-on-surface-variant">Date</dt>
 				<dd class="text-on-surface text-right">{ orDash(d.Comp.StartDate) } &ndash; { orDash(d.Comp.EndDate) }</dd>
 			</div>
 			<div class="flex justify-between gap-4">
-				<dt class="text-on-surface-variant">Modul aktif</dt>
+				<dt class="text-on-surface-variant">Active module</dt>
 				<dd class="text-on-surface text-right">
 					if d.CurrentModule != nil {
 						{ d.CurrentModule.Name }
 					} else {
-						<span class="text-on-surface-variant">belum dipilih</span>
+						<span class="text-on-surface-variant">not selected</span>
 					}
 				</dd>
 			</div>
 			<div class="flex justify-between gap-4">
-				<dt class="text-on-surface-variant">Total modul</dt>
+				<dt class="text-on-surface-variant">Total modules</dt>
 				<dd class="text-on-surface text-right">{ strconv.Itoa(d.Modules) }</dd>
 			</div>
 		</dl>
@@ -129,9 +129,9 @@ templ dashCountdownCard(d *dashboardview.Data) {
 		<div class="mt-2 flex items-center gap-2">
 			@Chip(statusChipKind(d.Comp.Status), d.Comp.Status)
 			if d.FormOpen {
-				@Chip("ok", "Form terbuka")
+				@Chip("ok", "Form open")
 			} else {
-				@Chip("neutral", "Form tertutup")
+				@Chip("neutral", "Form closed")
 			}
 		</div>
 		<div class="mt-4 flex flex-wrap gap-2">
@@ -141,7 +141,7 @@ templ dashCountdownCard(d *dashboardview.Data) {
 			<form method="post" action="/jury/countdown/resume">
 				<button type="submit" class="btn-ghost px-3 py-2 text-label-medium">Resume</button>
 			</form>
-			<form method="post" action="/jury/countdown/stop" onsubmit="return confirm('Hentikan countdown?')">
+			<form method="post" action="/jury/countdown/stop" onsubmit="return confirm('Stop the countdown?')">
 				<button type="submit" class="btn-danger px-3 py-2 text-label-medium">Stop</button>
 			</form>
 		</div>
@@ -153,16 +153,16 @@ templ dashProgressCard(d *dashboardview.Data) {
 		<div class="grid grid-cols-2 gap-4">
 			<div>
 				<p class="text-headline-medium text-on-surface">{ strconv.Itoa(d.Participants) }</p>
-				<p class="text-label-medium text-on-surface-variant">Peserta ({ strconv.Itoa(d.Seated) } ber-seat)</p>
+				<p class="text-label-medium text-on-surface-variant">Participants ({ strconv.Itoa(d.Seated) } seated)</p>
 			</div>
 			<div>
 				<p class="text-headline-medium text-on-surface">{ strconv.Itoa(d.NotSubmitted) }</p>
-				<p class="text-label-medium text-on-surface-variant">Belum submit apa pun</p>
+				<p class="text-label-medium text-on-surface-variant">Nothing submitted yet</p>
 			</div>
 		</div>
 		<div class="mt-4">
 			<div class="flex justify-between text-label-medium text-on-surface-variant mb-1">
-				<span>Submission</span>
+				<span>Submissions</span>
 				<span>{ strconv.Itoa(d.Submissions) } / { strconv.Itoa(d.SubmissionSlots) }</span>
 			</div>
 			<progress class="w-full h-2 [&::-webkit-progress-bar]:bg-surface-container-high [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary rounded-full" value={ strconv.Itoa(d.Submissions) } max={ strconv.Itoa(maxInt(d.SubmissionSlots, 1)) }></progress>
@@ -173,7 +173,7 @@ templ dashProgressCard(d *dashboardview.Data) {
 templ dashTopCard(d *dashboardview.Data) {
 	@Card("Top 3 Leaderboard") {
 		if len(d.Top) == 0 {
-			@EmptyState("leaderboard", "Belum ada skor", "Nilai peserta muncul di sini setelah scoring.") {
+			@EmptyState("leaderboard", "No scores yet", "Participant scores show up here after scoring.") {
 			}
 		} else {
 			<ol class="space-y-3 max-h-72 overflow-y-auto">
@@ -196,9 +196,9 @@ templ dashTopCard(d *dashboardview.Data) {
 }
 
 templ dashActivityCard(d *dashboardview.Data) {
-	@Card("Aktivitas Terbaru") {
+	@Card("Recent Activity") {
 		if len(d.Activity) == 0 {
-			@EmptyState("history", "Belum ada aktivitas", "Pengumpulan submission dan peserta aktif tampil di sini.") {
+			@EmptyState("history", "No activity yet", "Submission collection and active participants show up here.") {
 			}
 		} else {
 			<ul class="space-y-3 max-h-80 overflow-y-auto">
@@ -218,14 +218,14 @@ templ dashActivityCard(d *dashboardview.Data) {
 
 templ dashChartsCard() {
 	<section class="card md:col-span-2 xl:col-span-3">
-		<h2 class="text-title-medium text-on-surface mb-4">Statistik Submission</h2>
+		<h2 class="text-title-medium text-on-surface mb-4">Submission Statistics</h2>
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 			<div>
-				<p class="text-label-medium text-on-surface-variant mb-2">Waktu pengumpulan (menit setelah mulai)</p>
+				<p class="text-label-medium text-on-surface-variant mb-2">Collection time (minutes after start)</p>
 				<canvas id="chart-timing" height="200"></canvas>
 			</div>
 			<div>
-				<p class="text-label-medium text-on-surface-variant mb-2">Submission per modul</p>
+				<p class="text-label-medium text-on-surface-variant mb-2">Submissions per module</p>
 				<canvas id="chart-module" height="200"></canvas>
 			</div>
 		</div>

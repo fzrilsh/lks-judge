@@ -37,7 +37,7 @@ func AppLayout(title string, activePage string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"id\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -50,7 +50,7 @@ func AppLayout(title string, activePage string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/reset.js\" defer></script><script src=\"/static/js/forms.js\" defer></script></head><body class=\"bg-surface text-on-surface min-h-screen font-manrope\"><!-- CSS-only sidebar toggle: the checkbox drives peer-checked on the drawer + backdrop. No JS. --><input type=\"checkbox\" id=\"nav-toggle\" class=\"peer sr-only\"><header class=\"fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant\"><div class=\"flex items-center gap-3 min-w-0\"><label for=\"nav-toggle\" class=\"lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer\" aria-label=\"Buka menu\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></label> <span class=\"text-lg md:text-xl font-bold truncate\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - LKS Judge Platform</title><link rel=\"icon\" type=\"image/png\" href=\"/static/imgs/logo.png\"><link rel=\"stylesheet\" href=\"/static/css/app.css\"><script src=\"/static/js/reset.js\" defer></script><script src=\"/static/js/forms.js\" defer></script></head><body class=\"bg-surface text-on-surface min-h-screen font-manrope\"><!-- CSS-only sidebar toggle: the checkbox drives peer-checked on the drawer + backdrop. No JS. --><input type=\"checkbox\" id=\"nav-toggle\" class=\"peer sr-only\"><header class=\"fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 h-16 bg-surface-container-lowest/85 backdrop-blur-md border-b border-outline-variant\"><div class=\"flex items-center gap-3 min-w-0\"><label for=\"nav-toggle\" class=\"lg:hidden inline-flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high cursor-pointer\" aria-label=\"Open menu\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></label> <span class=\"text-lg md:text-xl font-bold truncate\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -63,7 +63,7 @@ func AppLayout(title string, activePage string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</span></div><form method=\"post\" action=\"/jury/reset\" onsubmit=\"return confirmReset()\"><button type=\"submit\" class=\"btn-danger px-3 py-2 text-label-medium\" aria-label=\"Reset semua data\">Reset</button></form></header><!-- Backdrop: only interactive when the drawer is open (<lg). Clicking it unchecks the toggle. --><label for=\"nav-toggle\" class=\"fixed inset-0 top-16 z-30 bg-on-surface/30 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity lg:hidden\" aria-hidden=\"true\"></label><aside class=\"fixed left-0 top-16 z-40 h-[calc(100vh-64px)] w-64 flex flex-col p-4 bg-surface-container-low border-r border-outline-variant -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 transition-transform\"><nav class=\"flex-1 space-y-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</span></div><form method=\"post\" action=\"/jury/reset\" onsubmit=\"return confirmReset()\"><button type=\"submit\" class=\"btn-danger px-3 py-2 text-label-medium\" aria-label=\"Reset all data\">Reset</button></form></header><!-- Backdrop: only interactive when the drawer is open (<lg). Clicking it unchecks the toggle. --><label for=\"nav-toggle\" class=\"fixed inset-0 top-16 z-30 bg-on-surface/30 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity lg:hidden\" aria-hidden=\"true\"></label><aside class=\"fixed left-0 top-16 z-40 h-[calc(100vh-64px)] w-64 flex flex-col p-4 bg-surface-container-low border-r border-outline-variant -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 transition-transform\"><nav class=\"flex-1 space-y-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

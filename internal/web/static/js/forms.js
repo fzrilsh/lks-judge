@@ -1,5 +1,5 @@
 // Global pending-state for real form submits: once a form starts navigating,
-// disable its submit button and swap the label to "Menyimpan..." so a slow
+// disable its submit button and swap the label to "Saving..." so a slow
 // POST cannot be double-submitted and the user sees the click registered.
 // One delegated listener, no per-form wiring. Skips forms whose submit was
 // cancelled (a confirm() dialog that returned false) and the chunked uploader,
@@ -17,7 +17,7 @@
       btn.dataset.pendingDone = "1";
       var label = btn.getAttribute("aria-label") || btn.textContent.trim();
       btn.setAttribute("aria-label", label);
-      btn.textContent = "Menyimpan...";
+      btn.textContent = "Saving...";
     }, 0);
   });
 })();

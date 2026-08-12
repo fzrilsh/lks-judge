@@ -149,7 +149,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 						return templ_7745c5c3_Err
 					}
 					for _, m := range modules {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<th class=\"text-center\"><div class=\"whitespace-nowrap\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<th><div class=\"whitespace-nowrap\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -236,7 +236,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 							return templ_7745c5c3_Err
 						}
 						for _, m := range modules {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<td><div class=\"flex justify-center\">")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -248,7 +248,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 								var templ_7745c5c3_Var11 templ.SafeURL
 								templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)))
 								if templ_7745c5c3_Err != nil {
-									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 82, Col: 85}
+									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 81, Col: 85}
 								}
 								_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 								if templ_7745c5c3_Err != nil {
@@ -261,7 +261,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 								var templ_7745c5c3_Var12 string
 								templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue("Unduh " + p.Name + " " + m.Name)
 								if templ_7745c5c3_Err != nil {
-									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 82, Col: 154}
+									return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 81, Col: 154}
 								}
 								_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 								if templ_7745c5c3_Err != nil {
@@ -277,7 +277,7 @@ func Submissions(comp *model.Competition, participants []*model.Participant, mod
 									return templ_7745c5c3_Err
 								}
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -359,7 +359,7 @@ func statCard(icon string, kind string, label string, value int) templ.Component
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 109, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 107, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -372,7 +372,7 @@ func statCard(icon string, kind string, label string, value int) templ.Component
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 112, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 110, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -385,7 +385,7 @@ func statCard(icon string, kind string, label string, value int) templ.Component
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", value))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 113, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `submissions.templ`, Line: 111, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {

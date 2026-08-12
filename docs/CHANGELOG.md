@@ -24,9 +24,13 @@
 - Participant dashboard reads `?error=` and renders a `Flash`: a failed submission upload no longer looks identical to success (the worst audit defect).
 - Destructive and state-changing forms (import, delete, shuffle, generate modules, set-current, countdown save/stop) confirm via `onsubmit` so Enter in a field cannot skip the prompt.
 - Upload is keyboard-reachable: `#dropzone`/import become real `<label for>` targets and the file input is `sr-only` instead of `hidden`. Scoring inputs get `sr-only` labels. Countdown clock and upload percent get `aria-live`.
-- `forms.js`: one delegated submit listener disables the submit button and shows "Menyimpan..." after a real POST, preventing double submits (skips cancelled confirms and the chunked uploader).
-- `countdown.js` flags a frozen clock as stale after 5s of failed polls. `leaderboard.js` shows a retry button instead of a perpetual "Memuat..." when the first fetch fails.
-- Empty participant/module/score states render an `EmptyState` with a next action. Copy is consistent Indonesian to match `<html lang="id">`. The stale "Max file size: 70MB" claim is corrected to 2 GB to match `upload.MaxUploadSize`.
+- `forms.js`: one delegated submit listener disables the submit button and shows "Saving..." after a real POST, preventing double submits (skips cancelled confirms and the chunked uploader).
+- `countdown.js` flags a frozen clock as stale after 5s of failed polls. `leaderboard.js` shows a retry button instead of a perpetual "Loading..." when the first fetch fails.
+- Empty participant/module/score states render an `EmptyState` with a next action. The stale "Max file size: 70MB" claim is corrected to 2 GB to match `upload.MaxUploadSize`.
+
+### Language pass (English)
+- All UI copy standardised on English across every page (jury, participant, public), plus the derived activity feed, form pending-state, countdown stale marker, and leaderboard fetch-failure copy. Proper nouns (competition name and similar) stay untouched. `<html lang>` flipped from `id` to `en` to match.
+- Participant `Institution` label renamed to `Member` to match the source spreadsheet column.
 
 ### Refinement pass (post-review)
 - `/jury/modules`: added `mt-6` between the Generate Modul card and the module grid. `/jury/files`: wrapped Aset Aktif in `mt-6`. Both were too tight.

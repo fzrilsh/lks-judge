@@ -57,6 +57,12 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 									<th class="text-center">
 										<div class="whitespace-nowrap">{ m.Name }</div>
 										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d collected", moduleCount(participants, cell, m.ID)) }</div>
+										if moduleCount(participants, cell, m.ID) > 0 {
+											<a href={ templ.URL(fmt.Sprintf("/jury/submissions/module/%d/export.zip", m.ID)) } class="chip chip-ok mt-1" aria-label={ "Download " + m.Name + " (.zip)" }>
+												<span class="material-symbols-outlined text-sm" aria-hidden="true">folder_zip</span>
+												.zip
+											</a>
+										}
 									</th>
 								}
 							</tr>

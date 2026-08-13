@@ -1,5 +1,13 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Per-Module Submission ZIP (2026-08-14) ✅
+
+**Status:** Complete. Jury can download one module's submissions as a ZIP, alongside the existing download-all. No schema change, no new SQL, no new Go dependency.
+
+- `GET /jury/submissions/module/{moduleID}/export.zip`: streams one module's submissions, laid out `{pc}-{participant}/{file}` (no module subfolder, since the ZIP is already scoped to one module). Validates the module belongs to the current competition (404 otherwise), reuses `ListSubmissions` filtered in-Go by `ModuleID`, and the `participantFolder`/`cdFilename` helpers. File name is `submissions-{module}.zip`.
+- `submissions.templ`: each module column header gets a `.zip` download chip, shown only when that module has at least one collected submission.
+- Tests in `handlers_submissions_test.go`: ZIP scoped to the requested module only (excludes other modules, correct folder layout), and 404 on an unknown module ID.
+
 ## UI Redesign (2026-08-12) ✅
 
 **Status:** Complete. Full UI redesign on `feat/ui-redesign`: soft blue-leaning palette, responsive layout, a new jury dashboard, and the heuristic-evaluation fixes from the audit, all done together (visual and UX in one pass). No schema change, no new SQL, no new Go dependency (Chart.js is vendored and embedded).

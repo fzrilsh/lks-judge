@@ -228,6 +228,7 @@ func main() {
 	// jury submissions matrix: per-cell download plus bulk ZIP export
 	mux.Handle("GET /jury/submissions", juryMw(web.HandleSubmissionsGET(st)))
 	mux.Handle("GET /jury/submissions/export.zip", juryMw(web.HandleSubmissionsExportZipGET(st)))
+	mux.Handle("GET /jury/submissions/module/{moduleID}/export.zip", juryMw(web.HandleModuleSubmissionsExportZipGET(st)))
 	mux.Handle("GET /jury/submissions/{id}/download", juryMw(web.HandleSubmissionDownloadGET(st)))
 
 	// jury scoring: raw-score matrix + PDF export

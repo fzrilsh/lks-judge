@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/fzrilsh/lks-judge/internal/model"
 	"github.com/fzrilsh/lks-judge/internal/store"
@@ -146,6 +147,91 @@ func HandleSubmissionsExportZipGET(st *store.Store) http.HandlerFunc {
 				continue // skip files gone from disk; best effort
 			}
 			entry := filepath.ToSlash(filepath.Join(pName[s.ParticipantID], mName[s.ModuleID], s.Name))
+			dst, err := zw.Create(entry)
+			if err != nil {
+				_ = f.Close()
+				log.Printf("zip create %s: %v", entry, err)
+				return
+			}
+			if _, err := io.Copy(dst, f); err != nil {
+				_ = f.Close()
+				log.Printf("zip copy %s: %v", entry, err)
+				return
+			}
+			_ = f.Close()
+		}
+	}
+}
+
+// HandleModuleSubmissionsExportZipGET streams one module's submissions as a ZIP
+// (jury only), laid out {pc}-{participant}/{file}. Missing files on disk are skipped.
+func HandleModuleSubmissionsExportZipGET(st *store.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, jury := juryAllowed(st, r); !jury {
+			http.NotFound(w, r)
+			return
+		}
+		comp := st.CompetitionCache.Load()
+		if comp == nil {
+			http.Redirect(w, r, "/jury/competition?setup=1", http.StatusSeeOther)
+			return
+		}
+		moduleID, err := strconv.ParseInt(r.PathValue("moduleID"), 10, 64)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Validate the module belongs to this competition, and get its name.
+		modules, err := st.ListModules(comp.ID)
+		if err != nil {
+			log.Printf("list modules: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		var moduleName string
+		for _, m := range modules {
+			if m.ID == moduleID {
+				moduleName = m.Name
+				break
+			}
+		}
+		if moduleName == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		subs, err := st.ListSubmissions(comp.ID)
+		if err != nil {
+			log.Printf("list submissions: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		participants, err := st.ListParticipants(comp.ID)
+		if err != nil {
+			log.Printf("list participants: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		pName := make(map[int64]string, len(participants))
+		for _, p := range participants {
+			pName[p.ID] = participantFolder(p)
+		}
+
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", `attachment; filename="`+cdFilename("submissions-"+moduleName+".zip")+`"`)
+		zw := zip.NewWriter(w)
+		defer func() { _ = zw.Close() }()
+
+		for _, s := range subs {
+			if s.ModuleID != moduleID {
+				continue
+			}
+			f, err := os.Open(s.FilePath)
+			if err != nil {
+				continue // skip files gone from disk; best effort
+			}
+			entry := filepath.ToSlash(filepath.Join(pName[s.ParticipantID], s.Name))
 			dst, err := zw.Create(entry)
 			if err != nil {
 				_ = f.Close()

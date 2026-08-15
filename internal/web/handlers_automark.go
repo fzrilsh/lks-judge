@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -105,7 +106,10 @@ func HandleAutomarkRunPOST(st *store.Store, hub *realtime.Hub, dataDir string) h
 		cfg := s.Config
 		go func() {
 			defer automarkRunning.Store(false)
-			automark.Run(r.Context(), &cfg, targets, automark.DefaultConcurrency, func(res automark.ParticipantResult) {
+			// Detached context: r.Context() is canceled the moment this handler
+			// returns the 202, which would abort every request before it is sent.
+			ctx := context.Background()
+			automark.Run(ctx, &cfg, targets, automark.DefaultConcurrency, func(res automark.ParticipantResult) {
 				hub.Broadcast(realtime.EvAutomarkResult, res)
 			})
 			hub.Broadcast(realtime.EvAutomarkDone, map[string]any{"count": len(targets)})

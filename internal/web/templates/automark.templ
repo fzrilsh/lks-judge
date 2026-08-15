@@ -35,7 +35,7 @@ templ AutomarkPage(comp *model.Competition, configJSON string, targets []automar
 				<div id="am-results" class="space-y-2"></div>
 			}
 		</div>
-		<script type="application/json" id="am-example">@templ.Raw(automark.ExampleConfigJSON)</script>
+		<div id="am-example" hidden>{ automark.ExampleConfigJSON }</div>
 		<script src="/static/js/automark.js" defer></script>
 	}
 }

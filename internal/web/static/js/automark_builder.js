@@ -301,10 +301,13 @@
 
   // 5. Assertion: a <details> so a long suite stays scannable. Summary reads
   // "{title} - {METHOD} {endpoint} - {score} pts"; body holds every field.
-  function assertionNode(cfg, g, a, ai, assertions) {
+  function assertionNode(cfg, g, a, ai, assertions, gi) {
     a.expected = a.expected || {};
     var det = document.createElement("details");
     det.className = "border border-outline-variant rounded-xl";
+    // Stable key so render() can reopen this assertion after a full rebuild;
+    // add appends, so existing gi/ai stay put and the open one survives.
+    det.dataset.key = "g" + gi + "a" + ai;
 
     var sum = document.createElement("summary");
     sum.className = "flex items-center gap-2 px-3 py-2 cursor-pointer text-label-large text-on-surface";
@@ -396,7 +399,7 @@
     var list = document.createElement("div");
     list.className = "space-y-2";
     g.assertions = g.assertions || [];
-    g.assertions.forEach(function (a, ai) { list.appendChild(assertionNode(cfg, g, a, ai, g.assertions)); });
+    g.assertions.forEach(function (a, ai) { list.appendChild(assertionNode(cfg, g, a, ai, g.assertions, gi)); });
     card.appendChild(list);
 
     card.appendChild(textBtn("+ assertion", "btn-tonal", function () {
@@ -616,6 +619,11 @@
   // ---- render -------------------------------------------------------------
   function render() {
     var cfg = parse();
+    // Preserve which assertions are open and the scroll position across the
+    // full rebuild, so adding a shape node does not collapse and jump the page.
+    var open = {};
+    host.querySelectorAll("details[data-key]").forEach(function (d) { if (d.open) open[d.dataset.key] = true; });
+    var scrollY = window.scrollY;
     host.innerHTML = "";
     if (!cfg) {
       var err = document.createElement("div");
@@ -644,6 +652,9 @@
       sync(cfg); render();
     }));
     host.appendChild(groups);
+
+    host.querySelectorAll("details[data-key]").forEach(function (d) { if (open[d.dataset.key]) d.open = true; });
+    window.scrollTo(0, scrollY);
 
     validate();
   }

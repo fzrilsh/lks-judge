@@ -13,6 +13,8 @@ const (
 	EvFormOpened      = "FormOpened"
 	EvCountdownTick   = "CountdownTick"
 	EvScoreUpdated    = "ScoreUpdated" // Phase 11: broadcast on score upsert; no emitter yet.
+	EvAutomarkResult  = "AutomarkResult" // one participant finished (jury only)
+	EvAutomarkDone    = "AutomarkDone"   // whole run finished (jury only)
 )
 
 // WSMessage is one frame pushed to clients.

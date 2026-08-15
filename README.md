@@ -35,7 +35,7 @@ live results over the WebSocket hub. The server is ready for a LAN competition.
 | 12 | UI modification: port the old Laravel design to the templ views | done |
 | 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | done |
 | UI | UI redesign: soft palette, responsive drawer, jury dashboard at `/jury/`, heuristic fixes | done |
-| Automark | Config-driven HTTP marking across every participant server, bounded-parallel, live WS results | done |
+| Automark | Config-driven HTTP marking across every participant server, bounded-parallel, live WS results, full visual config builder | done |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -137,11 +137,17 @@ progress, top 3, activity feed, submission-timing charts); the competition setup
 form lives at `GET/POST /jury/competition`.
 
 The automark console is `GET /jury/automark` (renders the saved config plus the
-target list), `POST /jury/automark` (validates and persists the config to
-`{data}/automark.json`), and `POST /jury/automark/run` (starts a background run
-against every participant that has a recorded IP, returns `202`; a second
-concurrent run gets `409`). Per-participant results and completion stream to the
-jury over `/ws` as `AutomarkResult` / `AutomarkDone`.
+target list), `POST /jury/automark` (normalizes, validates, and persists the
+config to `{data}/automark.json`, redirecting with `?error=` on a rejected
+paste), and `POST /jury/automark/run` (starts a background run against every
+participant that has a recorded IP, returns `202`; a second concurrent run gets
+`409`). Per-participant results and completion stream to the jury over `/ws` as
+`AutomarkResult` / `AutomarkDone`. The config editor has two tabs: a raw JSON
+textarea (the submitted source of truth, with a **Load example** button that
+seeds a complete sample) and a full visual builder that hydrates from and writes
+back to it. The builder edits every field, including a visual expected-shape
+tree that hides the engine's numeric-key / `"*"` encoding behind
+field/object/list-of nodes, and mirrors the server-side validation inline.
 
 The header **Reset** button (`POST /jury/reset`) is a nuclear wipe: it snapshots
 the DB to `backups/` first, then deletes every competition, participant, module,

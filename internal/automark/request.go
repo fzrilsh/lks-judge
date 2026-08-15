@@ -14,7 +14,10 @@ import (
 const requestTimeout = 10 * time.Second
 
 // DefaultConcurrency bounds how many participant servers are marked at once.
-const DefaultConcurrency = 6
+// Each target is a separate machine, so there is no contention on our side;
+// this covers the spec's ~16 participants in a single wave. Within one
+// participant assertions still run serially (auth-token ordering).
+const DefaultConcurrency = 16
 
 // response is a captured HTTP result. A transport failure sets status 0 and
 // networkError, so evaluate records a failure instead of the run crashing.
@@ -87,13 +90,4 @@ func buildHost(base Base, t Target) string {
 		host += "/" + p
 	}
 	return host
-}
-
-func noteFor(pct float64, notes []Note) string {
-	for _, n := range notes {
-		if pct >= n.Min {
-			return n.Text
-		}
-	}
-	return ""
 }

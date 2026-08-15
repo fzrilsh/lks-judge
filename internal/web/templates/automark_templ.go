@@ -17,7 +17,7 @@ import (
 // AutomarkPage is the jury auto-mark console. configJSON is the saved config
 // pretty-printed for the JSON tab / builder to hydrate from. targets are the
 // participants that currently have an IP (the ones a run would hit).
-func AutomarkPage(comp *model.Competition, configJSON string, targets []automark.Target, saved bool, errMsg string) templ.Component {
+func AutomarkPage(comp *model.Competition, configJSON string, targets []automark.Target, modules []*model.Module, saved bool, errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -163,7 +163,68 @@ func AutomarkPage(comp *model.Competition, configJSON string, targets []automark
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div id=\"am-status\" class=\"text-body-medium text-on-surface-variant mb-3\">Idle. Save a config, then Run.</div><div id=\"am-results\" class=\"space-y-2\"></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div id=\"am-status\" class=\"text-body-medium text-on-surface-variant mb-3\">Idle. Save a config, then Run.</div><div id=\"am-results\" class=\"space-y-2\"></div><div id=\"am-apply\" class=\"hidden mt-4 pt-4 border-t border-outline-variant space-y-3\"><p class=\"text-label-large text-on-surface\">Apply raw totals to a module</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if len(modules) == 0 {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p class=\"text-body-small text-on-surface-variant\">No modules yet. Create one under Modules first.</p>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<label class=\"block\"><span class=\"text-label-medium text-on-surface-variant\">Target module</span> <select id=\"am-apply-module\" class=\"input w-full mt-1\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					for _, m := range modules {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<option value=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var7 string
+						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(m.ID))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 45, Col: 41}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						if comp.CurrentModuleID != nil && *comp.CurrentModuleID == m.ID {
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " selected")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, ">")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var8 string
+						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(m.Name)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 45, Col: 127}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</option>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</select></label><div class=\"flex gap-2\"><button type=\"button\" id=\"am-apply-replace\" class=\"btn-primary\">Replace scores</button> <button type=\"button\" id=\"am-apply-add\" class=\"btn-tonal\">Add to scores</button></div><p class=\"text-body-small text-on-surface-variant\">Writes each participant's raw total from this run into the chosen module. Replace overwrites the cell; Add sums onto the existing value. You confirm the module first.</p>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -173,20 +234,20 @@ func AutomarkPage(comp *model.Competition, configJSON string, targets []automark
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div id=\"am-example\" hidden>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div id=\"am-example\" hidden>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(automark.ExampleConfigJSON)
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(automark.ExampleConfigJSON)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 38, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 58, Col: 58}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><script src=\"/static/js/automark_builder.js\" defer></script> <script src=\"/static/js/automark.js\" defer></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><script src=\"/static/js/automark_builder.js\" defer></script> <script src=\"/static/js/automark.js\" defer></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -220,25 +281,25 @@ func automarkEditor(configJSON string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<form method=\"post\" action=\"/jury/automark\" id=\"am-form\"><div class=\"flex gap-1 mb-4 border-b border-outline-variant\" role=\"tablist\"><button type=\"button\" class=\"am-tab am-tab-active px-4 py-2 text-label-large border-b-2 border-primary text-primary\" data-tab=\"json\">JSON</button> <button type=\"button\" class=\"am-tab px-4 py-2 text-label-large border-b-2 border-transparent text-on-surface-variant\" data-tab=\"builder\">Builder</button></div><div id=\"am-pane-json\"><label class=\"sr-only\" for=\"am-config\">Config JSON</label> <textarea id=\"am-config\" name=\"config\" rows=\"22\" spellcheck=\"false\" class=\"input font-mono text-body-small w-full\" placeholder=\"Paste the automark config JSON here.\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<form method=\"post\" action=\"/jury/automark\" id=\"am-form\"><div class=\"flex gap-1 mb-4 border-b border-outline-variant\" role=\"tablist\"><button type=\"button\" class=\"am-tab am-tab-active px-4 py-2 text-label-large border-b-2 border-primary text-primary\" data-tab=\"json\">JSON</button> <button type=\"button\" class=\"am-tab px-4 py-2 text-label-large border-b-2 border-transparent text-on-surface-variant\" data-tab=\"builder\">Builder</button></div><div id=\"am-pane-json\"><label class=\"sr-only\" for=\"am-config\">Config JSON</label> <textarea id=\"am-config\" name=\"config\" rows=\"22\" spellcheck=\"false\" class=\"input font-mono text-body-small w-full\" placeholder=\"Paste the automark config JSON here.\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(configJSON)
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(configJSON)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 58, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 78, Col: 67}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</textarea><div class=\"mt-2\"><button type=\"button\" id=\"am-load-example\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">note_add</span> Load example</button></div></div><div id=\"am-pane-builder\" class=\"hidden space-y-4\"></div><div class=\"flex justify-end gap-2 mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Save Config</button></div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</textarea><div class=\"mt-2\"><button type=\"button\" id=\"am-load-example\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">note_add</span> Load example</button></div></div><div id=\"am-pane-builder\" class=\"hidden space-y-4\"></div><div class=\"flex justify-end gap-2 mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Save Config</button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

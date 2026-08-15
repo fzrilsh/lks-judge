@@ -247,57 +247,6 @@
     return sec;
   }
 
-  // 3. Grading notes: two ordered lists. noteFor takes the first note whose min
-  // the pct clears, so a non-descending list misfires. Warn inline; the server
-  // rejects it too.
-  function noteList(cfg, key, title) {
-    var notes = cfg.grading[key] || (cfg.grading[key] = []);
-    var box = document.createElement("div");
-    box.className = "space-y-2";
-    box.appendChild(heading("h4", title));
-
-    var descending = true;
-    for (var i = 1; i < notes.length; i++) { if (notes[i].min > notes[i - 1].min) { descending = false; break; } }
-    if (!descending) {
-      box.appendChild(chip("warn", "Min values are not ordered high to low. The first matching note wins, so lower thresholds are shadowed. Sort them."));
-    }
-
-    notes.forEach(function (n, ni) {
-      var row = document.createElement("div");
-      row.className = "flex items-end gap-2";
-      var min = document.createElement("input");
-      min.type = "number"; min.className = "input w-24"; min.value = n.min == null ? "" : n.min;
-      min.addEventListener("input", function () { n.min = Number(min.value) || 0; sync(cfg); });
-      row.appendChild(labelled("Min", min));
-      var txt = document.createElement("input");
-      txt.className = "input w-full"; txt.value = n.text || "";
-      txt.addEventListener("input", function () { n.text = txt.value; sync(cfg); });
-      var txtWrap = labelled("Note", txt); txtWrap.className = "block flex-1";
-      row.appendChild(txtWrap);
-      row.appendChild(iconBtn("close", "Remove note", "btn-danger", function () { notes.splice(ni, 1); sync(cfg); render(); }));
-      box.appendChild(row);
-    });
-
-    var actions = document.createElement("div");
-    actions.className = "flex gap-2";
-    actions.appendChild(textBtn("+ note", "btn-tonal", function () { notes.push({ min: 0, text: "" }); sync(cfg); render(); }));
-    actions.appendChild(textBtn("Sort high to low", "btn-ghost", function () {
-      notes.sort(function (a, b) { return (b.min || 0) - (a.min || 0); });
-      sync(cfg); render();
-    }));
-    box.appendChild(actions);
-    return box;
-  }
-
-  function gradingSection(cfg) {
-    cfg.grading = cfg.grading || {};
-    var sec = document.createElement("div");
-    sec.className = "space-y-4";
-    sec.appendChild(heading("h3", "Grading notes"));
-    sec.appendChild(noteList(cfg, "groupNotes", "Per-group notes"));
-    sec.appendChild(noteList(cfg, "totalNotes", "Total notes"));
-    return sec;
-  }
   // PLACEHOLDER-C
 
   // 5. Assertion: a <details> so a long suite stays scannable. Summary reads
@@ -642,7 +591,6 @@
 
     host.appendChild(serverSection(cfg));
     host.appendChild(authSection(cfg));
-    host.appendChild(gradingSection(cfg));
 
     var groups = document.createElement("div");
     groups.className = "space-y-4";

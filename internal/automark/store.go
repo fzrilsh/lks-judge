@@ -8,7 +8,7 @@ import (
 )
 
 // Store is the automark config, encapsulated as a struct so the whole thing can
-// be persisted as one JSON blob (auth + groups + grading). The jury edits it via
+// be persisted as one JSON blob (auth + groups). The jury edits it via
 // the UI (JSON paste or visual builder); it is saved to {data}/automark.json.
 type Store struct {
 	Config Config `json:"config"`

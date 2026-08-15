@@ -8,10 +8,9 @@ package automark
 // Config is the whole assertion suite. It maps 1:1 to the JSON the jury pastes
 // or the visual builder emits, so a saved automark.json round-trips unchanged.
 type Config struct {
-	Base    Base    `json:"base"`
-	Auth    Auth    `json:"auth"`
-	Grading Grading `json:"grading"`
-	Groups  []Group `json:"groups"`
+	Base   Base    `json:"base"`
+	Auth   Auth    `json:"auth"`
+	Groups []Group `json:"groups"`
 }
 
 // Base builds each target host as {scheme}://{ip}:{port}{path}. Port and path
@@ -36,17 +35,8 @@ type LoginSpec struct {
 	Body     map[string]any `json:"body"`
 }
 
-// Grading maps a percentage to a human note. Entries are checked top-down;
-// the first whose Min the pct clears wins, so order them high to low.
-type Grading struct {
-	GroupNotes []Note `json:"groupNotes"`
-	TotalNotes []Note `json:"totalNotes"`
-}
-
-type Note struct {
-	Min  float64 `json:"min"`
-	Text string  `json:"text"`
-}
+// Grading previously mapped percentages to human notes. It was removed: the
+// result UI shows raw scores and percentages only, no note text.
 
 type Group struct {
 	GroupID    string      `json:"group_id"`
@@ -79,12 +69,14 @@ type Expected struct {
 
 // Target is one participant server. Auth (or a bare host) overrides the global
 // config, used only when several targets share one server during testing; in
-// production each participant differs by IP alone.
+// production each participant differs by IP alone. ParticipantID ties a result
+// back to its participant row so scores can be written to the right one.
 type Target struct {
-	PCNumber string       `json:"pc_number"`
-	IP       string       `json:"ip"`
-	Host     string       `json:"host,omitempty"`
-	Auth     *Credentials `json:"auth,omitempty"`
+	ParticipantID int64        `json:"participant_id,omitempty"`
+	PCNumber      string       `json:"pc_number"`
+	IP            string       `json:"ip"`
+	Host          string       `json:"host,omitempty"`
+	Auth          *Credentials `json:"auth,omitempty"`
 }
 
 type Credentials struct {

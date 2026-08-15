@@ -49,15 +49,6 @@ func TestValidate(t *testing.T) {
 			c.Auth.Login.Endpoint = "/login"
 			c.Auth.TokenPath = "data.token"
 		}, ""},
-		{"groupNotes out of order", func(c *Config) {
-			c.Grading.GroupNotes = []Note{{Min: 50, Text: "a"}, {Min: 80, Text: "b"}}
-		}, "grading.groupNotes: min values must be ordered high to low"},
-		{"totalNotes out of order", func(c *Config) {
-			c.Grading.TotalNotes = []Note{{Min: 50, Text: "a"}, {Min: 80, Text: "b"}}
-		}, "grading.totalNotes: min values must be ordered high to low"},
-		{"notes descending ok", func(c *Config) {
-			c.Grading.TotalNotes = []Note{{Min: 80, Text: "b"}, {Min: 50, Text: "a"}}
-		}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

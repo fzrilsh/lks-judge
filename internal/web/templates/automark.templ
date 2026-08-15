@@ -9,7 +9,7 @@ import (
 // AutomarkPage is the jury auto-mark console. configJSON is the saved config
 // pretty-printed for the JSON tab / builder to hydrate from. targets are the
 // participants that currently have an IP (the ones a run would hit).
-templ AutomarkPage(comp *model.Competition, configJSON string, targets []automark.Target, saved bool, errMsg string) {
+templ AutomarkPage(comp *model.Competition, configJSON string, targets []automark.Target, modules []*model.Module, saved bool, errMsg string) {
 	@AppLayout("Automark", "automark") {
 		@PageHeader("Automark", "Config-driven HTTP marking across every participant server.") {
 			<button type="button" id="am-run" class="btn-primary" disabled?={ len(targets) == 0 }>
@@ -33,6 +33,26 @@ templ AutomarkPage(comp *model.Competition, configJSON string, targets []automar
 			@Card("Results") {
 				<div id="am-status" class="text-body-medium text-on-surface-variant mb-3">Idle. Save a config, then Run.</div>
 				<div id="am-results" class="space-y-2"></div>
+				<div id="am-apply" class="hidden mt-4 pt-4 border-t border-outline-variant space-y-3">
+					<p class="text-label-large text-on-surface">Apply raw totals to a module</p>
+					if len(modules) == 0 {
+						<p class="text-body-small text-on-surface-variant">No modules yet. Create one under Modules first.</p>
+					} else {
+						<label class="block">
+							<span class="text-label-medium text-on-surface-variant">Target module</span>
+							<select id="am-apply-module" class="input w-full mt-1">
+								for _, m := range modules {
+									<option value={ fmt.Sprint(m.ID) } selected?={ comp.CurrentModuleID != nil && *comp.CurrentModuleID == m.ID }>{ m.Name }</option>
+								}
+							</select>
+						</label>
+						<div class="flex gap-2">
+							<button type="button" id="am-apply-replace" class="btn-primary">Replace scores</button>
+							<button type="button" id="am-apply-add" class="btn-tonal">Add to scores</button>
+						</div>
+						<p class="text-body-small text-on-surface-variant">Writes each participant's raw total from this run into the chosen module. Replace overwrites the cell; Add sums onto the existing value. You confirm the module first.</p>
+					}
+				</div>
 			}
 		</div>
 		<div id="am-example" hidden>{ automark.ExampleConfigJSON }</div>

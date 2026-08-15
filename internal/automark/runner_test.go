@@ -89,10 +89,6 @@ func testConfig() *Config {
 			Login:     LoginSpec{Method: "POST", Endpoint: "/api/login", Body: map[string]any{"email": "u@x.id", "password": "ok"}},
 			TokenPath: "data.user.token",
 		},
-		Grading: Grading{
-			GroupNotes: []Note{{Min: 100, Text: "full"}, {Min: 0, Text: "meh"}},
-			TotalNotes: []Note{{Min: 100, Text: "full"}, {Min: 0, Text: "meh"}},
-		},
 		Groups: []Group{{
 			GroupID:   "A",
 			GroupName: "Auth",
@@ -118,7 +114,7 @@ func TestRunAllPass(t *testing.T) {
 	targets := []Target{{PCNumber: "01", Host: srv.URL}, {PCNumber: "02", Host: srv.URL}}
 
 	var count int
-	results := Run(context.Background(), cfg, targets, 2, func(ParticipantResult) { count++ })
+	results := Run(context.Background(), cfg, targets, 2, func(ParticipantResult) { count++ }, nil)
 
 	if count != 2 {
 		t.Fatalf("onResult fired %d times, want 2", count)
@@ -130,8 +126,8 @@ func TestRunAllPass(t *testing.T) {
 		if r.TotalScore != 4 || r.TotalMax != 4 {
 			t.Errorf("target %d: score %v/%v, want 4/4 (deductions: %+v)", i, r.TotalScore, r.TotalMax, firstFail(r))
 		}
-		if r.Pct != 100 || r.Note != "full" {
-			t.Errorf("target %d: pct=%v note=%q, want 100 / full", i, r.Pct, r.Note)
+		if r.Pct != 100 {
+			t.Errorf("target %d: pct=%v, want 100", i, r.Pct)
 		}
 	}
 }
@@ -142,7 +138,7 @@ func TestLazyReloginAfterLogout(t *testing.T) {
 
 	// The 4th assertion (secure GET) runs AFTER logout invalidated the token.
 	// If re-login didn't fire it would 401 and fail; assert it passed.
-	res := Run(context.Background(), testConfig(), []Target{{Host: srv.URL}}, 1, nil)
+	res := Run(context.Background(), testConfig(), []Target{{Host: srv.URL}}, 1, nil, nil)
 	last := res[0].Groups[0].Assertions[3]
 	if !last.Passed {
 		t.Fatalf("post-logout secure GET failed, lazy re-login broken: %+v", last.Deductions)

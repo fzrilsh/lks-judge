@@ -44,6 +44,7 @@
   function numField(label, value, oninput, validator) {
     var inp = document.createElement("input");
     inp.type = "number";
+    inp.step = "any"; // scores and deductions are decimals; default step=1 blocks them
     inp.className = "input w-full";
     inp.value = value == null ? "" : value;
     var wrap = labelled(label, inp);
@@ -347,7 +348,7 @@
       dedNum.disabled = !c; sync(cfg);
     });
     var dedNum = document.createElement("input");
-    dedNum.type = "number"; dedNum.className = "input w-32"; dedNum.disabled = a.deduction == null;
+    dedNum.type = "number"; dedNum.step = "any"; dedNum.className = "input w-32"; dedNum.disabled = a.deduction == null;
     dedNum.value = a.deduction == null ? "" : a.deduction;
     dedNum.addEventListener("input", function () { a.deduction = Number(dedNum.value) || 0; sync(cfg); });
     dedWrap.appendChild(dedCb.row);

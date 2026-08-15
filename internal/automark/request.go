@@ -80,7 +80,7 @@ func buildHost(base Base, t Target) string {
 		ip = "localhost"
 	}
 	host := scheme + "://" + ip
-	if base.Port != 0 && !((scheme == "http" && base.Port == 80) || (scheme == "https" && base.Port == 443)) {
+	if base.Port != 0 && (scheme != "http" || base.Port != 80) && (scheme != "https" || base.Port != 443) {
 		host += fmt.Sprintf(":%d", base.Port)
 	}
 	if p := strings.Trim(base.Path, "/"); p != "" {

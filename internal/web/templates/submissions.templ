@@ -32,10 +32,36 @@ func moduleCount(participants []*model.Participant, cell map[int64]map[int64]*mo
 templ Submissions(comp *model.Competition, participants []*model.Participant, modules []*model.Module, cell map[int64]map[int64]*model.Submission) {
 	@AppLayout("Submissions", "submissions") {
 		@PageHeader("Submissions", "Track collection status per module.") {
-			<a href="/jury/submissions/export.zip" class="btn-tonal">
-				<span class="material-symbols-outlined text-lg" aria-hidden="true">archive</span>
-				Download All (.zip)
-			</a>
+			<details class="dropdown relative">
+				<summary class="btn-tonal cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+					<span class="material-symbols-outlined text-lg" aria-hidden="true">folder_zip</span>
+					Download (.zip)
+					<span class="material-symbols-outlined text-lg" aria-hidden="true">arrow_drop_down</span>
+				</summary>
+				<div class="card absolute right-0 z-20 mt-2 w-72 max-h-80 overflow-auto p-2">
+					<a href="/jury/submissions/export.zip" class="flex items-center gap-2 rounded-lg px-3 py-2 text-body-medium font-medium text-on-surface hover:bg-surface-container-high">
+						<span class="material-symbols-outlined text-lg" aria-hidden="true">archive</span>
+						All modules
+					</a>
+					<hr class="my-1 border-outline-variant"/>
+					if len(modules) == 0 {
+						<p class="text-body-small text-on-surface-variant px-2 py-1">No modules.</p>
+					}
+					for _, m := range modules {
+						if moduleCount(participants, cell, m.ID) > 0 {
+							<a href={ templ.URL(fmt.Sprintf("/jury/submissions/module/%d/export.zip", m.ID)) } class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-body-medium text-on-surface hover:bg-surface-container-high">
+								<span>{ m.Name }</span>
+								<span class="text-label-small text-on-surface-variant">{ fmt.Sprintf("%d", moduleCount(participants, cell, m.ID)) }</span>
+							</a>
+						} else {
+							<span class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-body-medium text-on-surface-variant opacity-50">
+								<span>{ m.Name }</span>
+								<span class="text-label-small">empty</span>
+							</span>
+						}
+					}
+				</div>
+			</details>
 		}
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 			@statCard("groups", "ok", "Total Participants", len(participants))
@@ -57,12 +83,6 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 									<th class="text-center">
 										<div class="whitespace-nowrap">{ m.Name }</div>
 										<div class="text-label-small text-on-surface-variant normal-case">{ fmt.Sprintf("%d collected", moduleCount(participants, cell, m.ID)) }</div>
-										if moduleCount(participants, cell, m.ID) > 0 {
-											<a href={ templ.URL(fmt.Sprintf("/jury/submissions/module/%d/export.zip", m.ID)) } class="chip chip-ok mt-1" aria-label={ "Download " + m.Name + " (.zip)" }>
-												<span class="material-symbols-outlined text-sm" aria-hidden="true">folder_zip</span>
-												.zip
-											</a>
-										}
 									</th>
 								}
 							</tr>
@@ -82,7 +102,7 @@ templ Submissions(comp *model.Competition, participants []*model.Participant, mo
 										<div class="text-label-small text-on-surface-variant">{ p.School }</div>
 									</td>
 									for _, m := range modules {
-										<td class="text-center">
+										<td class="text-left">
 											if sub := cell[p.ID][m.ID]; sub != nil {
 												<a href={ templ.URL(fmt.Sprintf("/jury/submissions/%s/download", sub.ID)) } class="chip chip-ok" aria-label={ "Download " + p.Name + " " + m.Name }>
 													<span class="material-symbols-outlined text-sm" aria-hidden="true">download</span>

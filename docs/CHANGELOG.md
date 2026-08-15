@@ -5,7 +5,7 @@
 **Status:** Complete. Jury can download one module's submissions as a ZIP, alongside the existing download-all. No schema change, no new SQL, no new Go dependency.
 
 - `GET /jury/submissions/module/{moduleID}/export.zip`: streams one module's submissions, laid out `{pc}-{participant}/{file}` (no module subfolder, since the ZIP is already scoped to one module). Validates the module belongs to the current competition (404 otherwise), reuses `ListSubmissions` filtered in-Go by `ModuleID`, and the `participantFolder`/`cdFilename` helpers. File name is `submissions-{module}.zip`.
-- `submissions.templ`: each module column header gets a `.zip` download chip, shown only when that module has at least one collected submission.
+- `submissions.templ`: header gains a single `Download (.zip)` split-button, a native `<details>`/`<summary>` dropdown (no JS) anchored `right-0` so it opens inward. First item is All modules (the download-all route), then one item per module (modules with no submission are shown disabled). The old separate "Download All" button and the per-column chip are removed.
 - Tests in `handlers_submissions_test.go`: ZIP scoped to the requested module only (excludes other modules, correct folder layout), and 404 on an unknown module ID.
 
 ## UI Redesign (2026-08-12) ✅

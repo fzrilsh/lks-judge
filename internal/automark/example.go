@@ -2,12 +2,12 @@ package automark
 
 // ExampleConfigJSON is a complete, working suite that exercises every feature
 // the visual builder can express: base scheme/port/path, global auth with a
-// {{uniqid}} login body and a tokenPath, both note lists ordered high to low,
-// two groups, and assertions covering requires_auth, invalidates_token, a
-// request body, deduction present (record but keep score) and absent (any fail
-// zeroes it), a status/message scalar check, a nested object shape, and a
-// list-of shape. The Load-example button drops this into the JSON textarea so
-// an empty config is approachable. A test keeps it parsing and validating.
+// {{uniqid}} login body and a tokenPath, two groups, and assertions covering
+// requires_auth, invalidates_token, a request body, deduction present (record
+// but keep score) and absent (any fail zeroes it), a status/message scalar
+// check, a nested object shape, and a list-of shape. The Load-example button
+// drops this into the JSON textarea so an empty config is approachable. A test
+// keeps it parsing and validating.
 const ExampleConfigJSON = `{
   "base": {
     "scheme": "http",
@@ -24,17 +24,6 @@ const ExampleConfigJSON = `{
       }
     },
     "tokenPath": "data.token"
-  },
-  "grading": {
-    "groupNotes": [
-      { "min": 80, "text": "Excellent" },
-      { "min": 50, "text": "Adequate" },
-      { "min": 0, "text": "Needs work" }
-    ],
-    "totalNotes": [
-      { "min": 75, "text": "Pass" },
-      { "min": 0, "text": "Fail" }
-    ]
   },
   "groups": [
     {

@@ -83,20 +83,5 @@ func Validate(c Config) error {
 			return fmt.Errorf("auth.tokenPath required because an assertion requires auth")
 		}
 	}
-	if err := notesOrdered("grading.groupNotes", c.Grading.GroupNotes); err != nil {
-		return err
-	}
-	return notesOrdered("grading.totalNotes", c.Grading.TotalNotes)
-}
-
-// notesOrdered enforces non-increasing min values. noteFor takes the first note
-// whose min the pct clears, so an out-of-order list makes every result show the
-// wrong note.
-func notesOrdered(name string, notes []Note) error {
-	for i := 1; i < len(notes); i++ {
-		if notes[i].Min > notes[i-1].Min {
-			return fmt.Errorf("%s: min values must be ordered high to low", name)
-		}
-	}
 	return nil
 }

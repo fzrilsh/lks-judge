@@ -173,7 +173,7 @@ func AutomarkPage(comp *model.Competition, configJSON string, targets []automark
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><script src=\"/static/js/automark.js\" defer></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><script type=\"application/json\" id=\"am-example\">@templ.Raw(automark.ExampleConfigJSON)</script> <script src=\"/static/js/automark.js\" defer></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -219,13 +219,13 @@ func automarkEditor(configJSON string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(configJSON)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 56, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `automark.templ`, Line: 57, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</textarea></div><div id=\"am-pane-builder\" class=\"hidden space-y-4\"></div><div class=\"flex justify-end gap-2 mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Save Config</button></div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</textarea><div class=\"mt-2\"><button type=\"button\" id=\"am-load-example\" class=\"btn-ghost\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">note_add</span> Load example</button></div></div><div id=\"am-pane-builder\" class=\"hidden space-y-4\"></div><div class=\"flex justify-end gap-2 mt-4\"><button type=\"submit\" class=\"btn-primary\"><span class=\"material-symbols-outlined text-lg\" aria-hidden=\"true\">save</span> Save Config</button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

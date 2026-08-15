@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"sync/atomic"
 
 	"github.com/fzrilsh/lks-judge/internal/automark"
@@ -57,7 +58,7 @@ func HandleAutomarkSavePOST(st *store.Store, dataDir string) http.HandlerFunc {
 		}
 		cfg, err := automark.ParseConfig([]byte(r.FormValue("config")))
 		if err != nil {
-			http.Redirect(w, r, "/jury/automark?error=invalid+JSON:+"+err.Error(), http.StatusSeeOther)
+			http.Redirect(w, r, "/jury/automark?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
 			return
 		}
 		if err := automark.Save(dataDir, &automark.Store{Config: cfg}); err != nil {

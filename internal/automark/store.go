@@ -59,5 +59,6 @@ func ParseConfig(raw []byte) (Config, error) {
 	if err := json.Unmarshal(raw, &c); err != nil {
 		return Config{}, err
 	}
-	return c, nil
+	Normalize(&c)
+	return c, Validate(c)
 }

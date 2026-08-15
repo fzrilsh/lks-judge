@@ -286,13 +286,9 @@
 
     body.appendChild(numField("Expected status code", a.expected.status_code, function (v) { a.expected.status_code = Number(v) || 0; sync(cfg); }));
 
-    // Expected body shape. The visual tree (task 6) plugs in via window hook;
-    // until then, edit the shape as JSON.
-    if (window.AutomarkShapeTree) {
-      body.appendChild(window.AutomarkShapeTree(cfg, a, sync, render));
-    } else {
-      body.appendChild(jsonField("Expected body (JSON)", a.expected.body, function (v) { a.expected.body = v; sync(cfg); }));
-    }
+    // Expected body shape: a visual tree so the author never sees numeric keys
+    // or "*". Unrepresentable shapes fall back to a warning + JSON edit.
+    body.appendChild(shapeSection(cfg, a));
 
     det.appendChild(body);
     return det;
@@ -332,6 +328,213 @@
       sync(cfg); render();
     }));
     return card;
+  }
+
+  // ---- expected-shape tree ------------------------------------------------
+  // Turns expected.body into a visual tree so the author never sees numeric
+  // keys or "*". Node model:
+  //   {k:"scalar", name:"status"|"message", value:"..."}   top level only
+  //   {k:"field",  name:"token"}                            children only
+  //   {k:"object", name:"data",   children:[...]}
+  //   {k:"list",   name:"errors", children:[...]}
+  var RESERVED = ["status", "message"];
+  function isNumeric(s) { return /^\d+$/.test(s); }
+  function isPlainObject(v) { return v && typeof v === "object" && !Array.isArray(v); }
+
+  // serChildren: all-field children -> a plain array (matches hand-written
+  // configs); a mix -> an object with numeric keys for the fields plus named
+  // keys for the rest. entries() treats both identically at run time.
+  function serChildren(children) {
+    var fields = children.filter(function (c) { return c.k === "field"; });
+    var rest = children.filter(function (c) { return c.k !== "field"; });
+    if (!rest.length) return fields.map(function (c) { return c.name; });
+    var out = {};
+    fields.forEach(function (c, i) { out[String(i)] = c.name; });
+    rest.forEach(function (c) {
+      out[c.name] = c.k === "list" ? { "*": serChildren(c.children) } : serChildren(c.children);
+    });
+    return out;
+  }
+
+  function serTop(nodes) {
+    var out = {};
+    nodes.forEach(function (n) {
+      if (n.k === "scalar") out[n.name] = n.value;
+      else if (n.k === "list") out[n.name] = { "*": serChildren(n.children) };
+      else out[n.name] = serChildren(n.children);
+    });
+    return out;
+  }
+
+  // parseChildren is the inverse. Returns {nodes, ok}; ok=false means some part
+  // has no tree representation (a scalar under a non-status/message key), so the
+  // tree must not be shown as authoritative.
+  function parseChildren(value) {
+    var nodes = [], ok = true;
+    if (Array.isArray(value)) {
+      value.forEach(function (item) { nodes.push({ k: "field", name: String(item) }); });
+      return { nodes: nodes, ok: ok };
+    }
+    if (isPlainObject(value)) {
+      Object.keys(value).forEach(function (key) {
+        var v = value[key];
+        if (isNumeric(key)) { nodes.push({ k: "field", name: String(v) }); return; }
+        if (isPlainObject(v) && v.hasOwnProperty("*")) {
+          var inner = parseChildren(v["*"]);
+          ok = ok && inner.ok;
+          nodes.push({ k: "list", name: key, children: inner.nodes });
+          return;
+        }
+        if (isPlainObject(v) || Array.isArray(v)) {
+          var ch = parseChildren(v);
+          ok = ok && ch.ok;
+          nodes.push({ k: "object", name: key, children: ch.nodes });
+          return;
+        }
+        ok = false; // scalar under a plain key: not representable
+      });
+      return { nodes: nodes, ok: ok };
+    }
+    return { nodes: nodes, ok: false };
+  }
+
+  // parseTop reads expected.body into top-level nodes. status/message are
+  // scalar nodes; everything else recurses via parseChildren.
+  function parseTop(bodyObj) {
+    var nodes = [], ok = true;
+    if (!isPlainObject(bodyObj)) return { nodes: nodes, ok: true };
+    Object.keys(bodyObj).forEach(function (key) {
+      var v = bodyObj[key];
+      if (key === "status" || key === "message") { nodes.push({ k: "scalar", name: key, value: v }); return; }
+      if (isPlainObject(v) && v.hasOwnProperty("*")) {
+        var inner = parseChildren(v["*"]);
+        ok = ok && inner.ok;
+        nodes.push({ k: "list", name: key, children: inner.nodes });
+        return;
+      }
+      if (isPlainObject(v) || Array.isArray(v)) {
+        var ch = parseChildren(v);
+        ok = ok && ch.ok;
+        nodes.push({ k: "object", name: key, children: ch.nodes });
+        return;
+      }
+      ok = false; // a plain top-level scalar other than status/message is ignored by the engine
+    });
+    return { nodes: nodes, ok: ok };
+  }
+
+  // childrenEditor renders the children of an object/list node, with add
+  // buttons for field/object/list, and recurses.
+  function childrenEditor(cfg, a, root, children) {
+    var box = document.createElement("div");
+    box.className = "ml-4 pl-3 border-l border-outline-variant space-y-2";
+    children.forEach(function (c, ci) {
+      box.appendChild(childRow(cfg, a, root, children, c, ci));
+    });
+    var actions = document.createElement("div");
+    actions.className = "flex gap-2";
+    actions.appendChild(textBtn("+ field", "btn-ghost", function () { children.push({ k: "field", name: "" }); commit(cfg, a, root); }));
+    actions.appendChild(textBtn("+ object", "btn-ghost", function () { children.push({ k: "object", name: "", children: [] }); commit(cfg, a, root); }));
+    actions.appendChild(textBtn("+ list", "btn-ghost", function () { children.push({ k: "list", name: "", children: [] }); commit(cfg, a, root); }));
+    box.appendChild(actions);
+    return box;
+  }
+
+  function childRow(cfg, a, root, siblings, c, ci) {
+    var wrap = document.createElement("div");
+    wrap.className = "space-y-1";
+    var row = document.createElement("div");
+    row.className = "flex items-center gap-2";
+    var tag = chip("neutral", c.k === "field" ? "has field" : c.k === "list" ? "is list of" : "is object");
+    row.appendChild(tag);
+    var name = document.createElement("input");
+    name.className = "input flex-1"; name.value = c.name || "";
+    name.addEventListener("input", function () { c.name = name.value; commitQuiet(cfg, a, root); });
+    row.appendChild(name);
+    row.appendChild(iconBtn("close", "Remove", "btn-danger", function () { siblings.splice(ci, 1); commit(cfg, a, root); }));
+    wrap.appendChild(row);
+    if (c.k !== "field") {
+      c.children = c.children || [];
+      wrap.appendChild(childrenEditor(cfg, a, root, c.children));
+    }
+    return wrap;
+  }
+
+  // commit rewrites a.expected.body from the node tree (root), syncs, and does a
+  // full re-render (which reparses the tree from the fresh JSON).
+  function commit(cfg, a, root) {
+    a.expected.body = serTop(root);
+    sync(cfg); render();
+  }
+  // commitQuiet writes without a re-render so a text input keeps focus while
+  // typing a name. The node tree stays live in the closure until the next
+  // structural change forces a re-render.
+  function commitQuiet(cfg, a, root) {
+    a.expected.body = serTop(root);
+    sync(cfg);
+  }
+
+  function shapeSection(cfg, a) {
+    var box = document.createElement("div");
+    box.className = "space-y-2";
+    box.appendChild(heading("h4", "Expected body"));
+
+    var parsed = parseTop(a.expected.body || {});
+    if (!parsed.ok) {
+      box.appendChild(chip("warn", "This expected shape has parts the builder cannot show (a scalar value under a non-status/message key, which the engine ignores). Edit it on the JSON tab."));
+      box.appendChild(textBtn("Rebuild visually (drops the unsupported parts)", "btn-tonal", function () {
+        commit(cfg, a, parsed.nodes);
+      }));
+      return box;
+    }
+    // root is the live node tree, held only in this closure so it never leaks
+    // into the serialized config (JSON.stringify(cfg) must not see it).
+    var root = parsed.nodes;
+
+    root.forEach(function (n, ni) {
+      box.appendChild(topRow(cfg, a, root, n, ni));
+    });
+
+    var actions = document.createElement("div");
+    actions.className = "flex flex-wrap gap-2";
+    // scalar (status/message) addable once each; object; list. No "has field":
+    // top level cannot assert a field exists.
+    RESERVED.forEach(function (name) {
+      if (root.some(function (n) { return n.k === "scalar" && n.name === name; })) return;
+      actions.appendChild(textBtn("+ " + name, "btn-ghost", function () { root.push({ k: "scalar", name: name, value: "" }); commit(cfg, a, root); }));
+    });
+    actions.appendChild(textBtn("+ object", "btn-ghost", function () { root.push({ k: "object", name: "", children: [] }); commit(cfg, a, root); }));
+    actions.appendChild(textBtn("+ list", "btn-ghost", function () { root.push({ k: "list", name: "", children: [] }); commit(cfg, a, root); }));
+    box.appendChild(actions);
+    box.appendChild(hint("Top level cannot assert a bare field exists (the engine ignores it); nest it under an object or list. status/message compare values; every other key checks presence and shape only."));
+    return box;
+  }
+
+  function topRow(cfg, a, root, n, ni) {
+    var wrap = document.createElement("div");
+    wrap.className = "space-y-1";
+    var row = document.createElement("div");
+    row.className = "flex items-center gap-2";
+    if (n.k === "scalar") {
+      row.appendChild(chip("neutral", n.name + (n.name === "message" ? " equals (case-insensitive)" : " equals")));
+      var val = document.createElement("input");
+      val.className = "input flex-1"; val.value = n.value == null ? "" : n.value;
+      val.addEventListener("input", function () { n.value = val.value; commitQuiet(cfg, a, root); });
+      row.appendChild(val);
+    } else {
+      row.appendChild(chip("neutral", n.k === "list" ? "is list of" : "is object"));
+      var name = document.createElement("input");
+      name.className = "input flex-1"; name.value = n.name || "";
+      name.addEventListener("input", function () { n.name = name.value; commitQuiet(cfg, a, root); });
+      row.appendChild(name);
+    }
+    row.appendChild(iconBtn("close", "Remove", "btn-danger", function () { root.splice(ni, 1); commit(cfg, a, root); }));
+    wrap.appendChild(row);
+    if (n.k !== "scalar") {
+      n.children = n.children || [];
+      wrap.appendChild(childrenEditor(cfg, a, root, n.children));
+    }
+    return wrap;
   }
 
   // ---- render -------------------------------------------------------------

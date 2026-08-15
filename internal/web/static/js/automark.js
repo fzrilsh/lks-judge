@@ -95,6 +95,18 @@
     });
   }
 
+  // ---- load example ------------------------------------------------------
+  // Fills the textarea from the embedded example so an empty config is a
+  // starting point, not a blank wall. Only overwrites on an empty/confirm.
+  var loadBtn = document.getElementById("am-load-example");
+  var exampleEl = document.getElementById("am-example");
+  if (loadBtn && exampleEl) {
+    loadBtn.addEventListener("click", function () {
+      if (ta.value.trim() && !confirm("Replace the current config with the example?")) return;
+      ta.value = exampleEl.textContent.trim();
+    });
+  }
+
   // ---- run + live results -------------------------------------------------
   var runBtn = document.getElementById("am-run");
   var statusEl = document.getElementById("am-status");

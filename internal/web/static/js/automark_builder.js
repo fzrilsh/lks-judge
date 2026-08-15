@@ -31,23 +31,45 @@
     return wrap;
   }
 
-  function textField(label, value, oninput) {
+  function textField(label, value, oninput, validator) {
     var inp = document.createElement("input");
     inp.className = "input w-full";
     inp.value = value == null ? "" : value;
-    inp.addEventListener("input", function () { oninput(inp.value, inp); });
-    return labelled(label, inp);
+    var wrap = labelled(label, inp);
+    var msg = attachError(wrap, inp, validator);
+    inp.addEventListener("input", function () { oninput(inp.value, inp); if (msg) msg(); });
+    return wrap;
   }
 
-  function numField(label, value, oninput) {
+  function numField(label, value, oninput, validator) {
     var inp = document.createElement("input");
     inp.type = "number";
     inp.className = "input w-full";
     inp.value = value == null ? "" : value;
-    inp.addEventListener("input", function () { oninput(inp.value, inp); });
-    return labelled(label, inp);
+    var wrap = labelled(label, inp);
+    var msg = attachError(wrap, inp, validator);
+    inp.addEventListener("input", function () { oninput(inp.value, inp); if (msg) msg(); });
+    return wrap;
   }
-  // PLACEHOLDER-A
+
+  // attachError wires a validator(value)->errString|"" to an input: it appends a
+  // message line, toggles .input-error, runs once now, and returns a re-run fn
+  // (also refreshing the pane-level count) for the field's input handler to call.
+  function attachError(wrap, inp, validator) {
+    if (!validator) return null;
+    var line = document.createElement("p");
+    line.className = "text-body-small text-error mt-1 hidden";
+    wrap.appendChild(line);
+    var run = function () {
+      var err = validator(inp.value);
+      inp.classList.toggle("input-error", !!err);
+      line.textContent = err || "";
+      line.classList.toggle("hidden", !err);
+      refreshWarn();
+    };
+    run();
+    return run;
+  }
 
   function selectField(label, value, options, onchange) {
     var sel = document.createElement("select");
@@ -141,6 +163,60 @@
     var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
     return true;
   }
+
+  // ---- inline validation --------------------------------------------------
+  // Field validators mirror internal/automark/validate.go so the builder shows
+  // the same errors the server would return. Each returns "" when valid.
+  function vRequired(name) { return function (v) { return v.trim() ? "" : name + " required"; }; }
+  function vEndpoint(v) {
+    if (!v.trim()) return "Endpoint required";
+    return v.charAt(0) === "/" ? "" : "Endpoint must start with \"/\"";
+  }
+  function vNonNegative(name) { return function (v) { return Number(v) < 0 ? name + " must not be negative" : ""; }; }
+  function vStatus(v) {
+    var n = Number(v);
+    return n >= 100 && n <= 599 ? "" : "Status code must be 100..599";
+  }
+
+  // validate re-derives the error count from the current config (the same rules
+  // attachError applies per field) and paints the pane-level summary. Returns
+  // the count so callers/tests can assert on it.
+  function validate() { var n = countErrors(); paintWarn(n); return n; }
+
+  // countErrors mirrors internal/automark/validate.go: every condition that
+  // makes Validate return an error is one counted problem.
+  function countErrors() {
+    var cfg = parse();
+    if (!cfg) return 0;
+    var n = 0;
+    if (!(cfg.groups || []).length) n++;
+    (cfg.groups || []).forEach(function (g) {
+      if (!(g.group_id || "").trim()) n++;
+      if (!(g.assertions || []).length) n++;
+      (g.assertions || []).forEach(function (a) {
+        if (!(a.title || "").trim()) n++;
+        if (!(a.method || "").trim()) n++;
+        var ep = a.endpoint || "";
+        if (!ep.trim() || ep.charAt(0) !== "/") n++;
+        if (Number(a.score) < 0) n++;
+        if (a.deduction != null && Number(a.deduction) < 0) n++;
+        var sc = a.expected && a.expected.status_code;
+        if (!(sc >= 100 && sc <= 599)) n++;
+      });
+    });
+    return n;
+  }
+
+  function paintWarn(n) {
+    var box = document.getElementById("am-b-warn");
+    if (!box) return;
+    box.innerHTML = "";
+    if (n > 0) box.appendChild(chip("danger", n + (n === 1 ? " field needs attention" : " fields need attention") + " before this config will save."));
+  }
+
+  // refreshWarn recomputes the summary after a field edit, so it tracks live
+  // edits without a full re-render.
+  function refreshWarn() { paintWarn(countErrors()); }
   // PLACEHOLDER-B
 
   // ---- sections -----------------------------------------------------------
@@ -244,9 +320,9 @@
     var body = document.createElement("div");
     body.className = "px-3 pb-3 pt-1 space-y-3";
 
-    body.appendChild(textField("Title", a.title, function (v) { a.title = v; sync(cfg); label.textContent = summaryText(a); }));
+    body.appendChild(textField("Title", a.title, function (v) { a.title = v; sync(cfg); label.textContent = summaryText(a); }, vRequired("Title")));
     body.appendChild(selectField("Method", a.method || "GET", METHODS, function (v) { a.method = v; sync(cfg); render(); }));
-    body.appendChild(textField("Endpoint", a.endpoint, function (v) { a.endpoint = v; sync(cfg); label.textContent = summaryText(a); }));
+    body.appendChild(textField("Endpoint", a.endpoint, function (v) { a.endpoint = v; sync(cfg); label.textContent = summaryText(a); }, vEndpoint));
 
     // requires auth / invalidates token. omitempty in Go: on false, delete the
     // key so the JSON matches what the server would marshal.
@@ -256,7 +332,7 @@
     body.appendChild(it.row);
     body.appendChild(hint("An authed request lazily re-logs in only after a passing invalidates-token assertion, so logout suites re-authenticate on the next authed call."));
 
-    body.appendChild(numField("Score (pts)", a.score, function (v) { a.score = Number(v) || 0; sync(cfg); label.textContent = summaryText(a); }));
+    body.appendChild(numField("Score (pts)", a.score, function (v) { a.score = Number(v) || 0; sync(cfg); label.textContent = summaryText(a); }, vNonNegative("Score")));
 
     // deduction: null and 0 differ. Unchecked deletes the key (any single fail
     // zeroes the assertion); checked writes the number, 0 included (record
@@ -284,7 +360,7 @@
       body.appendChild(chip("warn", "A " + a.method + " request sends no body; this request body will be dropped at run time."));
     }
 
-    body.appendChild(numField("Expected status code", a.expected.status_code, function (v) { a.expected.status_code = Number(v) || 0; sync(cfg); }));
+    body.appendChild(numField("Expected status code", a.expected.status_code, function (v) { a.expected.status_code = Number(v) || 0; sync(cfg); }, vStatus));
 
     // Expected body shape: a visual tree so the author never sees numeric keys
     // or "*". Unrepresentable shapes fall back to a warning + JSON edit.
@@ -314,7 +390,7 @@
     head.appendChild(iconBtn("close", "Remove group", "btn-danger", function () { cfg.groups.splice(gi, 1); sync(cfg); render(); }));
     card.appendChild(head);
 
-    card.appendChild(textField("Group id", g.group_id, function (v) { g.group_id = v; sync(cfg); }));
+    card.appendChild(textField("Group id", g.group_id, function (v) { g.group_id = v; sync(cfg); }, vRequired("Group id")));
     card.appendChild(textField("Group name", g.group_name, function (v) { g.group_name = v; sync(cfg); }));
 
     var list = document.createElement("div");
@@ -569,10 +645,8 @@
     }));
     host.appendChild(groups);
 
-    if (window.AutomarkBuilder && window.AutomarkBuilder.validate) window.AutomarkBuilder.validate();
+    validate();
   }
-
-  function validate() { return 0; }
 
   window.AutomarkBuilder = { render: render, validate: validate };
 })();

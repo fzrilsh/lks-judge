@@ -33,22 +33,25 @@
     }
     body.innerHTML = entries.map(function (e) {
       var rank = e.rank;
-      var tint = rank === 1 ? "bg-amber-500/10 hover:bg-amber-500/20"
-        : rank === 2 ? "bg-slate-400/10 hover:bg-slate-400/20"
-        : rank === 3 ? "bg-orange-500/10 hover:bg-orange-500/20"
+      var tint = rank <= 3 ? "bg-surface-container-low/60 hover:bg-surface-container-low"
         : "hover:bg-surface-container-low";
 
-      var circle = rank === 1 ? "bg-gradient-to-br from-amber-300 to-amber-500"
-        : rank === 2 ? "bg-gradient-to-br from-slate-300 to-slate-500"
-        : rank === 3 ? "bg-gradient-to-br from-orange-400 to-orange-600"
-        : "bg-surface-container-high text-on-surface";
-      var seat = e.pc_number != null ? ("0" + e.pc_number).slice(-2) : "-";
-
-      var medal = rank === 1 ? '<span title="Gold Medal" class="text-xl">🥇</span>'
-        : rank === 2 ? '<span title="Silver Medal" class="text-xl">🥈</span>'
-        : rank === 3 ? '<span title="Bronze Medal" class="text-xl">🥉</span>'
-        : e.award === "Medallion for Excellence" ? '<span title="Medallion for Excellence" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 ml-2">Medallion</span>'
-        : "";
+      // Rank cell: top 3 get a colored medal icon; a Medallion for Excellence
+      // gets the military_tech icon (same left slot, not beside the name); the
+      // rest a plain muted rank number.
+      var medalColor = rank === 1 ? "text-amber-500"
+        : rank === 2 ? "text-slate-400"
+        : rank === 3 ? "text-orange-500" : "";
+      var rankCell;
+      if (rank <= 3) {
+        rankCell = '<span class="material-symbols-outlined text-3xl ' + medalColor + '" aria-hidden="true">workspace_premium</span>' +
+          '<span class="text-sm font-black ' + medalColor + '">' + rank + '</span>';
+      } else if (e.award === "Medallion for Excellence") {
+        rankCell = '<span class="material-symbols-outlined text-2xl text-primary" title="Medallion for Excellence" aria-hidden="true">military_tech</span>' +
+          '<span class="text-lg font-bold text-primary tabular-nums">' + rank + '</span>';
+      } else {
+        rankCell = '<span class="text-lg font-bold text-on-surface-variant tabular-nums">' + rank + '</span>';
+      }
 
       var totalColor = rank === 1 ? "text-amber-500 drop-shadow-sm" : "text-primary";
 
@@ -57,21 +60,16 @@
         return '<td class="py-5 px-2 w-[80px] text-center"><div class="w-14 h-9 mx-auto flex items-center justify-center rounded-lg bg-surface-container border border-surface-container-high font-bold text-on-surface text-sm group-hover:bg-surface-container-high transition-colors">' + val + '</div></td>';
       }).join("");
 
-      return '<tr class="group transition-all duration-200 ease-in-out ' + tint + '">' +
-        '<td class="py-5 px-6 font-bold text-on-surface">' +
-          '<div class="flex items-center gap-3">' +
-            '<span class="text-lg w-6 text-center text-outline font-black">#' + rank + '</span>' +
-            '<span class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ' + circle + '">' + seat + '</span>' +
-          '</div>' +
+      return '<tr class="group transition-colors ' + tint + '">' +
+        '<td class="py-4 px-6">' +
+          '<div class="flex items-center gap-2 w-14">' + rankCell + '</div>' +
         '</td>' +
-        '<td class="py-5 px-6">' +
-          '<div class="flex flex-col">' +
-            '<div class="flex items-center gap-2"><p class="font-extrabold text-on-surface text-base">' + esc(e.name) + '</p>' + medal + '</div>' +
-            '<p class="text-xs font-medium text-outline mt-0.5">' + esc(e.school) + '</p>' +
-          '</div>' +
+        '<td class="py-4 px-6">' +
+          '<span class="font-bold text-on-surface text-base">' + esc(e.name) + '</span>' +
+          '<p class="text-xs font-medium text-on-surface-variant mt-0.5">' + esc(e.school) + '</p>' +
         '</td>' +
         moduleCells +
-        '<td class="py-5 px-6 text-right"><div class="flex flex-col items-end"><span class="text-2xl font-black font-manrope ' + totalColor + '">' + e.wsi + '</span></div></td>' +
+        '<td class="py-4 px-6 text-center"><span class="text-2xl font-black font-manrope ' + totalColor + '">' + e.wsi + '</span></td>' +
         '</tr>';
     }).join("");
   }

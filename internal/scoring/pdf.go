@@ -22,11 +22,18 @@ func PDF(comp *model.Competition, entries []Entry, leftLogo, rightLogo []byte) (
 	const pageW = 210.0
 	if len(leftLogo) > 0 {
 		regImage(pdf, "left", leftLogo)
-		pdf.ImageOptions("left", 15, 12, 0, 16, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
+		// LKS logo, anchored to the left margin. Height only, width auto.
+		pdf.ImageOptions("left", 15, 12, 0, 22, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
 	}
 	if len(rightLogo) > 0 {
 		regImage(pdf, "right", rightLogo)
-		pdf.ImageOptions("right", pageW-15-16, 12, 0, 16, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
+		// WorldSkills logo, flush to the right margin. Its aspect ratio is wider
+		// than tall, so derive the drawn width from the registered dimensions to
+		// place the left edge; otherwise a fixed offset leaves it too far in.
+		const rightH = 18.0
+		info := pdf.GetImageInfo("right")
+		w := rightH * info.Width() / info.Height()
+		pdf.ImageOptions("right", pageW-15-w, 12, 0, rightH, false, fpdf.ImageOptions{ReadDpi: true}, 0, "")
 	}
 
 	pdf.SetY(14)

@@ -17,11 +17,6 @@
 # local-only spec (not for public repo)
 /docs/rebuild-spec.md
 
-# local-only automark prototype script (not for commit)
-/test.js
-/automark.config.json
-/targets.json
-
 # tailwind standalone CLI (per-OS binary, not committed)
 /tools/tailwindcss
 

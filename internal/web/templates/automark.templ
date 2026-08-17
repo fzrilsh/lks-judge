@@ -1,0 +1,94 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/fzrilsh/lks-judge/internal/automark"
+	"github.com/fzrilsh/lks-judge/internal/model"
+)
+
+// AutomarkPage is the jury auto-mark console. configJSON is the saved config
+// pretty-printed for the JSON tab / builder to hydrate from. targets are the
+// participants that currently have an IP (the ones a run would hit).
+templ AutomarkPage(comp *model.Competition, configJSON string, targets []automark.Target, modules []*model.Module, saved bool, errMsg string) {
+	@AppLayout("Automark", "automark") {
+		@PageHeader("Automark", "Config-driven HTTP marking across every participant server.") {
+			<button type="button" id="am-run" class="btn-primary" disabled?={ len(targets) == 0 }>
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">play_arrow</span>
+				Run ({ fmt.Sprint(len(targets)) })
+			</button>
+		}
+		if saved {
+			@Flash("success", "Config saved.")
+		}
+		if errMsg != "" {
+			@Flash("error", errMsg)
+		}
+		if len(targets) == 0 {
+			@Flash("warning", "No participant has a recorded IP yet. A run hits each participant's server by the IP captured at their login, so at least one must have logged in.")
+		}
+		<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+			@Card("Configuration") {
+				@automarkEditor(configJSON)
+			}
+			@Card("Results") {
+				<div id="am-status" class="text-body-medium text-on-surface-variant mb-3">Idle. Save a config, then Run.</div>
+				<div id="am-results" class="space-y-2"></div>
+				<div id="am-apply" class="hidden mt-4 pt-4 border-t border-outline-variant space-y-3">
+					<p class="text-label-large text-on-surface">Apply raw totals to a module</p>
+					if len(modules) == 0 {
+						<p class="text-body-small text-on-surface-variant">No modules yet. Create one under Modules first.</p>
+					} else {
+						<label class="block">
+							<span class="text-label-medium text-on-surface-variant">Target module</span>
+							<select id="am-apply-module" class="input w-full mt-1">
+								for _, m := range modules {
+									<option value={ fmt.Sprint(m.ID) } selected?={ comp.CurrentModuleID != nil && *comp.CurrentModuleID == m.ID }>{ m.Name }</option>
+								}
+							</select>
+						</label>
+						<div class="flex gap-2">
+							<button type="button" id="am-apply-replace" class="btn-primary">Replace scores</button>
+							<button type="button" id="am-apply-add" class="btn-tonal">Add to scores</button>
+						</div>
+						<p class="text-body-small text-on-surface-variant">Writes each participant's raw total from this run into the chosen module. Replace overwrites the cell; Add sums onto the existing value. You confirm the module first.</p>
+					}
+				</div>
+			}
+		</div>
+		<div id="am-example" hidden>{ automark.ExampleConfigJSON }</div>
+		<script src="/static/js/automark_builder.js" defer></script>
+		<script src="/static/js/automark.js" defer></script>
+	}
+}
+
+// automarkEditor is a two-tab config editor: a raw JSON textarea (fast paste)
+// and a visual builder (JS-rendered from the same JSON). The textarea is the
+// single source of truth submitted to /jury/automark. The builder writes back
+// into it on every change, so switching tabs never loses edits.
+templ automarkEditor(configJSON string) {
+	<form method="post" action="/jury/automark" id="am-form">
+		<div class="flex gap-1 mb-4 border-b border-outline-variant" role="tablist">
+			<button type="button" class="am-tab am-tab-active px-4 py-2 text-label-large border-b-2 border-primary text-primary" data-tab="json">JSON</button>
+			<button type="button" class="am-tab px-4 py-2 text-label-large border-b-2 border-transparent text-on-surface-variant" data-tab="builder">Builder</button>
+		</div>
+		<div id="am-pane-json">
+			<label class="sr-only" for="am-config">Config JSON</label>
+			<textarea id="am-config" name="config" rows="22" spellcheck="false"
+				class="input font-mono text-body-small w-full"
+				placeholder="Paste the automark config JSON here.">{ configJSON }</textarea>
+			<div class="mt-2">
+				<button type="button" id="am-load-example" class="btn-ghost">
+					<span class="material-symbols-outlined text-lg" aria-hidden="true">note_add</span>
+					Load example
+				</button>
+			</div>
+		</div>
+		<div id="am-pane-builder" class="hidden space-y-4"></div>
+		<div class="flex justify-end gap-2 mt-4">
+			<button type="submit" class="btn-primary">
+				<span class="material-symbols-outlined text-lg" aria-hidden="true">save</span>
+				Save Config
+			</button>
+		</div>
+	</form>
+}

@@ -3,8 +3,8 @@ package scoring
 import "testing"
 
 func TestScaleScoreBounds(t *testing.T) {
-	if got := ScaleScore(8.0, 8.0, 7.0); got != 700 { // median -> 700
-		t.Errorf("median -> %d, want 700", got)
+	if got := ScaleScore(8.0, 8.0, 7.0); got != 700 { // center -> 700
+		t.Errorf("center -> %d, want 700", got)
 	}
 	if got := ScaleScore(-1000, 8.0, 7.0); got != 0 { // clamp low
 		t.Errorf("clamp low -> %d, want 0", got)
@@ -12,8 +12,8 @@ func TestScaleScoreBounds(t *testing.T) {
 	if got := ScaleScore(1e9, 8.0, 7.0); got != 1000 { // clamp high
 		t.Errorf("clamp high -> %d, want 1000", got)
 	}
-	if got := ScaleScore(42, 8.0, 0); got != 700 { // degenerate MAD=0
-		t.Errorf("mad=0 -> %d, want 700", got)
+	if got := ScaleScore(42, 8.0, 0); got != 700 { // degenerate spread=0
+		t.Errorf("spread=0 -> %d, want 700", got)
 	}
 }
 
@@ -84,5 +84,19 @@ func TestRankFixture(t *testing.T) {
 	}
 	if medallions != 13 {
 		t.Errorf("medallions = %d, want 13", medallions)
+	}
+}
+
+// TestRankMADZeroFallback: majority of totals tie (MAD collapses to 0), so the
+// std-dev fallback must still spread the scored participants off 700.
+func TestRankMADZeroFallback(t *testing.T) {
+	totals := []float64{950, 880, 820, 760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	entries := make([]Entry, len(totals))
+	for i, tot := range totals {
+		entries[i] = Entry{ParticipantID: int64(i + 1), TotalRaw: tot}
+	}
+	got := Rank(entries)
+	if got[0].WSI == 700 || got[0].WSI <= got[1].WSI {
+		t.Fatalf("top WSI = %d (rank2 %d): fallback did not spread scores", got[0].WSI, got[1].WSI)
 	}
 }

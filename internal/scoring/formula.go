@@ -59,19 +59,39 @@ func MAD(xs []float64, median float64) float64 {
 	return Median(dev)
 }
 
+// StdDev is the population standard deviation of xs. Used as the spread
+// fallback when MAD collapses to 0 (a majority of tied totals, e.g. many
+// participants still on 0), which would otherwise flatten everyone to 700.
+func StdDev(xs []float64) float64 {
+	n := len(xs)
+	if n == 0 {
+		return 0
+	}
+	var sum float64
+	for _, x := range xs {
+		sum += x
+	}
+	mean := sum / float64(n)
+	var ss float64
+	for _, x := range xs {
+		d := x - mean
+		ss += d * d
+	}
+	return math.Sqrt(ss / float64(n))
+}
+
 // ScaleScore maps a raw total to the robust standardised WSI:
 //
-//	700 + 30 * (raw - median) / (1.4826 * mad)
+//	700 + 30 * (raw - center) / spread
 //
-// clamped to [0, 1000] and rounded. 1.4826 makes MAD a consistent estimate of
-// the standard deviation for normal data; 30 sets the points-per-unit spread.
-// A degenerate population with mad==0 has no spread, so every raw maps to 700.
-func ScaleScore(raw, median, mad float64) int {
-	unit := 1.4826 * mad
-	if unit == 0 {
+// clamped to [0, 1000] and rounded. 30 sets the points-per-unit spread. The
+// caller supplies the spread (1.4826*MAD, or a std-dev fallback); a spread of 0
+// means no dispersion in the population, so every raw maps to the centre 700.
+func ScaleScore(raw, center, spread float64) int {
+	if spread == 0 {
 		return 700
 	}
-	s := 700 + 30*(raw-median)/unit
+	s := 700 + 30*(raw-center)/spread
 	if s < 0 {
 		s = 0
 	}
@@ -93,11 +113,18 @@ func Rank(entries []Entry) []Entry {
 	}
 	median := Median(totals)
 	mad := MAD(totals, median)
+	// Robust spread is 1.4826*MAD. When more than half the totals tie (common
+	// early on with many participants on 0), MAD is 0 and would flatten every
+	// WSI to 700; fall back to std dev so real score gaps still separate.
+	spread := 1.4826 * mad
+	if spread == 0 {
+		spread = StdDev(totals)
+	}
 
 	out := make([]Entry, len(entries))
 	copy(out, entries)
 	for i := range out {
-		out[i].WSI = ScaleScore(out[i].TotalRaw, median, mad)
+		out[i].WSI = ScaleScore(out[i].TotalRaw, median, spread)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].WSI > out[j].WSI })
 	for i := range out {

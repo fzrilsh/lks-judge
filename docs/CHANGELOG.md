@@ -1,5 +1,38 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Automark (2026-08-15) ✅
+
+**Status:** Complete. Config-driven HTTP auto-marking across every participant server, bounded-parallel, with live results over the existing WS hub. Ported from a local JS prototype (`test.js`, gitignored). No schema change, no new SQL, no new Go dependency (stdlib `net/http` + `encoding/json`).
+
+### Engine (`internal/automark`, stdlib only, no internal imports)
+- `config.go`: the whole suite as typed structs (`Config`/`Base`/`Auth`/`Group`/`Assertion`/`Expected`/`Target`), round-tripping the saved JSON 1:1.
+- `evaluate.go`: `evaluate` scores one captured response (status_code + per-key body checks); `compareStructure` verifies shape only (numeric keys assert a field name, `{"*": shape}` asserts an array of matching items, nested objects recurse); `getPath` resolves a dot-path for the auth token. Failed checks deduct `deduction` (or the full score when unset), floored at 0. Semantics preserved verbatim from the prototype.
+- `request.go`: `doRequest` (10s context timeout; transport failure becomes status 0 + `networkError` so a run never crashes), `buildHost` (`{scheme}://{ip}:{port}{path}`, target `host` overrides, 80/443 omitted), `noteFor`.
+- `runner.go`: `runParticipant` runs each group/assertion with an isolated auth token. `requires_auth` injects `Bearer`; a passing `invalidates_token` assertion (logout) marks the token stale so the next authed request lazily re-logs in (single-login-upfront breaks against a suite containing logout). `Run` marks targets bounded-parallel (default 6), firing an `onResult` callback per finished participant for live progress; results returned in target order.
+- `placeholders.go`: `{{uniqid}}` substitution in request bodies (unique email per run).
+- `store.go`: `Load`/`Save` the config as `{data}/automark.json` (atomic temp+rename; missing file returns a zero config), `ParseConfig` normalizes then validates a pasted blob before persisting.
+- `validate.go`: `Normalize` (trim + upper-case methods) and `Validate` reject a config that would fail or silently no-op at run time (no groups, empty `group_id`, no assertions, missing title/method/endpoint, a method outside GET/POST/PUT/PATCH/DELETE, an endpoint without a leading slash, negative score/deduction, out-of-range status code, missing `auth.login.endpoint`/`tokenPath` when an assertion needs auth, and grading notes not ordered high to low). Wired into `ParseConfig`, so a raw JSON paste can no longer bypass the builder; the save handler `url.QueryEscape`s the message.
+- `example.go`: `ExampleConfigJSON`, one complete suite exercising every builder-expressible feature (base scheme/port/path, global auth with a `{{uniqid}}` login body and `tokenPath`, both note lists ordered high to low, two groups, and assertions covering `requires_auth`, `invalidates_token`, a request body, `deduction` present and absent, a status/message scalar check, a nested object shape, and a list-of shape).
+- Tests: all-pass run + per-participant `onResult` count, lazy re-login after logout, `compareStructure` array-of-objects, message case-insensitivity + status floor, network-error zero. `validate_test.go` table-covers each `Validate` error string and `Normalize`, plus the `deduction` nil-vs-0 round trip. `example_test.go` keeps `ExampleConfigJSON` parsing and validating clean. `TestBuilderEmittedShapes` pins the three `expected.body` forms the builder emits (array, `{"*":...}`, mixed) and the engine's top-level list-of no-op.
+
+### Web (`internal/web/handlers_automark.go`)
+- `GET /jury/automark`: renders the console with the saved config and the current target list (one per participant that has a recorded IP).
+- `POST /jury/automark`: validates and persists the pasted/builder JSON (`?error=` on parse failure).
+- `POST /jury/automark/run`: builds targets from participants with an `ip_address`, starts `automark.Run` in a background goroutine, returns `202`. A single `atomic.Bool` guard rejects a second concurrent run with `409`. Per-participant results broadcast as `AutomarkResult`, completion as `AutomarkDone` (both jury-only WS events).
+- `internal/realtime/hub.go`: added `EvAutomarkResult`/`EvAutomarkDone` (not in `anonymousEvents`, so only authenticated jury sockets receive them).
+
+### UI
+- `templates/automark.templ`: two-column console (Configuration | Results). Config editor is two tabs, a raw JSON textarea (source of truth, submitted to `/jury/automark`) and a visual builder; a Run button in the header disabled when no target has an IP. A **Load example** button on the JSON tab fills the textarea from an embedded `ExampleConfigJSON` script tag, so an empty config is a starting point rather than a blank wall.
+- `static/js/automark.js`: tab switching, the Load-example handler, the Run fetch, and a `/ws` listener that appends a progress-bar row per `AutomarkResult` and finalizes on `AutomarkDone`. The builder itself moved out to its own file; this file calls `AutomarkBuilder.render()` on tab switch.
+- `static/js/automark_builder.js`: the complete visual builder (`window.AutomarkBuilder = { render, validate }`). Sections for server (scheme/port/path), global authentication (method/endpoint/tokenPath/JSON login body), grading notes (two lists with add/remove/sort and an inline warning when min values are not descending), and groups (a card each with reorder/remove, add-assertion, and per-assertion `<details>` blocks). Each assertion exposes title, method, endpoint, `requires_auth`/`invalidates_token` (deleted on false to match Go `omitempty`), score, a custom-deduction checkbox that preserves the null-vs-0 distinction, a request body with a GET/DELETE drop warning, expected status code, and a visual expected-shape tree. The tree hides numeric keys and `"*"` behind field/object/list-of nodes; an unrepresentable shape (a scalar under a non-status/message key) is withheld with a warning and a Rebuild button rather than silently dropped. Inline validation mirrors `validate.go`, toggling `.input-error` per field and painting a `chip-danger` count at the top of the pane; it never blocks submit (the server is the gate).
+- Nav: `Automark` item added to the jury sidebar between Scoring and Files.
+
+### Auth model
+Credentials are a single global set (login endpoint + body reused for every participant): in production each participant runs the same API on a different IP but seeds the same account. A per-target credential override exists in the engine (`Target.Auth`) for the testing case of several targets sharing one server, but the UI does not expose it.
+
+### Deviations from spec
+`docs/rebuild-spec.md` predates this feature; the automark routes and `automark.json` are recorded here and added to the spec's route list. Second front-end feature after the vendored Chart.js; automark ships no vendored asset.
+
 ## Per-Module Submission ZIP (2026-08-14) ✅
 
 **Status:** Complete. Jury can download one module's submissions as a ZIP, alongside the existing download-all. No schema change, no new SQL, no new Go dependency.

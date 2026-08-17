@@ -192,6 +192,12 @@ func main() {
 	mux.Handle("POST /jury/modules/{id}/rename", juryMw(web.HandleModuleRenamePOST(st)))
 	mux.Handle("POST /jury/modules/{id}/delete", juryMw(web.HandleModuleDeletePOST(st, hub)))
 
+	// jury automark routes
+	mux.Handle("GET /jury/automark", juryMw(web.HandleAutomarkGET(st, *dataDir)))
+	mux.Handle("POST /jury/automark", juryMw(web.HandleAutomarkSavePOST(st, *dataDir)))
+	mux.Handle("POST /jury/automark/run", juryMw(web.HandleAutomarkRunPOST(st, hub, *dataDir)))
+	mux.Handle("POST /jury/automark/apply", juryMw(web.HandleAutomarkApplyPOST(st, scoreCache, hub)))
+
 	// jury countdown routes
 	mux.Handle("GET /jury/countdown", juryMw(web.HandleCountdownJuryGET(st)))
 	mux.Handle("POST /jury/countdown", juryMw(web.HandleCountdownJuryPOST(st)))

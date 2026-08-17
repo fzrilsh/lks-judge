@@ -15,7 +15,9 @@ public leaderboard, a CIS PDF export, and the final polish (nuclear reset,
 Windows binary + `server.bat`). A subsequent UI redesign pass gave the whole app
 a softer palette, a responsive CSS-only sidebar drawer, a jury dashboard at
 `/jury/` (with vendored Chart.js insight charts), and the accessibility and
-usability fixes from a heuristic audit. The server is ready for a LAN competition.
+usability fixes from a heuristic audit. An automark console at `/jury/automark`
+runs config-driven HTTP checks against every participant server in parallel, with
+live results over the WebSocket hub. The server is ready for a LAN competition.
 
 | Phase | Scope | State |
 | ----- | ----- | ----- |
@@ -33,6 +35,7 @@ usability fixes from a heuristic audit. The server is ready for a LAN competitio
 | 12 | UI modification: port the old Laravel design to the templ views | done |
 | 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | done |
 | UI | UI redesign: soft palette, responsive drawer, jury dashboard at `/jury/`, heuristic fixes | done |
+| Automark | Config-driven HTTP marking across every participant server, bounded-parallel, live WS results, full visual config builder | done |
 
 Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -109,8 +112,9 @@ There are no environment variables, all configuration is flags.
 
 Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/`
 (participant work, laid out `submissions/{participant_id}/{module_id}/`),
-`uploads_tmp/` (in-flight chunks), and `logs/` (per-day `YYYY-MM-DD.log`, also
-teed to the terminal) alongside `lks.sqlite`.
+`uploads_tmp/` (in-flight chunks), `logs/` (per-day `YYYY-MM-DD.log`, also
+teed to the terminal), and `automark.json` (the saved automark config) alongside
+`lks.sqlite`.
 
 Six routes are public, everything else is behind the jury IP allowlist or a
 participant session (plus `GET /login` and the `GET /static/` asset tree):
@@ -132,6 +136,19 @@ bulk upsert) and `GET /jury/scoring/export-pdf` (the CIS PDF). `/leaderboard`,
 progress, top 3, activity feed, submission-timing charts); the competition setup
 form lives at `GET/POST /jury/competition`.
 
+The automark console is `GET /jury/automark` (renders the saved config plus the
+target list), `POST /jury/automark` (normalizes, validates, and persists the
+config to `{data}/automark.json`, redirecting with `?error=` on a rejected
+paste), and `POST /jury/automark/run` (starts a background run against every
+participant that has a recorded IP, returns `202`; a second concurrent run gets
+`409`). Per-participant results and completion stream to the jury over `/ws` as
+`AutomarkResult` / `AutomarkDone`. The config editor has two tabs: a raw JSON
+textarea (the submitted source of truth, with a **Load example** button that
+seeds a complete sample) and a full visual builder that hydrates from and writes
+back to it. The builder edits every field, including a visual expected-shape
+tree that hides the engine's numeric-key / `"*"` encoding behind
+field/object/list-of nodes, and mirrors the server-side validation inline.
+
 The header **Reset** button (`POST /jury/reset`) is a nuclear wipe: it snapshots
 the DB to `backups/` first, then deletes every competition, participant, module,
 score, submission, session, and the `files/`, `submissions/`, `uploads_tmp/`
@@ -150,6 +167,7 @@ internal/web/       handlers, middleware, templ views, embedded static assets
 internal/realtime/  countdown timing and the WebSocket hub
 internal/upload/    filesystem chunk tracker, resumable upload handlers, session cleanup
 internal/scoring/   robust WSI scale, leaderboard cache, CIS PDF export
+internal/automark/  config-driven HTTP marking engine (stdlib only, no internal imports)
 internal/excel/     participant import/export
 internal/backup/    periodic VACUUM INTO
 docs/               changelog and the rebuild spec (source of truth)

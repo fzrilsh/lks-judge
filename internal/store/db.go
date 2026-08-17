@@ -19,6 +19,9 @@ var migrationSQL string
 //go:embed migrations/002_plain_password.sql
 var migration002SQL string
 
+//go:embed migrations/003_censored.sql
+var migration003SQL string
+
 // Store holds the dual connection pool.
 // writer: serialized single connection (WAL writer).
 // reader: read-only pool, up to 16 concurrent connections.
@@ -103,6 +106,18 @@ func migrate(db *sql.DB) error {
 	}
 	if !has {
 		if _, err := db.Exec(migration002SQL); err != nil {
+			return err
+		}
+	}
+	// 003: ADD COLUMN censored, gated on its absence (same reason as 002).
+	var hasCensored bool
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM pragma_table_info('competitions') WHERE name = 'censored'`,
+	).Scan(&hasCensored); err != nil {
+		return err
+	}
+	if !hasCensored {
+		if _, err := db.Exec(migration003SQL); err != nil {
 			return err
 		}
 	}

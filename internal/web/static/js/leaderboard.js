@@ -23,7 +23,7 @@
     });
   }
 
-  function render(entries, modules) {
+  function render(entries, modules, censored) {
     renderHead(modules);
     var body = document.getElementById("leaderboard-body");
     if (!body) return;
@@ -32,6 +32,24 @@
       return;
     }
     body.innerHTML = entries.map(function (e) {
+      // Censored: rank, total and every module cell are withheld and the row
+      // order is already shuffled server-side, so nothing here reveals standing.
+      if (censored) {
+        var hiddenCells = modules.map(function () {
+          return '<td class="py-5 px-2 w-[80px] text-center"><span class="text-on-surface-variant">—</span></td>';
+        }).join("");
+        return '<tr class="transition-colors hover:bg-surface-container-low">' +
+          '<td class="py-4 px-6">' +
+            '<div class="flex items-center gap-2 w-14"><span class="material-symbols-outlined text-2xl text-on-surface-variant" aria-hidden="true">lock</span></div>' +
+          '</td>' +
+          '<td class="py-4 px-6">' +
+            '<span class="font-bold text-on-surface text-base">' + esc(e.name) + '</span>' +
+            '<p class="text-xs font-medium text-on-surface-variant mt-0.5">' + esc(e.school) + '</p>' +
+          '</td>' +
+          hiddenCells +
+          '<td class="py-4 px-6 text-center"><span class="text-2xl font-black font-manrope text-on-surface-variant">—</span></td>' +
+          '</tr>';
+      }
       var rank = e.rank;
       var tint = rank <= 3 ? "bg-surface-container-low/60 hover:bg-surface-container-low"
         : "hover:bg-surface-container-low";
@@ -82,7 +100,7 @@
         if (!r.ok) throw new Error("http " + r.status);
         return r.json();
       })
-      .then(function (d) { loaded = true; render(d.entries || [], d.modules || []); })
+      .then(function (d) { loaded = true; render(d.entries || [], d.modules || [], d.censored); })
       .catch(function () {
         // First load failed: replace the "Loading..." row with a retry affordance
         // instead of hanging forever. A later failure keeps the last good render.

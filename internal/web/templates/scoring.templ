@@ -15,6 +15,19 @@ templ Scoring(comp *model.Competition, participants []*model.Participant, module
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">leaderboard</span>
 				Leaderboard
 			</a>
+			<form method="post" action="/jury/scoring/censor" class="contents">
+				if comp.Censored {
+					<button type="submit" class="btn-tonal">
+						<span class="material-symbols-outlined text-lg" aria-hidden="true">visibility</span>
+						Uncensor
+					</button>
+				} else {
+					<button type="submit" class="btn-tonal">
+						<span class="material-symbols-outlined text-lg" aria-hidden="true">visibility_off</span>
+						Censor
+					</button>
+				}
+			</form>
 			<a href="/jury/scoring/export-pdf" class="btn-primary">
 				<span class="material-symbols-outlined text-lg" aria-hidden="true">picture_as_pdf</span>
 				Export PDF

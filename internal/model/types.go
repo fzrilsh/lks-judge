@@ -17,6 +17,7 @@ type Competition struct {
 	PausedAt         *time.Time
 	StartTime        *string // TIME
 	EndTime          *string // TIME
+	Censored         bool    // when true, /leaderboard hides scores/total/rank and shuffles order
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

@@ -24,7 +24,7 @@ func (s *Store) GetCompetition() (*model.Competition, error) {
 		SELECT id, name, level, allowed_ips, current_module_id,
 		       CAST(start_date AS TEXT), CAST(end_date AS TEXT),
 		       status, remaining_seconds, paused_at,
-		       start_time, end_time, created_at, updated_at
+		       start_time, end_time, censored, created_at, updated_at
 		FROM competitions LIMIT 1`)
 
 	var c model.Competition
@@ -36,7 +36,7 @@ func (s *Store) GetCompetition() (*model.Competition, error) {
 	err := row.Scan(
 		&c.ID, &c.Name, &c.Level, &c.AllowedIPs, &currentModuleID,
 		&c.StartDate, &c.EndDate, &c.Status, &remainingSeconds, &pausedAt,
-		&startTime, &endTime, &c.CreatedAt, &c.UpdatedAt,
+		&startTime, &endTime, &c.Censored, &c.CreatedAt, &c.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -112,6 +112,17 @@ func (s *Store) LoadCompetitionCache() error {
 	s.CompetitionCache.Store(c) // nil if no row — intentional
 	s.reloadAllowedNets(c)
 	return nil
+}
+
+// SetCensored flips the leaderboard censoring flag and refreshes the cache.
+func (s *Store) SetCensored(competitionID int64, censored bool) error {
+	if _, err := s.Writer.Exec(
+		`UPDATE competitions SET censored = ?, updated_at = ? WHERE id = ?`,
+		censored, time.Now().UTC(), competitionID,
+	); err != nil {
+		return fmt.Errorf("set censored: %w", err)
+	}
+	return s.LoadCompetitionCache()
 }
 
 // Reset performs a nuclear wipe: every competition row and all its children

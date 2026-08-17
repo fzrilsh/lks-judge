@@ -240,6 +240,7 @@ func main() {
 	// jury scoring: raw-score matrix + PDF export
 	mux.Handle("GET /jury/scoring", juryMw(web.Gzip(web.HandleScoringGET(st))))
 	mux.Handle("POST /jury/scoring", juryMw(web.HandleScoringPOST(st, scoreCache, hub)))
+	mux.Handle("POST /jury/scoring/censor", juryMw(web.HandleScoringCensorPOST(st, scoreCache, hub)))
 	mux.Handle("GET /jury/scoring/export-pdf", juryMw(web.HandleScoringExportPDF(st)))
 
 	// public leaderboard (HTML shell + JSON snapshot), unauthenticated by design, gzip-scoped

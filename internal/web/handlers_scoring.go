@@ -113,6 +113,29 @@ func HandleScoringPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub)
 	}
 }
 
+// HandleScoringCensorPOST toggles the public-leaderboard censoring flag, then
+// refreshes the cache (which shuffles + blanks the rows) and broadcasts so every
+// open leaderboard re-fetches at once.
+func HandleScoringCensorPOST(st *store.Store, cache *scoring.Cache, hub *realtime.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		comp := st.CompetitionCache.Load()
+		if comp == nil {
+			http.Redirect(w, r, "/jury/", http.StatusSeeOther)
+			return
+		}
+		if err := st.SetCensored(comp.ID, !comp.Censored); err != nil {
+			log.Printf("set censored: %v", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		if err := cache.Refresh(st, comp.ID); err != nil {
+			log.Printf("refresh leaderboard cache: %v", err)
+		}
+		hub.Broadcast(realtime.EvScoreUpdated, map[string]any{})
+		http.Redirect(w, r, "/jury/scoring?saved=1", http.StatusSeeOther)
+	}
+}
+
 // HandleScoringExportPDF streams the scaled-results PDF.
 func HandleScoringExportPDF(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

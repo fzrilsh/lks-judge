@@ -2,6 +2,7 @@ package scoring
 
 import (
 	"encoding/json"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 
@@ -39,25 +40,35 @@ type Cache struct {
 // safe to call before the first Refresh.
 func NewCache() *Cache {
 	c := &Cache{}
-	c.store(nil, nil)
+	c.store(nil, nil, false)
 	return c
 }
 
-// store marshals entries to the wire shape and swaps in the bytes.
-func (c *Cache) store(entries []Entry, modules []moduleInfo) {
+// store marshals entries to the wire shape and swaps in the bytes. When censored,
+// rank/wsi/scores/award are blanked and rows are shuffled, so the public page
+// leaks neither standing nor score while the jury holds results back.
+func (c *Cache) store(entries []Entry, modules []moduleInfo, censored bool) {
+	if censored {
+		rand.Shuffle(len(entries), func(i, j int) { entries[i], entries[j] = entries[j], entries[i] })
+	}
 	rows := make([]row, 0, len(entries))
 	for _, e := range entries {
+		if censored {
+			rows = append(rows, row{PCNumber: e.PCNumber, Name: e.Name, School: e.School})
+			continue
+		}
 		rows = append(rows, row{
 			Rank: e.Rank, PCNumber: e.PCNumber, Name: e.Name,
 			School: e.School, WSI: e.WSI, Award: e.Award, Scores: e.Scores,
 		})
 	}
 	b, err := json.Marshal(struct {
-		Modules []moduleInfo `json:"modules"`
-		Entries []row        `json:"entries"`
-	}{modules, rows})
+		Censored bool         `json:"censored"`
+		Modules  []moduleInfo `json:"modules"`
+		Entries  []row        `json:"entries"`
+	}{censored, modules, rows})
 	if err != nil {
-		b = []byte(`{"modules":null,"entries":[]}`) // marshal of plain strings/ints cannot fail; belt and braces
+		b = []byte(`{"censored":false,"modules":null,"entries":[]}`) // marshal of plain strings/ints cannot fail; belt and braces
 	}
 	c.json.Store(&b)
 }
@@ -91,7 +102,11 @@ func (c *Cache) Refresh(st *store.Store, competitionID int64) error {
 			PCNumber: t.PCNumber, TotalRaw: t.TotalRaw, Scores: cells[t.ParticipantID],
 		}
 	}
-	c.store(Rank(entries), mods)
+	censored := false
+	if comp := st.CompetitionCache.Load(); comp != nil {
+		censored = comp.Censored
+	}
+	c.store(Rank(entries), mods, censored)
 	return nil
 }
 
@@ -105,5 +120,5 @@ func (c *Cache) Snapshot() []byte {
 func (c *Cache) Clear() {
 	c.refresh.Lock()
 	defer c.refresh.Unlock()
-	c.store(nil, nil)
+	c.store(nil, nil, false)
 }

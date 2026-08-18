@@ -17,9 +17,25 @@ import (
 func PDF(comp *model.Competition, entries []Entry, leftLogo, rightLogo []byte) ([]byte, error) {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.SetMargins(15, 12, 15)
+	const pageW = 210.0
+	// Credit footer on every page, drawn just inside the bottom margin. Set before
+	// AddPage so the first page gets it too. "WebTech Indonesia" is a clickable
+	// link; the line is centered by measuring both parts and placing X manually.
+	pdf.SetFooterFunc(func() {
+		const prefix = "LKS Judge Platform by "
+		const link = "WebTech Indonesia"
+		pdf.SetY(-12)
+		pdf.SetFont("Helvetica", "", 8)
+		wPrefix := pdf.GetStringWidth(prefix)
+		wLink := pdf.GetStringWidth(link)
+		pdf.SetX((pageW - wPrefix - wLink) / 2)
+		pdf.SetTextColor(140, 140, 140)
+		pdf.CellFormat(wPrefix, 6, prefix, "", 0, "L", false, 0, "")
+		pdf.SetTextColor(11, 61, 96)
+		pdf.CellFormat(wLink, 6, link, "", 0, "L", false, 0, "https://github.com/webtechindonesia")
+	})
 	pdf.AddPage()
 
-	const pageW = 210.0
 	if len(leftLogo) > 0 {
 		regImage(pdf, "left", leftLogo)
 		// LKS logo, anchored to the left margin. Height only, width auto.

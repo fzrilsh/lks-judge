@@ -1,5 +1,49 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Production Branding & README (2026-08-18) ✅
+
+**Status:** Complete. A shared credit line across the app plus a production README and MIT license, ahead of the v1.2.0 release. No schema change, no new SQL, no new Go dependency.
+
+- `templates/ui.templ`: new `Watermark()` component, "LKS Judge Platform by WebTech Indonesia" with the name a `rel="noopener noreferrer"` external link, so the markup lives in one place.
+- Placed on login (below a divider), the leaderboard footer, and the public countdown/TV screen (fixed to the bottom).
+- `internal/scoring/pdf.go`: `SetFooterFunc` draws the same credit on every PDF page, centered by measuring both parts; "WebTech Indonesia" is a clickable link via `CellFormat`'s link argument (no visible URL text).
+- `README.md`: rewritten for production, centered header (name, badges, description, dashboard image), no development/phase content. `LICENSE`: MIT, WebTech Indonesia.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
+
+### Next
+Phase 13 planned a session-expiry sweep for the `sync.Map` session cache that is still not implemented. Manual responsive/accessibility smoke passes (DevTools at 360/768/1280/1920, full keyboard nav, Lighthouse a11y on `/jury/` and `/`) remain outstanding.
+
+---
+
+## Leaderboard Censoring (2026-08-17) ✅
+
+**Status:** Complete. A jury-toggled switch that hides the public leaderboard's per-module scores, total WSI, rank, and award, and randomizes row order while censored, so no ranking leaks even via a direct `/leaderboard.json` fetch. Additive schema (one column), no new dependency.
+
+- `migrations/003_censored.sql`: `ALTER TABLE competitions ADD COLUMN censored INTEGER NOT NULL DEFAULT 0`, gated in `migrate()` on a `pragma_table_info` absence check. `model.Competition` gains `Censored bool`; `GetCompetition` selects/scans it; `SetCensored` writes it and reloads the competition cache.
+- `internal/scoring/cache.go`: `store` takes a `censored bool`; when set it `rand.Shuffle`s the entries and emits only `{PCNumber, Name, School}` per row (rank/wsi/scores/award blanked). The JSON payload gains `"censored"`. Refresh reads the flag from the competition cache.
+- `POST /jury/scoring/censor` toggles the flag, refreshes the cache, and broadcasts `ScoreUpdated`. Scoring page gains a Censor/Uncensor button. `leaderboard.js` renders lock icons and "—" placeholders when censored.
+- Tests: `TestCacheStoreCensored` asserts a censored row leaks no rank/wsi/award/scores; empty-snapshot string updated.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
+
+---
+
+## Leaderboard Redesign & Scoring Fixes (2026-08-17) ✅
+
+**Status:** Complete. A minimalist public leaderboard plus two scoring/PDF fixes. No schema change, no new dependency.
+
+- `feat(web): minimalist leaderboard with icon medals` (`b394bf1`): pared-back leaderboard using icon medals in place of the previous chrome.
+- `fix(scoring): fall back to std dev when MAD is zero` (`ffc8bc0`): when the median absolute deviation is 0 (no spread), the WSI spread falls back to the standard deviation instead of collapsing every scaled score to 700.
+- `fix(scoring): enlarge left logo and right-align WorldSkills logo in PDF` (`cd623ea`): the left (LKS) logo is larger and the right (WorldSkills) logo is flush to the right margin, derived from its registered aspect ratio.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
+
+---
+
 ## Automark (2026-08-15) ✅
 
 **Status:** Complete. Config-driven HTTP auto-marking across every participant server, bounded-parallel, with live results over the existing WS hub. Ported from a local JS prototype (`test.js`, gitignored). No schema change, no new SQL, no new Go dependency (stdlib `net/http` + `encoding/json`).
@@ -108,9 +152,6 @@ cmd/server/main.go                                 (/jury/ dashboard + /jury/com
 - ✅ `go generate ./...` (templ then Tailwind), `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run`: clean
 - ✅ `TestCSSCoverage` green after the stem list + `@source inline` updates
 - ✅ `handlers_dashboard_jury_test.go`: aggregates counts/top-3/activity/chart JSON, redirects to `/jury/competition?setup=1` without a competition, 404s on deep paths
-
-### Next
-Phase 13 planned a session-expiry sweep for the `sync.Map` session cache that is still not implemented. Manual responsive/accessibility smoke passes (DevTools at 360/768/1280/1920, full keyboard nav, Lighthouse a11y on `/jury/` and `/`) remain to be run before release.
 
 ---
 

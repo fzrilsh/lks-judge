@@ -60,7 +60,15 @@ func Leaderboard(comp *model.Competition) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-body-medium text-on-surface-variant\">WorldSkills (WSI) scaled results</p></div><div class=\"card card-flush overflow-hidden\"><div class=\"table-wrap border-0 rounded-t\"><table class=\"data-table whitespace-nowrap\"><thead><tr id=\"leaderboard-head\"><th class=\"w-24\">Rank</th><th>Participant</th><th class=\"text-center!\">Total Score</th></tr></thead> <tbody id=\"leaderboard-body\"><tr><td colspan=\"99\" class=\"text-center py-8 text-on-surface-variant\">Loading...</td></tr></tbody></table></div><div class=\"bg-surface-container-low px-6 py-4 border-t border-outline-variant flex flex-wrap gap-4 text-label-medium text-on-surface-variant justify-between items-center rounded-b\"><div class=\"flex flex-wrap items-center gap-4\"><span class=\"flex items-center gap-1\"><span class=\"material-symbols-outlined text-lg text-primary\" aria-hidden=\"true\">military_tech</span> Medallion for Excellence (&gt;= 700)</span></div><div class=\"font-semibold\">WSI Scale Standard Assessment</div></div></div></div><script src=\"/static/js/leaderboard.js\" defer></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h1><p class=\"text-body-medium text-on-surface-variant\">WorldSkills (WSI) scaled results</p></div><div class=\"card card-flush overflow-hidden\"><div class=\"table-wrap border-0 rounded-t\"><table class=\"data-table whitespace-nowrap\"><thead><tr id=\"leaderboard-head\"><th class=\"w-24\">Rank</th><th>Participant</th><th class=\"text-center!\">Total Score</th></tr></thead> <tbody id=\"leaderboard-body\"><tr><td colspan=\"99\" class=\"text-center py-8 text-on-surface-variant\">Loading...</td></tr></tbody></table></div><div class=\"bg-surface-container-low px-6 py-4 border-t border-outline-variant flex flex-wrap gap-4 text-label-medium text-on-surface-variant justify-between items-center rounded-b\"><div class=\"flex flex-wrap items-center gap-4\"><span class=\"flex items-center gap-1\"><span class=\"material-symbols-outlined text-lg text-primary\" aria-hidden=\"true\">military_tech</span> Medallion for Excellence (&gt;= 700)</span></div><div class=\"font-semibold\">WSI Scale Standard Assessment</div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = Watermark().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><script src=\"/static/js/leaderboard.js\" defer></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

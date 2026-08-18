@@ -1,89 +1,71 @@
-# lks-judge
+<div align="center">
 
-Single-binary judging server for LKS (Indonesian vocational skills competition).
-Runs on a Windows LAN for ~16 simultaneous participants with **zero runtime
-dependencies**: no PHP, no Node, no system SQLite, no CGO. Replaces a previous
-Laravel + FrankenPHP + Reverb stack that buckled under concurrent load.
+# LKS Judge Platform
 
-## Status
+[![License](https://img.shields.io/github/license/fzrilsh/lks-judge?color=blue)](https://github.com/fzrilsh/lks-judge/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/fzrilsh/lks-judge?style=flat)](https://github.com/fzrilsh/lks-judge/stargazers)
+[![Forks](https://img.shields.io/github/forks/fzrilsh/lks-judge?style=flat)](https://github.com/fzrilsh/lks-judge/network/members)
+[![Issues](https://img.shields.io/github/issues/fzrilsh/lks-judge)](https://github.com/fzrilsh/lks-judge/issues)
+[![Last commit](https://img.shields.io/github/last-commit/fzrilsh/lks-judge)](https://github.com/fzrilsh/lks-judge/commits)
+[![Go](https://img.shields.io/github/go-mod/go-version/fzrilsh/lks-judge)](go.mod)
 
-All thirteen phases are done: setup, participants,
-modules, the competition countdown, the WebSocket hub that pushes live events,
-chunked resumable file upload with jury file management, participant submissions
-with the jury review matrix, scoring with the robust WSI scale, a cached
-public leaderboard, a CIS PDF export, and the final polish (nuclear reset,
-Windows binary + `server.bat`). A subsequent UI redesign pass gave the whole app
-a softer palette, a responsive CSS-only sidebar drawer, a jury dashboard at
-`/jury/` (with vendored Chart.js insight charts), and the accessibility and
-usability fixes from a heuristic audit. An automark console at `/jury/automark`
-runs config-driven HTTP checks against every participant server in parallel, with
-live results over the WebSocket hub. The server is ready for a LAN competition.
+A single-binary judging server for LKS (Lomba Kompetensi Siswa, the Indonesian
+vocational skills competition). It runs on a local network and serves the full
+event: competition setup, participant registration, a synchronized countdown,
+resumable file distribution and submission, jury scoring on the robust
+WorldSkills (WSI) scale, and a live public leaderboard.
 
-| Phase | Scope | State |
-| ----- | ----- | ----- |
-| 1 | Foundation: dual SQLite pool, migrations, embedded assets | done |
-| 2 | Auth: jury IP allowlist, participant session login | done |
-| 3 | Layouts: templ views, app + guest shells | done |
-| 4 | Competition setup | done |
-| 5 | Participants: CRUD, Excel import/export, seat shuffle | done |
-| 6 | Modules: CRUD, current-module selection | done |
-| 7 | Countdown: jury control, public display, polling endpoint | done |
-| 8 | WebSocket hub: `GET /ws`, live countdown and module events | done |
-| 9 | Chunked upload: resumable 2MB chunks, jury file manager, Range download | done |
-| 10 | Submissions: live dashboard, per-module upload, jury matrix + ZIP export | done |
-| 11 | Scoring + leaderboard: robust WSI, cached leaderboard, CIS PDF | done |
-| 12 | UI modification: port the old Laravel design to the templ views | done |
-| 13 | Polish & build: nuclear reset, session expiry sweep, Windows binary | done |
-| UI | UI redesign: soft palette, responsive drawer, jury dashboard at `/jury/`, heuristic fixes | done |
-| Automark | Config-driven HTTP marking across every participant server, bounded-parallel, live WS results, full visual config builder | done |
+The server ships as one executable with **zero runtime dependencies**: no PHP,
+no Node.js, no external SQLite, no CGO. Copy the binary to the host machine and
+run it. It is built for a LAN of roughly 16 simultaneous participants.
 
-Per-phase detail lives in [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+![LKS Judge Platform dashboard](docs/assets/dashboard.png)
+
+</div>
+
+
+## Highlights
+
+- **Self-contained.** SQLite (`modernc.org/sqlite`) and PDF generation
+  (`github.com/go-pdf/fpdf`) are pure Go and compiled in. Nothing to install on
+  the host, and the app works fully offline.
+- **Live updates.** A WebSocket hub pushes the countdown, score changes, and
+  submission activity to every connected screen in real time.
+- **Resumable transfers.** Files are uploaded and downloaded in chunks with
+  range support, so a dropped connection resumes instead of restarting.
+- **Robust scoring.** Raw jury marks are converted to the WSI scale on demand
+  and exported to a CIS-style PDF.
+- **Operator controls.** A jury dashboard, a nuclear reset with automatic
+  backup, leaderboard censoring, and a config-driven automark console.
 
 ## Requirements
 
-- Go 1.25+
-- [`templ`](https://templ.guide), install with `go install github.com/a-h/templ/cmd/templ@latest`
+To run: nothing. The distributed binary is self-contained.
 
-Contributors also need [`golangci-lint`](https://golangci-lint.run) and
-[`lefthook`](https://lefthook.dev) for the commit gates.
+To build from source:
 
-SQLite is compiled in via `modernc.org/sqlite` (pure Go), so there is nothing to
-install and `CGO_ENABLED=0` works everywhere. The CIS PDF export uses
-`github.com/go-pdf/fpdf` (also pure Go), so it ships in the binary too.
+- Go 1.25 or newer
+- [`templ`](https://templ.guide): `go install github.com/a-h/templ/cmd/templ@latest`
 
 ## Build
 
 ```bash
-go generate ./...          # compiles .templ files AND rebuilds static/css/app.css, required before every build
+go generate ./...          # compile .templ views and rebuild static/css/app.css
 go build ./cmd/server
 ```
 
-Any change to a `.templ` file needs `go generate ./...` (or `templ generate`)
-before `go build`, or you will build against stale views.
+`go generate ./...` must run before `go build` after any change to a `.templ`
+file or you will build against stale views.
 
-### CSS
-
-Styling is Tailwind v4. The source is `internal/web/tailwind.css` (MD3 tokens,
-type scale, self-hosted `@font-face`, component classes); `go generate` runs the
-standalone `tools/tailwindcss` CLI to regenerate the committed, embedded
-`internal/web/static/css/app.css`. The CLI binary is git-ignored and per-OS
-(see [`tools/README.md`](tools/README.md) for the download URL). Because
-`app.css` is committed and embedded, `go build` alone works without the CLI;
-you only need it to regenerate `app.css` after changing `tailwind.css` or the
-class strings in `.templ` / `static/js/*.js` files. Self-hosted fonts live under
-`internal/web/static/fonts/`. Vendored front-end libraries (currently Chart.js
-for the jury dashboard) live under `internal/web/static/js/vendor/`, which
-Tailwind does not scan, and ship embedded so the app works offline on the LAN.
-
-Windows target:
+Windows target for the competition host:
 
 ```bash
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o lks-judge.exe ./cmd/server
 ```
 
-Ship `lks-judge.exe` and `server.bat` together on the competition host.
-Double-clicking `server.bat` launches the server on `0.0.0.0:80` with `./data`
-and pauses on exit so a crash message stays readable.
+Ship `lks-judge.exe` and `server.bat` together. Double-clicking `server.bat`
+launches the server on `0.0.0.0:80` with a `./data` directory and pauses on exit
+so any error message stays readable.
 
 ## Run
 
@@ -93,69 +75,67 @@ and pauses on exit so a crash message stays readable.
 
 | Flag | Default | Meaning |
 | ---- | ------- | ------- |
-| `--data` | `./data` | Data directory; the database lives at `{data}/lks.sqlite` |
+| `--data` | `./data` | Data directory; the SQLite database lives at `{data}/lks.sqlite` |
 | `--listen` | `0.0.0.0:8080` | HTTP listen address |
-| `--dev` | `false` | Seed a default competition and one participant |
 | `--jury-ip` | (none) | Extra jury IP or CIDR granted `/jury/*` access, in memory only. Repeatable or comma-separated. |
 
-`--jury-ip` is a runtime-only allowlist: it is never written to the database,
-so it is not shown in the competition setup form and it survives a Reset. Use it
-to keep a fixed operator machine reachable before any competition exists or after
-a wipe, e.g. `--jury-ip 192.168.1.10 --jury-ip 10.0.0.0/24`. It is additive to the
-persisted `allowed_ips`. Loopback (`127.0.0.1`, `::1`) is always allowed on top of
-both lists, so the machine running the server can always reach `/jury/*`.
+All configuration is through flags; there are no environment variables.
 
-`--dev` seeds a participant whose password is `123456`. **Never run a real
-competition with `--dev`.**
+### Jury access
 
-There are no environment variables, all configuration is flags.
+Access to `/jury/*` is granted by IP. The persisted allowlist is set in the
+competition setup form and stored in the database. `--jury-ip` adds a
+runtime-only entry that is never written to the database and survives a reset,
+which keeps a fixed operator machine reachable before any competition exists or
+after a wipe, for example `--jury-ip 192.168.1.10 --jury-ip 10.0.0.0/24`.
+Loopback (`127.0.0.1`, `::1`) is always allowed on top of both lists, so the
+machine running the server can always reach the jury pages.
 
-Under `--data` the server keeps `backups/`, `files/` (jury files), `submissions/`
-(participant work, laid out `submissions/{participant_id}/{module_id}/`),
-`uploads_tmp/` (in-flight chunks), `logs/` (per-day `YYYY-MM-DD.log`, also
-teed to the terminal), and `automark.json` (the saved automark config) alongside
-`lks.sqlite`.
+### Data directory
 
-Six routes are public, everything else is behind the jury IP allowlist or a
-participant session (plus `GET /login` and the `GET /static/` asset tree):
+Under `--data` the server keeps, alongside `lks.sqlite`:
+
+| Path | Contents |
+| ---- | -------- |
+| `backups/` | Database snapshots (periodic and pre-reset) |
+| `files/` | Jury-distributed files |
+| `submissions/` | Participant work, laid out `{participant_id}/{module_id}/` |
+| `uploads_tmp/` | In-flight upload chunks |
+| `logs/` | Per-day `YYYY-MM-DD.log`, also teed to the terminal |
+| `automark.json` | The saved automark configuration |
+
+## Public pages
+
+These routes need no authentication and are meant for shared screens and
+participants:
 
 | Route | Purpose |
 | ----- | ------- |
-| `GET /countdown` | Full-screen countdown for a projector; plays an alert at zero |
-| `GET /countdown/time` | `{"seconds":N,"status":"..."}`, polled once a second |
-| `GET /leaderboard` | Public leaderboard; refreshes live on the `ScoreUpdated` WS event |
-| `GET /leaderboard.json` | Cached leaderboard snapshot (WSI, ranks, awards) |
-| `GET /ws` | WebSocket; anonymous clients get a reduced event set (countdown + score only) |
-| `GET /healthz` | Liveness check |
+| `GET /countdown` | Full-screen countdown for a projector; sounds an alert at zero |
+| `GET /leaderboard` | Public leaderboard; updates live as scores change |
+| `GET /login` | Participant sign-in |
 
-The jury scoring surface adds `GET/POST /jury/scoring` (raw-score matrix and
-bulk upsert) and `GET /jury/scoring/export-pdf` (the CIS PDF). `/leaderboard`,
-`/leaderboard.json`, and `GET /jury/scoring` are gzip-scoped.
+Everything under `/jury/*` is restricted to the jury IP allowlist, and each
+participant's dashboard and downloads require their session login.
 
-`GET /jury/` is the jury dashboard (competition status, countdown controls,
-progress, top 3, activity feed, submission-timing charts); the competition setup
-form lives at `GET/POST /jury/competition`.
+## Operator features
 
-The automark console is `GET /jury/automark` (renders the saved config plus the
-target list), `POST /jury/automark` (normalizes, validates, and persists the
-config to `{data}/automark.json`, redirecting with `?error=` on a rejected
-paste), and `POST /jury/automark/run` (starts a background run against every
-participant that has a recorded IP, returns `202`; a second concurrent run gets
-`409`). Per-participant results and completion stream to the jury over `/ws` as
-`AutomarkResult` / `AutomarkDone`. The config editor has two tabs: a raw JSON
-textarea (the submitted source of truth, with a **Load example** button that
-seeds a complete sample) and a full visual builder that hydrates from and writes
-back to it. The builder edits every field, including a visual expected-shape
-tree that hides the engine's numeric-key / `"*"` encoding behind
-field/object/list-of nodes, and mirrors the server-side validation inline.
-
-The header **Reset** button (`POST /jury/reset`) is a nuclear wipe: it snapshots
-the DB to `backups/` first, then deletes every competition, participant, module,
-score, submission, session, and the `files/`, `submissions/`, `uploads_tmp/`
-directories. A confirm dialog plus typing `RESET` guards it. Note that a reset
-clears `allowed_ips`, so the jury allowlist falls back to loopback only: after a
-reset you must recreate the competition from `127.0.0.1` before remote jury
-machines can reach `/jury/*` again.
+- **Jury dashboard** (`/jury/`): competition status, countdown controls,
+  submission progress, the current top three, an activity feed, and
+  submission-timing charts.
+- **Scoring** (`/jury/scoring`): a raw-score matrix with bulk save and a
+  CIS-style PDF export of the scaled results.
+- **Leaderboard censoring**: hide ranks, totals, and per-module scores on the
+  public leaderboard and shuffle the row order, to reveal standings on the
+  jury's schedule rather than live.
+- **Automark** (`/jury/automark`): run config-driven HTTP checks against every
+  participant's server in parallel, watch results stream in live, and apply the
+  scores to a module. A visual builder edits the configuration without hand-editing JSON.
+- **Reset**: a guarded nuclear wipe that first snapshots the database to
+  `backups/`, then clears every competition, participant, module, score,
+  submission, and session. A reset also clears the persisted jury allowlist, so
+  recreate the competition from the host machine (loopback) before remote jury
+  machines can reach `/jury/*` again.
 
 ## Layout
 
@@ -167,28 +147,36 @@ internal/web/       handlers, middleware, templ views, embedded static assets
 internal/realtime/  countdown timing and the WebSocket hub
 internal/upload/    filesystem chunk tracker, resumable upload handlers, session cleanup
 internal/scoring/   robust WSI scale, leaderboard cache, CIS PDF export
-internal/automark/  config-driven HTTP marking engine (stdlib only, no internal imports)
+internal/automark/  config-driven HTTP marking engine
 internal/excel/     participant import/export
 internal/backup/    periodic VACUUM INTO
-docs/               changelog and the rebuild spec (source of truth)
+docs/               changelog and the specification (source of truth)
 ```
 
-Two import rules keep the package graph acyclic: `model` imports nothing
-internal, and `realtime` must never import `store`.
-
-## Test
+## Development
 
 ```bash
+go generate ./...   # after any .templ or Tailwind change
+go build ./cmd/server
 go test ./...
 go test ./... -race
 ```
 
-## Contributing
+Styling is Tailwind v4. The source is `internal/web/tailwind.css`; `go generate`
+runs the standalone `tools/tailwindcss` CLI to regenerate the committed, embedded
+`internal/web/static/css/app.css` (see [`tools/README.md`](tools/README.md)).
+Because `app.css` is committed and embedded, `go build` alone works without the
+CLI; you only need it to regenerate `app.css` after changing the styles or the
+class strings in `.templ` / `static/js/*.js` files.
 
-Conventional commits: `feat(scope): ...`, `fix`, `docs`, `chore`, `refactor`.
+Contributions use conventional commits (`feat(scope): ...`, `fix`, `docs`,
+`chore`, `refactor`) and the branch flow `feat/*` -> `develop` -> `staging` ->
+`main`, with no direct commits to `main`. Run `lefthook install` before your
+first commit; pre-commit runs gofmt, `go vet`, and golangci-lint, and pre-push
+runs `go build ./...` and `go test ./...`.
 
-Branch flow: `feat/*` → `develop` → `staging` → `main`. No direct commits to
-`main`, no force-pushing shared branches.
+## License
 
-Run `lefthook install` before your first commit. Pre-commit runs gofmt, `go
-vet`, and golangci-lint; pre-push runs `go build ./...` and `go test ./...`.
+Released under the [MIT License](LICENSE).
+
+Built by [WebTech Indonesia](https://github.com/webtechindonesia).

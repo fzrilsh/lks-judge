@@ -214,7 +214,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><div class=\"w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4\"><span class=\"material-symbols-outlined text-3xl text-on-surface-variant\" aria-hidden=\"true\">lock</span></div><h3 class=\"text-title-medium text-on-surface mb-1\">Submission Locked</h3><p class=\"text-body-medium text-on-surface-variant\">Opens in the last 20 minutes.</p></div><div class=\"text-center mb-4\"><span class=\"material-symbols-outlined text-4xl text-primary\" aria-hidden=\"true\">cloud_upload</span><h3 class=\"text-title-large text-on-surface mt-1\">Upload Submission</h3></div><div id=\"existing-submission\" class=\"mb-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><div class=\"w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4\"><span class=\"material-symbols-outlined text-3xl text-on-surface-variant\" aria-hidden=\"true\">lock</span></div><h3 class=\"text-title-medium text-on-surface mb-1\">Submission Locked</h3><p class=\"text-body-medium text-on-surface-variant\">Opens in the last 20 minutes.</p></div><div class=\"text-center mb-4\"><span class=\"material-symbols-outlined text-4xl text-primary\" aria-hidden=\"true\">cloud_upload</span><h3 class=\"text-title-large text-on-surface mt-1\">Upload Submission</h3></div><div id=\"client-flash\"></div><div id=\"existing-submission\" class=\"mb-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -226,7 +226,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(existing.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 92, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 93, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -244,7 +244,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(existing.SubmittedAt.Local().Format("15:04:05"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 94, Col: 88}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 95, Col: 88}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
@@ -268,7 +268,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(module.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 103, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 104, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -287,7 +287,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 109, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 110, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 			if templ_7745c5c3_Err != nil {
@@ -300,7 +300,7 @@ func Dashboard(p *model.Participant, module *model.Module, publicFiles []*model.
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(moduleIDValue(module))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 112, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `participant_dashboard.templ`, Line: 113, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 			if templ_7745c5c3_Err != nil {

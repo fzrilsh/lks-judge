@@ -23,6 +23,23 @@
   var moduleId = dropzone.getAttribute("data-module-id") || null;
   var successUrl = dropzone.getAttribute("data-success-url") || "/jury/files?saved=1";
   var errorUrl = dropzone.getAttribute("data-error-url") || "/jury/files?error=";
+  var flashHost = document.getElementById("client-flash");
+
+  // showFlash renders an inline banner into #client-flash (participant dashboard).
+  // Falls back to no-op when the host is absent (e.g. the jury file manager).
+  function showFlash(msg) {
+    if (!flashHost) return;
+    flashHost.innerHTML =
+      '<div class="flex items-start gap-3 rounded-xl px-4 py-3 mb-6 text-body-medium bg-error-container text-on-error-container" role="alert">' +
+      '<span class="material-symbols-outlined text-xl" aria-hidden="true">error</span>' +
+      "<span></span></div>";
+    flashHost.querySelector("span:last-child").textContent = msg;
+  }
+
+  function clearFlash() {
+    if (flashHost) flashHost.innerHTML = "";
+  }
+
 
   function setProgress(done, total, name) {
     wrap.classList.remove("hidden");
@@ -78,6 +95,14 @@
 
   function start(file) {
     if (!file) return;
+    // Block a submission with no module before opening a session, so the
+    // participant gets a clear message instead of a server 400 mid-upload.
+    if (uploadType === "submission" && !moduleId) {
+      input.value = "";
+      showFlash("Module not selected");
+      return;
+    }
+    clearFlash();
     input.disabled = true;
     setProgress(0, Math.ceil(file.size / CHUNK), file.name);
     upload(file).catch(function (err) {

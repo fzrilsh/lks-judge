@@ -113,16 +113,29 @@ func (s *Store) CreateParticipant(competitionID int64, name, school string, pcNu
 	return res.LastInsertId()
 }
 
-// UpsertParticipantByName inserts or updates a participant matched by name+competition.
+// UpsertParticipant inserts or updates a participant. When pcNumber is set the
+// match key is (competition_id, pc_number): re-importing the same seat updates
+// the existing row (including its name), so renaming a participant while keeping
+// their PC number replaces the old row rather than colliding with the unique PC
+// index. Rows without a PC number fall back to matching by (competition_id,
+// name), since the unique PC index only applies when pc_number IS NOT NULL.
 // Returns the participant ID and the plain password (non-empty only on INSERT).
-func (s *Store) UpsertParticipantByName(competitionID int64, name, school string, pcNumber *int, ipAddress *string, passwordHash, plainPwd string) (int64, string, error) {
+func (s *Store) UpsertParticipant(competitionID int64, name, school string, pcNumber *int, ipAddress *string, passwordHash, plainPwd string) (int64, string, error) {
 	now := time.Now().UTC()
 
 	var id int64
-	err := s.Reader.QueryRow(
-		`SELECT id FROM participants WHERE competition_id = ? AND name = ?`,
-		competitionID, name,
-	).Scan(&id)
+	var err error
+	if pcNumber != nil {
+		err = s.Reader.QueryRow(
+			`SELECT id FROM participants WHERE competition_id = ? AND pc_number = ?`,
+			competitionID, *pcNumber,
+		).Scan(&id)
+	} else {
+		err = s.Reader.QueryRow(
+			`SELECT id FROM participants WHERE competition_id = ? AND name = ?`,
+			competitionID, name,
+		).Scan(&id)
+	}
 
 	if err == sql.ErrNoRows {
 		res, err := s.Writer.Exec(
@@ -141,8 +154,8 @@ func (s *Store) UpsertParticipantByName(competitionID int64, name, school string
 	}
 
 	_, err = s.Writer.Exec(
-		`UPDATE participants SET school=?, pc_number=?, ip_address=?, updated_at=? WHERE id=?`,
-		school, pcNumber, ipAddress, now, id,
+		`UPDATE participants SET name=?, school=?, pc_number=?, ip_address=?, updated_at=? WHERE id=?`,
+		name, school, pcNumber, ipAddress, now, id,
 	)
 	if err != nil {
 		return 0, "", fmt.Errorf("update participant: %w", err)

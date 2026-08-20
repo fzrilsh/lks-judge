@@ -68,10 +68,10 @@ func TestScanParticipantNullPlainPassword(t *testing.T) {
 	}
 }
 
-func TestUpsertParticipantByNameInsertThenUpdate(t *testing.T) {
+func TestUpsertParticipantInsertThenUpdateByPC(t *testing.T) {
 	s, compID := newTestStore(t)
-	pc1 := 1
-	id, plain, err := s.UpsertParticipantByName(compID, "Budi", "OldSchool", &pc1, nil, hashPw(t, "first"), "first")
+	pc := 1
+	id, plain, err := s.UpsertParticipant(compID, "Budi", "OldSchool", &pc, nil, hashPw(t, "first"), "first")
 	if err != nil {
 		t.Fatalf("insert: %v", err)
 	}
@@ -79,9 +79,10 @@ func TestUpsertParticipantByNameInsertThenUpdate(t *testing.T) {
 		t.Fatalf("insert should return plain, got %q", plain)
 	}
 
-	pc2 := 7
+	// re-import the same PC with a different name: this must UPDATE the existing
+	// row (rename), not create a new one or collide with idx_participants_pc.
 	ip := "10.0.0.9"
-	id2, plain2, err := s.UpsertParticipantByName(compID, "Budi", "NewSchool", &pc2, &ip, hashPw(t, "second"), "second")
+	id2, plain2, err := s.UpsertParticipant(compID, "Budi Santoso", "NewSchool", &pc, &ip, hashPw(t, "second"), "second")
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -96,8 +97,8 @@ func TestUpsertParticipantByNameInsertThenUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
-	if got.School != "NewSchool" || got.PCNumber == nil || *got.PCNumber != 7 {
-		t.Fatalf("update not applied: %+v", got)
+	if got.Name != "Budi Santoso" || got.School != "NewSchool" || got.PCNumber == nil || *got.PCNumber != 1 {
+		t.Fatalf("rename/update not applied: %+v", got)
 	}
 	if got.IPAddress == nil || *got.IPAddress != "10.0.0.9" {
 		t.Fatalf("ip not updated: %v", got.IPAddress)

@@ -1,5 +1,20 @@
 # LKS Judge Platform: Go Rebuild Changelog
 
+## Import & Submission Fixes (2026-08-20) ✅
+
+**Status:** Complete (v1.2.1). Two bug fixes, no schema change, no new dependency.
+
+- `fix(store): match participant import by PC number, not name` (PR #17, `ab07b9a`): import now matches an existing participant by `(competition_id, pc_number)` when a PC number is present, falling back to name only when it is absent. Re-importing the same PC with a changed name UPDATEs the existing row instead of colliding on `idx_participants_pc`. `UpsertParticipantByName` renamed to `UpsertParticipant`; the UPDATE path now overwrites `name`. `internal/excel/excel.go` rejects a file that reuses one PC number across two rows before touching the DB. Submissions are untouched: they key off the stable `participant.id`, which is unchanged on UPDATE.
+- `fix(web): block submission with no module client-side with clear message` (PR #18, `5b52e61`): the uploader now shows an inline "Module not selected" banner and aborts before opening an upload session when a participant tries to submit with no active module, instead of surfacing the raw `module_id required for submission` 400. The server-side check is retained as a second line of defence.
+
+### Verification
+- ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
+
+### Next
+Phase 13 planned a session-expiry sweep for the `sync.Map` session cache that is still not implemented. Manual responsive/accessibility smoke passes (DevTools at 360/768/1280/1920, full keyboard nav, Lighthouse a11y on `/jury/` and `/`) remain outstanding.
+
+---
+
 ## Production Branding & README (2026-08-18) ✅
 
 **Status:** Complete. A shared credit line across the app plus a production README and MIT license, ahead of the v1.2.0 release. No schema change, no new SQL, no new Go dependency.
@@ -11,9 +26,6 @@
 
 ### Verification
 - ✅ `go generate ./...`, `go build ./...`, `go vet ./...`, `go test ./...`: clean
-
-### Next
-Phase 13 planned a session-expiry sweep for the `sync.Map` session cache that is still not implemented. Manual responsive/accessibility smoke passes (DevTools at 360/768/1280/1920, full keyboard nav, Lighthouse a11y on `/jury/` and `/`) remain outstanding.
 
 ---
 

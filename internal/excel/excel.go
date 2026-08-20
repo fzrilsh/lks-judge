@@ -128,6 +128,20 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 		parsed = append(parsed, rd)
 	}
 
+	// reject duplicate PC numbers within the file before touching the DB. PC
+	// numbers are unique per competition (idx_participants_pc), so two rows
+	// sharing one is an input error, not something to silently overwrite.
+	seenPC := make(map[int]string, len(parsed))
+	for _, rd := range parsed {
+		if rd.pcNumber == nil {
+			continue
+		}
+		if prev, ok := seenPC[*rd.pcNumber]; ok {
+			return nil, fmt.Errorf("no PC %d dipakai 2 kali di file: %s dan %s", *rd.pcNumber, prev, rd.name)
+		}
+		seenPC[*rd.pcNumber] = rd.name
+	}
+
 	// generate passwords in parallel (bcrypt is CPU-bound)
 	type hashResult struct {
 		plain string
@@ -156,7 +170,7 @@ func ImportParticipants(st *store.Store, data []byte) ([]ImportedParticipant, er
 
 	results := make([]ImportedParticipant, 0, len(parsed))
 	for i, rd := range parsed {
-		id, plain, err := st.UpsertParticipantByName(
+		id, plain, err := st.UpsertParticipant(
 			comp.ID, rd.name, rd.school, rd.pcNumber, rd.ipAddress,
 			string(hashes[i].hash), hashes[i].plain,
 		)

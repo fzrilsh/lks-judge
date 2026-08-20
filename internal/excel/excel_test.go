@@ -119,7 +119,7 @@ func TestExportParticipantsHeaderAndRow(t *testing.T) {
 	}
 	pc := 1
 	ip := "10.0.0.1"
-	pid, _, err := s.UpsertParticipantByName(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1")
+	pid, _, err := s.UpsertParticipant(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1")
 	if err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestExportThenImportPreservesSeats(t *testing.T) {
 	s, compID := newTestStore(t)
 	pc := 5
 	ip := "10.0.0.2"
-	if _, _, err := s.UpsertParticipantByName(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1"); err != nil {
+	if _, _, err := s.UpsertParticipant(compID, "Ana", "SMK 1", &pc, &ip, "hash", "plainpw1"); err != nil {
 		t.Fatalf("upsert: %v", err)
 	}
 
